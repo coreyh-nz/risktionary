@@ -1,0 +1,42 @@
+name: risktionary
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: risktionary-backend
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: jdbc:mariadb://database:3306/risktionary
+      DATABASE_USER: risktionary
+      DATABASE_PASSWORD: risktionary
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - risktionary_network
+
+  database:
+    image: mariadb:10.11.14 # same as uc csse db2
+    container_name: risktionary-database
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: risktionary_root
+      MYSQL_DATABASE: risktionary
+      MYSQL_USER: risktionary
+      MYSQL_PASSWORD: risktionary
+    volumes:
+      - ./db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - risktionary_network
+
+networks:
+  risktionary_network:
+    driver: bridge

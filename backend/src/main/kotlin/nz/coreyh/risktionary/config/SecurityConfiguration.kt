@@ -22,7 +22,7 @@ class SecurityConfiguration {
             }
 
             authorizeHttpRequests {
-                authorize(anyRequest, authenticated)
+                authorize(anyRequest, permitAll)
             }
         }
         return http.build()
