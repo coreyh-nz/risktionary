@@ -1,21 +1,58 @@
-# Next.js template
+# Risktionary Frontend
 
-This is a Next.js template with shadcn/ui.
+A Next.js frontend application for Risktionary, built with TypeScript, Tailwind CSS, and shadcn/ui.
 
-## Adding components
+---
 
-To add components to your app, run the following command:
+## Getting Started
+
+### Development
+
+Run the app locally with hot reloading.
 
 ```bash
-npx shadcn@latest add button
+npm install
+npm run dev
 ```
 
-This will place the ui components in the `components` directory.
+The app runs at http://localhost:3000
 
-## Using components
+### Production (Docker)
 
-To use the components in your app, import them as follows:
+Build and run the app in a Docker container.
 
-```tsx
-import { Button } from "@/components/ui/button";
+1. Build the image
+
+    ```bash
+    docker build -t frontend .
+    ```
+
+2. Run the container
+
+    ```bash
+    docker run -p 3000:3000 frontend
+    ```
+
+   To run in detached mode (background):
+
+    ```bash
+    docker run -p 3000:3000 -d frontend
+    ```
+
+The app runs at http://localhost:3000
+
+### Docker Compose
+
+Builds the image and starts the container in one step. Useful for running alongside other services.
+
+```bash
+docker compose up --build
 ```
+
+To run in detached mode (background):
+
+```bash
+docker compose up --build -d
+```
+
+The app runs at http://localhost:3000
