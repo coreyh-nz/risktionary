@@ -28,6 +28,9 @@ dependencies {
     implementation("com.h2database:h2:2.4.240")
     implementation("org.mariadb.jdbc:mariadb-java-client")
 
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2")
+
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("tools.jackson.module:jackson-module-kotlin")
 

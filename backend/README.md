@@ -54,6 +54,18 @@ The app runs at http://localhost:8080
 
 ## Environment Variables
 
+### Required
+
+The following environment variables are mandatory for handling OAuth authentication.
+
+| Variable                | Description                                               |
+|-------------------------|-----------------------------------------------------------|
+| GOOGLE_CLIENT_ID        | OAuth 2.0 Client ID for Google login                      |
+| GOOGLE_CLIENT_SECRET    | OAuth 2.0 Client Secret for Google login                  |
+| MICROSOFT_CLIENT_ID     | OAuth 2.0 Client ID for Microsoft login                   |
+| MICROSOFT_CLIENT_SECRET | OAuth 2.0 Client Secret for Microsoft login               |
+| MICROSOFT_TENANT_ID     | Microsoft Entra ID (Tenant ID) for Microsoft login        |
+
 ### Profiles
 
 The backend uses different configurations depending on the active Spring profile.
