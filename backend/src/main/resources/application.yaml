@@ -28,3 +28,15 @@ spring:
 
 springdoc:
   show-oauth2-endpoints: true
+
+app:
+  auth:
+    cookie:
+      path: "/"
+      secure: false
+      same-site: lax
+      access-token-name: risktionary_at
+
+jwt:
+  access-lifetime: 30d
+  secret: ${JWT_SECRET}

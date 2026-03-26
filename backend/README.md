@@ -56,10 +56,11 @@ The app runs at http://localhost:8080
 
 ### Required
 
-The following environment variables are mandatory for handling OAuth authentication.
+The following environment variables are mandatory for handling OAuth authentication and issuing JWTs.
 
 | Variable                | Description                                               |
 |-------------------------|-----------------------------------------------------------|
+| JWT_SECRET              | Secret key used for signing and verifying JSON Web Tokens |
 | GOOGLE_CLIENT_ID        | OAuth 2.0 Client ID for Google login                      |
 | GOOGLE_CLIENT_SECRET    | OAuth 2.0 Client Secret for Google login                  |
 | MICROSOFT_CLIENT_ID     | OAuth 2.0 Client ID for Microsoft login                   |

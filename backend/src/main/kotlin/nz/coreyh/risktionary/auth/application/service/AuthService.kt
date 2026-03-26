@@ -1,44 +1,49 @@
 package nz.coreyh.risktionary.auth.application.service
 
+import nz.coreyh.risktionary.auth.domain.model.AccessToken
 import nz.coreyh.risktionary.auth.domain.model.OAuthUserInfo
-import nz.coreyh.risktionary.user.domain.model.User
+import nz.coreyh.risktionary.shared.application.transaction.Transactional
 import nz.coreyh.risktionary.user.domain.service.UserService
-import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.springframework.stereotype.Service
 
 @Service
 class AuthService(
     private val userService: UserService,
     private val oAuthAccountService: OAuthAccountService,
+    private val authTokenService: AuthTokenService,
+    private val transactional: Transactional,
 ) {
-    fun authenticateOAuthUser(oauthUserInfo: OAuthUserInfo): User? =
-        transaction {
+    fun authenticateOAuthUser(oauthUserInfo: OAuthUserInfo): AccessToken =
+        transactional.execute {
             val (email, firstName, lastName, displayName, provider, providerUserId) = oauthUserInfo
-            // try to find user if oauth account is linked
-            oAuthAccountService
-                .findByProviderIdentity(
-                    provider = provider,
-                    providerUserId = providerUserId,
-                )?.let {
-                    return@transaction userService.findById(it.userId)
+
+            // try to find an existing oauth account link
+            val linkedUser =
+                oAuthAccountService
+                    .findByProviderIdentity(provider, providerUserId)
+                    ?.let { oAuthAccount -> userService.findById(oAuthAccount.userId) }
+
+            val user =
+                linkedUser ?: run {
+                    // otherwise find or create the user then link oauth account
+                    val resolvedUser =
+                        userService.findByEmail(email)
+                            ?: userService
+                                .create(
+                                    email = email,
+                                    firstName = firstName,
+                                    lastName = lastName,
+                                    displayName = displayName,
+                                )
+                    oAuthAccountService.linkAccount(
+                        userId = resolvedUser.id,
+                        provider = provider,
+                        providerUserId = providerUserId,
+                        email = email,
+                    )
+                    resolvedUser
                 }
 
-            // no oauth link - find or create user by email then link
-            val user =
-                userService.findByEmail(email)
-                    ?: userService
-                        .create(
-                            email = email,
-                            firstName = firstName,
-                            lastName = lastName,
-                            displayName = displayName,
-                        )
-            oAuthAccountService.linkAccount(
-                userId = user.id,
-                provider = oauthUserInfo.provider,
-                providerUserId = providerUserId,
-                email = email,
-            )
-            user
+            authTokenService.generateAccessToken(user)
         }
 }
