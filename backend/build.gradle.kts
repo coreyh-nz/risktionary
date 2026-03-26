@@ -22,6 +22,12 @@ repositories {
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
+
+    // database
+    implementation("org.jetbrains.exposed:exposed-spring-boot4-starter:1.1.1")
+    implementation("com.h2database:h2:2.4.240")
+    implementation("org.mariadb.jdbc:mariadb-java-client")
+
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("tools.jackson.module:jackson-module-kotlin")
     testImplementation("org.springframework.boot:spring-boot-starter-security-test")

@@ -1,4 +1,4 @@
-package nz.coreyh.risktionary.config
+package nz.coreyh.risktionary.shared.config
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration

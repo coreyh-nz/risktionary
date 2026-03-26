@@ -49,3 +49,29 @@ docker compose up --build -d
 ```
 
 The app runs at http://localhost:8080
+
+---
+
+## Environment Variables
+
+### Profiles
+
+The backend uses different configurations depending on the active Spring profile.
+
+- **mariadb** - connects to an external MariaDB instance
+- **h2** - uses an in‑memory H2 database (no environment variables required)
+
+#### MariaDB Profile
+
+When running with the `mariadb` profile, the following environment variables **must** be set:
+
+| Variable          | Description                    |
+|-------------------|--------------------------------|
+| DATABASE_NAME     | Name of the MariaDB database   |
+| DATABASE_USER     | Username for the database      |
+| DATABASE_PASSWORD | Password for the database user |
+
+#### H2 Profile
+
+When running with the `h2` profile, the application uses an in‑memory H2 database.
+No environment variables are required.
