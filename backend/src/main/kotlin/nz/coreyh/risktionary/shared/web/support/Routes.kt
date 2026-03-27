@@ -13,5 +13,10 @@ object Routes {
             const val BASE = "${V1.BASE}/oauth"
             const val CALLBACK = "$BASE/{registrationId}/callback"
         }
+
+        object User {
+            const val BASE = "${V1.BASE}/user"
+            const val ME = "$BASE/me"
+        }
     }
 }
