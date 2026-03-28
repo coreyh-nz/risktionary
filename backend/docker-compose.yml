@@ -8,10 +8,8 @@ services:
     ports:
       - "8080:8080"
     restart: unless-stopped
-    environment:
-      DATABASE_URL: jdbc:mariadb://database:3306/risktionary
-      DATABASE_USER: risktionary
-      DATABASE_PASSWORD: risktionary
+    env_file:
+      - .test.env
     depends_on:
       database:
         condition: service_healthy
@@ -32,7 +30,7 @@ services:
     volumes:
       - ./db_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
       interval: 5s
       timeout: 3s
       retries: 10

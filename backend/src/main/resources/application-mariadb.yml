@@ -1,5 +1,10 @@
 spring:
   datasource:
-    url: jdbc:mariadb://localhost:3306/${DATABASE_NAME}
+    url: ${DATABASE_URL}
     username: ${DATABASE_USER}
     password: ${DATABASE_PASSWORD}
+
+  flyway:
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    validate-on-migrate: true

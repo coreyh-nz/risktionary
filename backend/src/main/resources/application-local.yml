@@ -3,5 +3,4 @@ spring:
     import: optional:file:.local.env[.properties]
 
   exposed:
-    generate-ddl: true
     show-sql: true

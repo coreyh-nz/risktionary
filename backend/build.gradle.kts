@@ -25,8 +25,12 @@ dependencies {
 
     // database
     implementation("org.jetbrains.exposed:exposed-spring-boot4-starter:1.1.1")
-    implementation("com.h2database:h2:2.4.240")
-    implementation("org.mariadb.jdbc:mariadb-java-client")
+    runtimeOnly("com.h2database:h2:2.4.240")
+    runtimeOnly("org.mariadb.jdbc:mariadb-java-client")
+
+    // migration
+    implementation("org.springframework.boot:spring-boot-starter-flyway")
+    implementation("org.flywaydb:flyway-mysql")
 
     implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2")
