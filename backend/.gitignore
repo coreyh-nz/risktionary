@@ -41,3 +41,7 @@ out/
 
 ### Database ###
 db_data
+
+### Environment ###
+.env
+*.env

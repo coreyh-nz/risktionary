@@ -1,0 +1,6 @@
+spring:
+  config:
+    import: optional:file:.local.env[.properties]
+
+  exposed:
+    show-sql: true
