@@ -35,6 +35,9 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2")
 
+    // logging
+    implementation("io.github.oshai:kotlin-logging-jvm:8.0.01")
+
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("tools.jackson.module:jackson-module-kotlin")
 
