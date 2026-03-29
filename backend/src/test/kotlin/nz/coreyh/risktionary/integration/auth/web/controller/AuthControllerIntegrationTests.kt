@@ -9,9 +9,11 @@ import nz.coreyh.risktionary.support.extensions.auth
 import org.junit.jupiter.api.Test
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
+import org.springframework.transaction.annotation.Transactional
 
 @IntegrationTest
-class AuthController(
+@Transactional
+class AuthControllerIntegrationTests(
     private val authConfiguration: AuthConfiguration,
     private val mockMvc: MockMvc,
     private val testUserCreator: TestUserCreator,
