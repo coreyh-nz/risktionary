@@ -8,11 +8,15 @@ import nz.coreyh.risktionary.shared.web.dto.ApiErrorResponse
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.servlet.resource.NoResourceFoundException
 
 private val logger = KotlinLogging.logger {}
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
+    @ExceptionHandler(NoResourceFoundException::class)
+    fun handleNoResourceFoundException(e: NoResourceFoundException): ResponseEntity<ApiErrorResponse> = handleErrorCode(ErrorCode.NOT_FOUND)
+
     @ExceptionHandler(AppException::class)
     fun handleAppException(
         ex: AppException,

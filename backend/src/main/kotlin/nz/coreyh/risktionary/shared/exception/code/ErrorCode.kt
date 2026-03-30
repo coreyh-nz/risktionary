@@ -19,13 +19,6 @@ enum class ErrorCode(
         defaultMessage = "You do not have permission to perform this action",
     ),
 
-    // User
-    USER_NOT_FOUND(
-        code = "auth.forbidden",
-        httpStatus = HttpStatus.FORBIDDEN,
-        defaultMessage = "You do not have permission to perform this action",
-    ),
-
     // Generic
     INTERNAL_ERROR(
         code = "generic.internal-error",
@@ -36,5 +29,10 @@ enum class ErrorCode(
         code = "generic.bad-request",
         httpStatus = HttpStatus.BAD_REQUEST,
         defaultMessage = "The request is invalid",
+    ),
+    NOT_FOUND(
+        code = "generic.not-found",
+        httpStatus = HttpStatus.NOT_FOUND,
+        defaultMessage = "Not found",
     ),
 }
