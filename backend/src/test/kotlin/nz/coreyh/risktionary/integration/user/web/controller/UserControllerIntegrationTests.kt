@@ -10,10 +10,12 @@ import nz.coreyh.risktionary.user.web.dto.UserDetailsDto
 import org.junit.jupiter.api.Test
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
+import org.springframework.transaction.annotation.Transactional
 import tools.jackson.databind.ObjectMapper
 import tools.jackson.module.kotlin.readValue
 
 @IntegrationTest
+@Transactional
 class UserControllerIntegrationTests(
     private val mockMvc: MockMvc,
     private val testUserCreator: TestUserCreator,
