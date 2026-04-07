@@ -1,4 +1,4 @@
-export const ROUTES = {
+export const API_ROUTES = {
   V1: {
     USER: {
       ME: "/v1/user/me",

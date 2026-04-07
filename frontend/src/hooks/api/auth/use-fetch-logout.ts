@@ -1,5 +1,5 @@
 import { useApi } from "@/hooks/api/use-api"
-import { ROUTES } from "@/lib/api/routes"
+import { API_ROUTES } from "@/lib/api/api-routes"
 import { ApiResponse } from "@/lib/api/request"
 
 interface UseFetchLogoutReturn {
@@ -7,7 +7,7 @@ interface UseFetchLogoutReturn {
 }
 
 export const useFetchLogout = (): UseFetchLogoutReturn => {
-  const { request } = useApi<void, void>(ROUTES.V1.AUTH.LOGOUT, {
+  const { request } = useApi<void, void>(API_ROUTES.V1.AUTH.LOGOUT, {
     method: "POST",
     credentials: "include",
   })

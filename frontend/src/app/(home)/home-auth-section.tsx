@@ -1,7 +1,7 @@
 "use client"
 
 import { useAuth } from "@/provider/AuthProvider"
-import { ROUTES } from "@/lib/api/routes"
+import { API_ROUTES } from "@/lib/api/api-routes"
 import { Button } from "@/components/ui/button"
 import { GoogleIcon } from "@/components/icon/google-icon"
 import { MicrosoftIcon } from "@/components/icon/microsoft-icon"
@@ -56,12 +56,12 @@ export const HomeAuthSection = () => {
       </div>
 
       <div className="flex w-full gap-4">
-        <OAuthButton href={getOAuthHref(ROUTES.V1.OAUTH.GOOGLE)}>
+        <OAuthButton href={getOAuthHref(API_ROUTES.V1.OAUTH.GOOGLE)}>
           <GoogleIcon />
           Google
         </OAuthButton>
 
-        <OAuthButton href={getOAuthHref(ROUTES.V1.OAUTH.MICROSOFT)}>
+        <OAuthButton href={getOAuthHref(API_ROUTES.V1.OAUTH.MICROSOFT)}>
           <MicrosoftIcon />
           Microsoft
         </OAuthButton>
