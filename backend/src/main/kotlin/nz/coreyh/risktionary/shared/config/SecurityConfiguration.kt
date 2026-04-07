@@ -15,6 +15,9 @@ import org.springframework.security.config.annotation.web.invoke
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
+import org.springframework.web.cors.CorsConfiguration
+import org.springframework.web.cors.CorsConfigurationSource
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 
 @Configuration
 @EnableWebSecurity
@@ -25,6 +28,7 @@ class SecurityConfiguration(
     private val oAuth2SuccessHandler: OAuth2SuccessHandler,
     private val oauth2FailureHandler: OAuth2FailureHandler,
     private val jwtAuthenticationFilter: JwtAuthenticationFilter,
+    private val appProperties: AppProperties,
 ) {
     @Bean
     fun filterChain(http: HttpSecurity): SecurityFilterChain {
@@ -33,6 +37,7 @@ class SecurityConfiguration(
             formLogin { disable() }
             httpBasic { disable() }
             logout { disable() }
+            cors { }
 
             sessionManagement {
                 sessionCreationPolicy = SessionCreationPolicy.STATELESS
@@ -63,5 +68,21 @@ class SecurityConfiguration(
             addFilterBefore<UsernamePasswordAuthenticationFilter>(jwtAuthenticationFilter)
         }
         return http.build()
+    }
+
+    @Bean
+    fun corsConfigurationSource(): CorsConfigurationSource {
+        val config =
+            CorsConfiguration().apply {
+                allowedOrigins = listOf(appProperties.frontendUrl)
+                allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                allowedHeaders = listOf("*")
+                allowCredentials = true // required for cookies
+                maxAge = 3600
+            }
+
+        return UrlBasedCorsConfigurationSource().apply {
+            registerCorsConfiguration("/**", config)
+        }
     }
 }

@@ -32,6 +32,7 @@ springdoc:
   default-produces-media-type: application/json
 
 app:
+  frontend-url: "http://localhost:3000"
   auth:
     cookie:
       path: "/"
