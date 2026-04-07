@@ -32,12 +32,14 @@ springdoc:
   default-produces-media-type: application/json
 
 app:
+  frontend-url: "http://localhost:3000"
   auth:
     cookie:
       path: "/"
       secure: false
       same-site: lax
       access-token-name: risktionary_at
+      login-success-redirect-url-name: risktionary_lr
 
 jwt:
   access-lifetime: 30d

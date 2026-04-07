@@ -17,4 +17,5 @@ data class CookieProperties(
     val secure: Boolean,
     val sameSite: Cookie.SameSite,
     val accessTokenName: String,
+    val loginSuccessRedirectUrlName: String,
 )

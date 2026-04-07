@@ -3,6 +3,7 @@ package nz.coreyh.risktionary.shared.config
 import nz.coreyh.risktionary.auth.infrastructure.security.JwtAuthenticationFilter
 import nz.coreyh.risktionary.auth.infrastructure.security.OAuth2FailureHandler
 import nz.coreyh.risktionary.auth.infrastructure.security.OAuth2SuccessHandler
+import nz.coreyh.risktionary.auth.infrastructure.security.OAuthRedirectCookieFilter
 import nz.coreyh.risktionary.shared.web.security.ApiAccessDeniedHandler
 import nz.coreyh.risktionary.shared.web.security.ApiAuthenticationEntryPoint
 import nz.coreyh.risktionary.shared.web.support.Routes
@@ -13,8 +14,12 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.annotation.web.invoke
 import org.springframework.security.config.http.SessionCreationPolicy
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
+import org.springframework.web.cors.CorsConfiguration
+import org.springframework.web.cors.CorsConfigurationSource
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 
 @Configuration
 @EnableWebSecurity
@@ -24,7 +29,9 @@ class SecurityConfiguration(
     private val apiAccessDeniedHandler: ApiAccessDeniedHandler,
     private val oAuth2SuccessHandler: OAuth2SuccessHandler,
     private val oauth2FailureHandler: OAuth2FailureHandler,
+    private val oAuthRedirectCookieFilter: OAuthRedirectCookieFilter,
     private val jwtAuthenticationFilter: JwtAuthenticationFilter,
+    private val appProperties: AppProperties,
 ) {
     @Bean
     fun filterChain(http: HttpSecurity): SecurityFilterChain {
@@ -33,6 +40,7 @@ class SecurityConfiguration(
             formLogin { disable() }
             httpBasic { disable() }
             logout { disable() }
+            cors { }
 
             sessionManagement {
                 sessionCreationPolicy = SessionCreationPolicy.STATELESS
@@ -61,7 +69,24 @@ class SecurityConfiguration(
             }
 
             addFilterBefore<UsernamePasswordAuthenticationFilter>(jwtAuthenticationFilter)
+            addFilterBefore<OAuth2AuthorizationRequestRedirectFilter>(oAuthRedirectCookieFilter)
         }
         return http.build()
+    }
+
+    @Bean
+    fun corsConfigurationSource(): CorsConfigurationSource {
+        val config =
+            CorsConfiguration().apply {
+                allowedOrigins = listOf(appProperties.frontendUrl)
+                allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                allowedHeaders = listOf("*")
+                allowCredentials = true // required for cookies
+                maxAge = 3600
+            }
+
+        return UrlBasedCorsConfigurationSource().apply {
+            registerCorsConfiguration("/**", config)
+        }
     }
 }
