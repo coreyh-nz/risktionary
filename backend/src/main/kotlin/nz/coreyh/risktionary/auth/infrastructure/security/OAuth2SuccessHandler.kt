@@ -5,21 +5,22 @@ import jakarta.servlet.http.HttpServletResponse
 import nz.coreyh.risktionary.auth.application.service.AuthService
 import nz.coreyh.risktionary.auth.application.service.OAuthUserInfoService
 import nz.coreyh.risktionary.auth.config.AuthConfiguration
+import nz.coreyh.risktionary.shared.config.AppProperties
 import nz.coreyh.risktionary.shared.web.support.addCookie
-import org.springframework.http.MediaType
+import nz.coreyh.risktionary.shared.web.support.deleteCookie
 import org.springframework.security.core.Authentication
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken
 import org.springframework.security.oauth2.core.user.OAuth2User
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler
 import org.springframework.stereotype.Component
-import tools.jackson.databind.ObjectMapper
+import org.springframework.web.util.WebUtils
 
 @Component
 class OAuth2SuccessHandler(
     private val oAuthUserInfoService: OAuthUserInfoService,
     private val authService: AuthService,
+    private val appProperties: AppProperties,
     private val authConfiguration: AuthConfiguration,
-    private val objectMapper: ObjectMapper,
 ) : AuthenticationSuccessHandler {
     override fun onAuthenticationSuccess(
         request: HttpServletRequest,
@@ -42,13 +43,17 @@ class OAuth2SuccessHandler(
             httpOnly = true
         }
 
-        val body =
-            mapOf(
-                "accessToken" to accessToken.value,
-            )
-        response.contentType = MediaType.APPLICATION_JSON_VALUE
-        response.characterEncoding = "UTF-8"
-        response.writer.write(objectMapper.writeValueAsString(body))
-        response.writer.flush()
+        // if the redirect url cookie was set, redirect the user back to where they came from
+        // fallback to frontend url
+        val redirectUrlCookieName = authConfiguration.cookie.loginSuccessRedirectUrlName
+        val redirectUrlCookie = WebUtils.getCookie(request, redirectUrlCookieName)
+        val redirectUrl =
+            redirectUrlCookie
+                ?.let { cookie ->
+                    response.deleteCookie(redirectUrlCookieName)
+                    cookie.value.takeIf { it.startsWith(appProperties.frontendUrl, true) }
+                } ?: appProperties.frontendUrl
+
+        response.sendRedirect(redirectUrl)
     }
 }

@@ -1,5 +1,6 @@
 package nz.coreyh.risktionary.auth.infrastructure.security
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -13,6 +14,8 @@ import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
 import org.springframework.web.util.WebUtils
 
+private val kLogger = KotlinLogging.logger {}
+
 @Component
 class JwtAuthenticationFilter(
     private val authTokenService: AuthTokenService,
@@ -23,16 +26,25 @@ class JwtAuthenticationFilter(
         response: HttpServletResponse,
         filterChain: FilterChain,
     ) {
-        val cookie = WebUtils.getCookie(request, authConfiguration.cookie.accessTokenName)
-        if (cookie != null) {
+        val cookieName = authConfiguration.cookie.accessTokenName
+        val cookie = WebUtils.getCookie(request, cookieName)
+
+        if (cookie == null) {
+            kLogger.debug { "No access token cookie '$cookieName' found on request ${request.requestURI}" }
+        } else {
             try {
                 val token = authTokenService.decodeAccessToken(cookie.value)
                 val principal = UserPrincipal(token.userId, listOf())
                 val authentication = UsernamePasswordAuthenticationToken(principal, null, listOf())
+
                 SecurityContextHolder.getContext().authentication = authentication
-            } catch (_: UnauthenticatedException) {
+
+                kLogger.debug { "Authentication set in SecurityContext for userId=${token.userId}" }
+            } catch (e: UnauthenticatedException) {
+                kLogger.debug { "Failed to decode access token cookie: ${e.message}" }
             }
         }
+
         filterChain.doFilter(request, response)
     }
 }

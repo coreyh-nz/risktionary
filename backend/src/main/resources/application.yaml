@@ -39,6 +39,7 @@ app:
       secure: false
       same-site: lax
       access-token-name: risktionary_at
+      login-success-redirect-url-name: risktionary_lr
 
 jwt:
   access-lifetime: 30d
