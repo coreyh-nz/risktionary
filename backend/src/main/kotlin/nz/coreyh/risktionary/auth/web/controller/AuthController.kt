@@ -8,7 +8,7 @@ import nz.coreyh.risktionary.shared.oas.ApiResponseInternalServerError
 import nz.coreyh.risktionary.shared.oas.ApiResponseUnauthorized
 import nz.coreyh.risktionary.shared.web.support.Routes
 import nz.coreyh.risktionary.shared.web.support.deleteCookie
-import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController
 class AuthController(
     private val authConfiguration: AuthConfiguration,
 ) {
-    @GetMapping(Routes.V1.Auth.LOGOUT)
+    @PostMapping(Routes.V1.Auth.LOGOUT)
     @Operation(
         summary = "Logout current user",
         description = "Removes the current access token so it can no longer be used.",
