@@ -1,11 +1,12 @@
 package nz.coreyh.risktionary.auth.application.service
 
-import com.nimbusds.jwt.proc.BadJWTException
 import nz.coreyh.risktionary.auth.config.JwtProperties
 import nz.coreyh.risktionary.auth.domain.model.AccessToken
+import nz.coreyh.risktionary.shared.application.service.TokenService
 import nz.coreyh.risktionary.shared.exception.UnauthenticatedException
 import nz.coreyh.risktionary.user.domain.model.User
 import nz.coreyh.risktionary.user.domain.model.toUserIdOrNull
+import org.springframework.security.oauth2.jwt.BadJwtException
 import org.springframework.stereotype.Service
 import kotlin.time.Clock
 
@@ -36,14 +37,14 @@ class AuthTokenService(
             val token = tokenService.decodeToken(accessToken)
             val userId =
                 token.subject.toUserIdOrNull()
-                    ?: throw BadJWTException("Invalid 'subject'")
+                    ?: throw BadJwtException("Invalid 'subject'")
             return AccessToken(
                 userId = userId,
                 issuedAt = token.issuedAt,
                 expiresAt = token.expiresAt,
                 value = token.value,
             )
-        } catch (e: BadJWTException) {
+        } catch (e: BadJwtException) {
             throw UnauthenticatedException(e)
         }
     }

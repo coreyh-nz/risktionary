@@ -1,8 +1,9 @@
-package nz.coreyh.risktionary.auth.infrastructure.security
+package nz.coreyh.risktionary.shared.infrastructure.service
 
 import com.nimbusds.jwt.proc.BadJWTException
-import nz.coreyh.risktionary.auth.application.service.TokenService
-import nz.coreyh.risktionary.auth.domain.model.Token
+import nz.coreyh.risktionary.shared.domain.model.Token
+import nz.coreyh.risktionary.shared.application.service.TokenService
+import org.springframework.security.oauth2.jwt.BadJwtException
 import org.springframework.security.oauth2.jwt.JwtClaimsSet
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.security.oauth2.jwt.JwtEncoder
@@ -48,10 +49,10 @@ class JwtTokenServiceImpl(
             subject = jwt.subject,
             issuedAt =
                 jwt.issuedAt?.toKotlinInstant()
-                    ?: throw BadJWTException("Missing 'issuedAt' claim"),
+                    ?: throw BadJwtException("Missing 'issuedAt' claim"),
             expiresAt =
-                jwt.issuedAt?.toKotlinInstant()
-                    ?: throw BadJWTException("Missing 'expiresAt' claim"),
+                jwt.expiresAt?.toKotlinInstant()
+                    ?: throw BadJwtException("Missing 'expiresAt' claim"),
             claims = jwt.claims.mapValues { it.toString() }, // all should be strings anyway from the issue method
         )
     }
