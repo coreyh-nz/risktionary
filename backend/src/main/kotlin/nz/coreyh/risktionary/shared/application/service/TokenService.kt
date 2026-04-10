@@ -8,8 +8,12 @@ interface TokenService {
         subject: String,
         issuedAt: Instant,
         expiresAt: Instant,
+        type: String,
         claims: Map<String, String> = mapOf(),
     ): Token
 
-    fun decodeToken(token: String): Token
+    fun decodeToken(
+        token: String,
+        type: String,
+    ): Token
 }

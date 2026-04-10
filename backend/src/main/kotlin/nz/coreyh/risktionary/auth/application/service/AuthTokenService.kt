@@ -23,6 +23,7 @@ class AuthTokenService(
                 subject = user.id.toString(),
                 issuedAt = issuedAt,
                 expiresAt = expiresAt,
+                type = TOKEN_TYPE,
             )
         return AccessToken(
             userId = user.id,
@@ -33,19 +34,24 @@ class AuthTokenService(
     }
 
     fun decodeAccessToken(accessToken: String): AccessToken {
-        try {
-            val token = tokenService.decodeToken(accessToken)
-            val userId =
-                token.subject.toUserIdOrNull()
-                    ?: throw BadJwtException("Invalid 'subject'")
-            return AccessToken(
-                userId = userId,
-                issuedAt = token.issuedAt,
-                expiresAt = token.expiresAt,
-                value = token.value,
-            )
-        } catch (e: BadJwtException) {
-            throw UnauthenticatedException(e)
-        }
+        val token =
+            try {
+                tokenService.decodeToken(accessToken, TOKEN_TYPE)
+            } catch (e: BadJwtException) {
+                throw UnauthenticatedException(e)
+            }
+        val userId =
+            token.subject.toUserIdOrNull()
+                ?: throw UnauthenticatedException()
+        return AccessToken(
+            userId = userId,
+            issuedAt = token.issuedAt,
+            expiresAt = token.expiresAt,
+            value = token.value,
+        )
+    }
+
+    companion object {
+        const val TOKEN_TYPE = "access-token"
     }
 }
