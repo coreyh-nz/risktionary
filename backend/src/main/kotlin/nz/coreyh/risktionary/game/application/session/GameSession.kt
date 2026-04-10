@@ -34,7 +34,7 @@ class GameSession(
     private val players: MutableMap<GamePlayerId, GamePlayerSession> = mutableMapOf()
     private val lock = ReentrantLock()
 
-    var state: GameState = GameState.INITIALIZING
+    var state: GameState = GameState.LOBBY
         get() = lock.withLock { field }
         set(value) = lock.withLock { field = value }
 

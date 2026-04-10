@@ -23,6 +23,7 @@ object Routes {
             const val BASE = "${V1.BASE}/game"
             const val CREATE = "$BASE/create"
             const val JOIN = "$BASE/join"
+            const val SOCKET = "/ws"
         }
     }
 }

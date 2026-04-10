@@ -12,7 +12,6 @@ import nz.coreyh.risktionary.game.web.dto.request.JoinGameRequest
 import nz.coreyh.risktionary.game.web.dto.response.CreateGameResponse
 import nz.coreyh.risktionary.game.web.dto.response.JoinGameResponse
 import nz.coreyh.risktionary.game.web.dto.toHostView
-import nz.coreyh.risktionary.game.web.dto.toPlayerView
 import nz.coreyh.risktionary.game.web.oas.ApiResponseGameNotFound
 import nz.coreyh.risktionary.shared.oas.ApiResponseInternalServerError
 import nz.coreyh.risktionary.shared.oas.ApiResponseUnauthorized
@@ -84,7 +83,7 @@ class GameController(
         val sessionPlayer = session.getPlayer(ticket.playerId)
         val response =
             JoinGameResponse(
-                session = session.toPlayerView(),
+                session = session.toHostView(),
                 ticket = ticket.value,
                 playerId = ticket.playerId,
                 displayName = sessionPlayer.identity.displayName,

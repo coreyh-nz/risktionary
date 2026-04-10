@@ -9,7 +9,6 @@ import nz.coreyh.risktionary.game.domain.model.player.toGamePlayerIdOrNull
 import nz.coreyh.risktionary.game.domain.model.toGameIdOrNull
 import nz.coreyh.risktionary.shared.application.service.TokenService
 import nz.coreyh.risktionary.shared.exception.UnauthenticatedException
-import org.springframework.security.oauth2.jwt.BadJwtException
 import org.springframework.stereotype.Service
 import kotlin.time.Clock
 
@@ -46,9 +45,10 @@ class GameTicketService(
         val token =
             try {
                 tokenService.decodeToken(ticket, TOKEN_TYPE)
-            } catch (e: BadJwtException) {
+            } catch (e: Exception) {
                 throw UnauthenticatedException(e)
             }
+
         val playerId =
             token.subject.toGamePlayerIdOrNull()
                 ?: throw GameTicketInvalidException()
