@@ -9,6 +9,7 @@ import nz.coreyh.risktionary.support.extensions.auth
 import org.junit.jupiter.api.Test
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
+import org.springframework.test.web.servlet.post
 import org.springframework.transaction.annotation.Transactional
 
 @IntegrationTest
@@ -23,7 +24,7 @@ class AuthControllerIntegrationTests(
         val user = testUserCreator.createTestUser()
 
         mockMvc
-            .get(Routes.V1.Auth.LOGOUT) {
+            .post(Routes.V1.Auth.LOGOUT) {
                 auth(user)
             }.andExpect {
                 status { isOk() }
