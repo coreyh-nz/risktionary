@@ -3,6 +3,7 @@ plugins {
     kotlin("plugin.spring") version "2.3.20"
     id("org.springframework.boot") version "4.0.4"
     id("io.spring.dependency-management") version "1.1.7"
+    jacoco
 }
 
 group = "nz.coreyh"
@@ -58,6 +59,37 @@ kotlin {
     }
 }
 
+jacoco {
+    toolVersion = "0.8.14"
+}
+
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+tasks.test {
+    finalizedBy(tasks.jacocoTestReport)
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
+
+    classDirectories.setFrom(
+        files(
+            classDirectories.files.map {
+                fileTree(it) {
+                    exclude(
+                        "**/config/**",
+                        "**/Application*",
+                    )
+                }
+            },
+        ),
+    )
 }
