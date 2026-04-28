@@ -10,9 +10,9 @@ interface GameStore {
   setHost: (gameId: string, gameCode: string) => void
   setPlayer: (
     gameCode: string,
+    ticket: string,
     playerId: string,
-    displayName: string,
-    ticket: string
+    displayName: string
   ) => void
   clear: () => void
 }
@@ -25,7 +25,7 @@ const storeDefinition: StateCreator<GameStore> = (set) => ({
   setHost: (gameId, gameCode) =>
     set({ session: { role: "host", gameId, gameCode } }),
 
-  setPlayer: (gameCode, playerId, displayName, ticket) =>
+  setPlayer: (gameCode, ticket, playerId, displayName) =>
     set({
       session: { gameCode, role: "player", playerId, displayName, ticket },
     }),

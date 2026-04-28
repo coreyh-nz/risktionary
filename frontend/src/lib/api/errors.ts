@@ -9,7 +9,7 @@ export const ErrorCode = {
   GAME_CODE_IN_USE: "game.code-in-use",
   GAME_PLAYER_ALREADY_IN_GAME: "game.player-already-in-game",
   GAME_PLAYER_NOT_IN_GAME: "game.player-not-in-game",
-  GAME_DISPLAY_NAME_REQUIRED: "game.display-name-required",
+  GAME_PLAYER_DISPLAY_NAME_IN_USE: "game.player-display-name-in-use",
 
   // Generic
   INTERNAL_ERROR: "generic.internal-error",

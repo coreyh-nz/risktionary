@@ -15,6 +15,7 @@ export const API_ROUTES = {
 
     GAME: {
       CREATE: "/v1/game/create",
+      JOIN: "/v1/game/join",
     },
   },
 }
