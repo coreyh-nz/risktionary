@@ -1,6 +1,6 @@
-package nz.coreyh.risktionary.auth.application.service
+package nz.coreyh.risktionary.shared.application.service
 
-import nz.coreyh.risktionary.auth.domain.model.Token
+import nz.coreyh.risktionary.shared.domain.model.Token
 import kotlin.time.Instant
 
 interface TokenService {
@@ -8,8 +8,12 @@ interface TokenService {
         subject: String,
         issuedAt: Instant,
         expiresAt: Instant,
+        type: String,
         claims: Map<String, String> = mapOf(),
     ): Token
 
-    fun decodeToken(token: String): Token
+    fun decodeToken(
+        token: String,
+        type: String,
+    ): Token
 }

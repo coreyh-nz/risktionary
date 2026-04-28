@@ -19,6 +19,38 @@ enum class ErrorCode(
         defaultMessage = "You do not have permission to perform this action",
     ),
 
+    // Game
+    GAME_NOT_FOUND(
+        code = "game.not-found",
+        httpStatus = HttpStatus.NOT_FOUND,
+        defaultMessage = "Game not found",
+    ),
+    GAME_TICKET_INVALID(
+        code = "game.ticket-invalid",
+        httpStatus = HttpStatus.BAD_REQUEST,
+        defaultMessage = "Game ticket invalid",
+    ),
+    GAME_PLAYER_STATE_INVALID(
+        code = "game.player-state-invalid",
+        httpStatus = HttpStatus.BAD_REQUEST,
+        defaultMessage = "Game player state invalid",
+    ),
+    GAME_PLAYER_ALREADY_IN_SESSION(
+        code = "game.player-already-in-session",
+        httpStatus = HttpStatus.BAD_REQUEST,
+        defaultMessage = "Game player already in session",
+    ),
+    GAME_PLAYER_NOT_IN_SESSION(
+        code = "game.player-not-in-session",
+        httpStatus = HttpStatus.BAD_REQUEST,
+        defaultMessage = "Game player not in session",
+    ),
+    GAME_PLAYER_DISPLAY_NAME_IN_USE(
+        code = "game.player-display-name-in-use",
+        httpStatus = HttpStatus.BAD_REQUEST,
+        defaultMessage = "Game player not in use",
+    ),
+
     // Generic
     INTERNAL_ERROR(
         code = "generic.internal-error",

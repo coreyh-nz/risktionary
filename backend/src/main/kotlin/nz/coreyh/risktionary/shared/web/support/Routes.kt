@@ -18,5 +18,11 @@ object Routes {
             const val BASE = "${V1.BASE}/user"
             const val ME = "$BASE/me"
         }
+
+        object Game {
+            const val BASE = "${V1.BASE}/game"
+            const val CREATE = "$BASE/create"
+            const val JOIN = "$BASE/join"
+        }
     }
 }

@@ -1,8 +1,8 @@
-package nz.coreyh.risktionary.auth.infrastructure.security
+package nz.coreyh.risktionary.shared.infrastructure.service
 
-import com.nimbusds.jwt.proc.BadJWTException
-import nz.coreyh.risktionary.auth.application.service.TokenService
-import nz.coreyh.risktionary.auth.domain.model.Token
+import nz.coreyh.risktionary.shared.domain.model.Token
+import nz.coreyh.risktionary.shared.application.service.TokenService
+import org.springframework.security.oauth2.jwt.BadJwtException
 import org.springframework.security.oauth2.jwt.JwtClaimsSet
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.security.oauth2.jwt.JwtEncoder
@@ -21,6 +21,7 @@ class JwtTokenServiceImpl(
         subject: String,
         issuedAt: Instant,
         expiresAt: Instant,
+        type: String,
         claims: Map<String, String>,
     ): Token {
         val claimsSet =
@@ -29,8 +30,10 @@ class JwtTokenServiceImpl(
                 .subject(subject)
                 .issuedAt(issuedAt.toJavaInstant())
                 .expiresAt(expiresAt.toJavaInstant())
-                .apply { claims.forEach { (k, v) -> claim(k, v) } }
-                .build()
+                .apply {
+                    claims.forEach { (k, v) -> claim(k, v) }
+                    claim(TYPE_CLAIM, type)
+                }.build()
         val encodedToken = jwtEncoder.encode(JwtEncoderParameters.from(claimsSet)).tokenValue
         return Token(
             value = encodedToken,
@@ -41,18 +44,34 @@ class JwtTokenServiceImpl(
         )
     }
 
-    override fun decodeToken(token: String): Token {
+    override fun decodeToken(
+        token: String,
+        type: String,
+    ): Token {
         val jwt = jwtDecoder.decode(token)
+        if (!jwt.hasClaim(TYPE_CLAIM)) {
+            throw BadJwtException("Missing '${TYPE_CLAIM}' claim")
+        }
+
+        val actualType = jwt.getClaim<String>(TYPE_CLAIM)
+        if (actualType != type) {
+            throw BadJwtException("Expected type '$type' but got '$actualType'")
+        }
+
         return Token(
             value = token,
             subject = jwt.subject,
             issuedAt =
                 jwt.issuedAt?.toKotlinInstant()
-                    ?: throw BadJWTException("Missing 'issuedAt' claim"),
+                    ?: throw BadJwtException("Missing 'issuedAt' claim"),
             expiresAt =
-                jwt.issuedAt?.toKotlinInstant()
-                    ?: throw BadJWTException("Missing 'expiresAt' claim"),
+                jwt.expiresAt?.toKotlinInstant()
+                    ?: throw BadJwtException("Missing 'expiresAt' claim"),
             claims = jwt.claims.mapValues { it.toString() }, // all should be strings anyway from the issue method
         )
+    }
+
+    companion object {
+        const val TYPE_CLAIM = "type"
     }
 }

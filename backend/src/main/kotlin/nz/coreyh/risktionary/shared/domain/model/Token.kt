@@ -1,4 +1,4 @@
-package nz.coreyh.risktionary.auth.domain.model
+package nz.coreyh.risktionary.shared.domain.model
 
 import kotlin.time.Instant
 

@@ -48,6 +48,7 @@ class SecurityConfiguration(
 
             authorizeHttpRequests {
                 authorize("${Routes.V1.OAuth.BASE}/**", permitAll)
+                authorize(Routes.V1.Game.JOIN, permitAll)
                 authorize(anyRequest, authenticated)
             }
 

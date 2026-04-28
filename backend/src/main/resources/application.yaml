@@ -40,6 +40,9 @@ app:
       same-site: lax
       access-token-name: risktionary_at
       login-success-redirect-url-name: risktionary_lr
+  game:
+    ticket:
+      lifetime: 30m
 
 jwt:
   access-lifetime: 30d
