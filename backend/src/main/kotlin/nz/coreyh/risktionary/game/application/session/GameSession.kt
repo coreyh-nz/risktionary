@@ -38,6 +38,8 @@ class GameSession(
         get() = lock.withLock { field }
         set(value) = lock.withLock { field = value }
 
+    fun getPlayers(): List<GamePlayerSession> = lock.withLock { players.values.toList() }
+
     fun getPlayer(playerId: GamePlayerId): GamePlayerSession =
         lock.withLock { players[playerId] ?: throw GamePlayerNotInSessionException() }
 

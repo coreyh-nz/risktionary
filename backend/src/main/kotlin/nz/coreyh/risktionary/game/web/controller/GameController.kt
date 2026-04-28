@@ -73,7 +73,7 @@ class GameController(
         @AuthenticationPrincipal principal: UserPrincipal?,
         @RequestBody request: JoinGameRequest,
     ): ResponseEntity<JoinGameResponse> {
-        val displayName = request.displayName
+        val displayName = request.displayName.trim()
         val identity =
             principal?.let {
                 GamePlayerIdentity.Authenticated(displayName, it.userId)

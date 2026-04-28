@@ -45,6 +45,11 @@ enum class ErrorCode(
         httpStatus = HttpStatus.BAD_REQUEST,
         defaultMessage = "Game player not in session",
     ),
+    GAME_PLAYER_DISPLAY_NAME_IN_USE(
+        code = "game.player-display-name-in-use",
+        httpStatus = HttpStatus.BAD_REQUEST,
+        defaultMessage = "Game player not in use",
+    ),
 
     // Generic
     INTERNAL_ERROR(

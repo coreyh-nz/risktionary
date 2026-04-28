@@ -9,6 +9,7 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.verify
 import nz.coreyh.risktionary.game.application.exception.GameNotFoundException
+import nz.coreyh.risktionary.game.application.exception.GamePlayerDisplayNameInUseException
 import nz.coreyh.risktionary.game.application.exception.GameTicketInvalidException
 import nz.coreyh.risktionary.game.application.service.GameSessionService
 import nz.coreyh.risktionary.game.application.service.GameTicketService
@@ -62,6 +63,7 @@ class GameSessionServiceTests {
         every { gameSessionStore.findByCode(code) } returns session
         every { session.id } returns gameId
         every { session.requestJoin(any()) } just Runs
+        every { session.getPlayers() } returns emptyList()
         every { gameTicketService.generateTicket(any(), any()) } returns ticket
 
         val result = service.handleJoinRequest(code, identity)
@@ -72,6 +74,29 @@ class GameSessionServiceTests {
 
     @Test
     fun `handle join request throws when session does not exist`() {
+        val code = "123456"
+        val gameId = createTestGameId()
+        val playerId = createTestGamePlayerId()
+        val session = mockk<GameSession>()
+        val identity = createTestGamePlayerIdentityGuest()
+        val ticket = createTestGameTicket(gameId = gameId, playerId = playerId, value = "ticket12345")
+
+        val joinedPlayer = mockk<GamePlayerSession>()
+        val joinedPlayerIdentity = createTestGamePlayerIdentityGuest(displayName = identity.displayName)
+        every { gameSessionStore.findByCode(code) } returns session
+        every { session.id } returns gameId
+        every { session.requestJoin(any()) } just Runs
+        every { session.getPlayers() } returns listOf(joinedPlayer)
+        every { joinedPlayer.identity } returns joinedPlayerIdentity
+        every { gameTicketService.generateTicket(any(), any()) } returns ticket
+
+        shouldThrow<GamePlayerDisplayNameInUseException> {
+            service.handleJoinRequest(code, identity)
+        }
+    }
+
+    @Test
+    fun `handle join request throws when display name is already in use`() {
         val code = "123456"
         val identity = createTestGamePlayerIdentityGuest()
         every { gameSessionStore.findByCode(code) } returns null

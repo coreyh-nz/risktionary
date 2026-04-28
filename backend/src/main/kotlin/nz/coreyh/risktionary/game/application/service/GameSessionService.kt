@@ -1,6 +1,7 @@
 package nz.coreyh.risktionary.game.application.service
 
 import nz.coreyh.risktionary.game.application.exception.GameNotFoundException
+import nz.coreyh.risktionary.game.application.exception.GamePlayerDisplayNameInUseException
 import nz.coreyh.risktionary.game.application.exception.GameTicketInvalidException
 import nz.coreyh.risktionary.game.application.session.GamePlayerSession
 import nz.coreyh.risktionary.game.application.session.GameSession
@@ -65,7 +66,14 @@ class GameSessionService(
         identity: GamePlayerIdentity,
     ): GameTicket {
         val session = getSessionByCode(code)
-        // TODO: validation on display name
+
+        // prevent duplicate display name
+        session
+            .getPlayers()
+            .find { it.identity.displayName.equals(identity.displayName, ignoreCase = true) }
+            ?.let {
+                throw GamePlayerDisplayNameInUseException()
+            }
 
         val playerSession =
             GamePlayerSession(
