@@ -10,6 +10,9 @@ enum class GamePlayerStatus {
      */
     PENDING,
 
+    /**
+     * The player has sent an HTTP request to establish a WebSocket connection.
+     */
     CONNECTING,
 
     /**
