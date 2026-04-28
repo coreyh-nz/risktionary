@@ -3,12 +3,45 @@
 import { GamePlayLobbyScreen } from "@/features/lobby/components/game-lobby-screen"
 import { useGameStore } from "@/stores/game-store"
 import { assertNever } from "@/lib/utils"
+import { useWebSocket, WebSocketProvider } from "@/context/web-socket-context"
+import ConnectingScreen from "@/features/lobby/components/connecting-screen"
+import { useRouter } from "next/navigation"
+import { ROUTES } from "@/lib/routes"
+import { toast } from "sonner"
+import { useEffect } from "react"
 
 const GamePlayPage = () => {
-  const { state, session } = useGameStore()
+  const { session } = useGameStore()
 
   if (!session) {
     return <div>no session</div>
+  }
+
+  return (
+    <WebSocketProvider>
+      <GameScreen />
+    </WebSocketProvider>
+  )
+}
+
+const GameScreen = () => {
+  const { state } = useGameStore()
+  const { connect, disconnect, connected, attempts, error } = useWebSocket()
+  const router = useRouter()
+
+  useEffect(() => {
+    connect()
+    return () => disconnect()
+  }, [connect, disconnect])
+
+  useEffect(() => {
+    if (!error) return
+    toast.error(error)
+    router.push(ROUTES.HOME)
+  }, [error, router])
+
+  if (!connected && !error) {
+    return <ConnectingScreen attempts={attempts} />
   }
 
   switch (state) {
@@ -25,10 +58,7 @@ const GamePlayPage = () => {
     case "COMPLETED":
       return <p>COMPLETED</p>
     default:
-      // will give a compiler error if there is a
-      // unhandled state in switch case
       assertNever(state)
   }
 }
-
 export default GamePlayPage

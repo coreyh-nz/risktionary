@@ -13,6 +13,7 @@ export interface GameSessionHostView {
 }
 
 export interface GameSessionPlayerView {
+  id: string
   code: string
   state: GameState
 }
@@ -25,6 +26,7 @@ export interface HostSession {
 
 export interface PlayerSession {
   role: "player"
+  gameId: string
   gameCode: string
   playerId: string
   displayName: string

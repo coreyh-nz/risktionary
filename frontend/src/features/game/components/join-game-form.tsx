@@ -1,6 +1,9 @@
 "use client"
 
-import { JoinGameFormValues, useJoinGameForm, } from "@/features/game/hooks/use-join-game-form"
+import {
+  JoinGameFormValues,
+  useJoinGameForm,
+} from "@/features/game/hooks/use-join-game-form"
 import { FormInput } from "@/components/common/form"
 import { Button } from "@/components/ui/button"
 import { FieldGroup, FieldSet } from "@/components/ui/field"
@@ -42,7 +45,7 @@ export const JoinGameForm = () => {
     const ticket = response.data.ticket
     const playerId = response.data.playerId
     const displayName = response.data.displayName
-    setPlayer(session.code, ticket, playerId, displayName)
+    setPlayer(session.id, session.code, ticket, playerId, displayName)
     router.push(ROUTES.GAME.PLAY)
   }
 
