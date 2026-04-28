@@ -13,7 +13,7 @@ import {
 import { LogOut } from "lucide-react"
 import { useAuth } from "@/provider/AuthProvider"
 import { useLogout } from "@/hooks/use-logout"
-import { UserAvatar } from "@/components/game/user-avatar"
+import { UserAvatar } from "@/components/common/user-avatar"
 
 export const Navbar = () => {
   const { user } = useAuth()

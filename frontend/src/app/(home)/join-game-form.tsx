@@ -3,7 +3,7 @@
 import {
   JoinGameFormValues,
   useJoinGameForm,
-} from "@/hooks/game/use-join-game-form"
+} from "@/features/game/hooks/use-join-game-form"
 import { FormInput } from "@/components/common/form"
 import { Button } from "@/components/ui/button"
 import { FieldGroup, FieldSet } from "@/components/ui/field"

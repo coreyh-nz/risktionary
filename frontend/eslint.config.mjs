@@ -1,6 +1,6 @@
-import { defineConfig, globalIgnores } from "eslint/config";
-import nextVitals from "eslint-config-next/core-web-vitals";
-import nextTs from "eslint-config-next/typescript";
+import { defineConfig, globalIgnores } from "eslint/config"
+import nextVitals from "eslint-config-next/core-web-vitals"
+import nextTs from "eslint-config-next/typescript"
 
 const eslintConfig = defineConfig([
   ...nextVitals,
@@ -13,6 +13,15 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
-]);
+  {
+    settings: {
+      // Fix for ESLint 10+: eslint-plugin-react uses context.getFilename() (legacy API)
+      // which was removed in ESLint 10 flat config. Declaring the version explicitly
+      // prevents the plugin from trying to auto-detect it and failing.
+      // https://gist.github.com/OscarGauss/1f305edf5b7c103bb2ee32ba479f4261
+      react: { version: "19" },
+    },
+  },
+])
 
-export default eslintConfig;
+export default eslintConfig

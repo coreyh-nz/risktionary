@@ -12,5 +12,9 @@ export const API_ROUTES = {
       GOOGLE: "/v1/oauth/google",
       MICROSOFT: "/v1/oauth/microsoft",
     },
+
+    GAME: {
+      CREATE: "/v1/game/create",
+    },
   },
 }
