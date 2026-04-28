@@ -1,7 +1,7 @@
 package nz.coreyh.risktionary.shared.infrastructure.service
 
-import nz.coreyh.risktionary.shared.domain.model.Token
 import nz.coreyh.risktionary.shared.application.service.TokenService
+import nz.coreyh.risktionary.shared.domain.model.Token
 import org.springframework.security.oauth2.jwt.BadJwtException
 import org.springframework.security.oauth2.jwt.JwtClaimsSet
 import org.springframework.security.oauth2.jwt.JwtDecoder
@@ -67,7 +67,10 @@ class JwtTokenServiceImpl(
             expiresAt =
                 jwt.expiresAt?.toKotlinInstant()
                     ?: throw BadJwtException("Missing 'expiresAt' claim"),
-            claims = jwt.claims.mapValues { it.toString() }, // all should be strings anyway from the issue method
+            claims =
+                jwt.claims
+                    .filter { it.value is String }
+                    .mapValues { it.value.toString() },
         )
     }
 
