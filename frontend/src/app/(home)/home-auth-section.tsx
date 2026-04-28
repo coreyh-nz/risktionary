@@ -2,12 +2,14 @@
 
 import { useAuth } from "@/provider/AuthProvider"
 import { API_ROUTES } from "@/lib/api/api-routes"
-import { Button } from "@/components/ui/button"
+import { buttonVariants } from "@/components/ui/button"
 import { GoogleIcon } from "@/components/icon/google-icon"
 import { MicrosoftIcon } from "@/components/icon/microsoft-icon"
 import { config } from "@/lib/config"
 import { useEffect, useState } from "react"
 import { OAuthButton } from "@/app/(home)/oauth-button"
+import Link from "next/link"
+import { ROUTES } from "@/lib/routes"
 
 export const HomeAuthSection = () => {
   const { user } = useAuth()
@@ -35,7 +37,12 @@ export const HomeAuthSection = () => {
         <div className="flex w-full max-w-sm items-center justify-center gap-3">
           <div className="text-center text-sm text-muted-foreground">
             Ready to start a new game?
-            <Button variant="link">Create Game</Button>
+            <Link
+              href={ROUTES.GAME.CREATE}
+              className={buttonVariants({ variant: "link" })}
+            >
+              Create Game
+            </Link>
           </div>
         </div>
       </div>

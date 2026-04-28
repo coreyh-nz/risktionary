@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Logo } from "@/components/common/logo"
-import { JoinGameForm } from "@/app/(home)/join-game-form"
+import { JoinGameForm } from "@/features/game/components/join-game-form"
 import { HomeAuthSection } from "@/app/(home)/home-auth-section"
 
 const HomePage = async () => {

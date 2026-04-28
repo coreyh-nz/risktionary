@@ -1,6 +1,8 @@
 import { TriangleAlert } from "lucide-react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
+import Link from "next/link"
+import { ROUTES } from "@/lib/routes"
 
 const logoVariants = cva("flex items-center font-black tracking-tight", {
   variants: {
@@ -29,7 +31,7 @@ export const Logo = ({
   showText = true,
 }: LogoProps) => {
   return (
-    <div className={cn(logoVariants({ size }), className)}>
+    <Link href={ROUTES.HOME} className={cn(logoVariants({ size }), className)}>
       <TriangleAlert className="stroke-3 text-primary" />
 
       {showText && (
@@ -38,6 +40,6 @@ export const Logo = ({
           tionary
         </span>
       )}
-    </div>
+    </Link>
   )
 }
