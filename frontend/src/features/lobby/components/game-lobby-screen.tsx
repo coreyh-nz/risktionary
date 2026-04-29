@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { useGameStore } from "@/stores/game-store"
+import { PlayerList } from "./player-list"
 
 export const GamePlayLobbyScreen = () => {
   const { session } = useGameStore()
@@ -34,11 +35,7 @@ export const GamePlayLobbyScreen = () => {
       {/* Joined Players */}
       <Card>
         <CardContent className="pt-4">
-          <div className="mb-3 flex items-center justify-between">
-            <p className="text-xs font-semibold tracking-widest text-muted-foreground uppercase">
-              x players joined
-            </p>
-          </div>
+          <PlayerList />
         </CardContent>
       </Card>
 

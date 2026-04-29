@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation"
 import { ROUTES } from "@/lib/routes"
 import { toast } from "sonner"
 import { useEffect } from "react"
+import { setupSubscriptions } from "@/socket/subscriptions"
 
 const GamePlayPage = () => {
   const { session } = useGameStore()
@@ -25,14 +26,16 @@ const GamePlayPage = () => {
 }
 
 const GameScreen = () => {
-  const { state } = useGameStore()
+  const { session, state } = useGameStore()
   const { connect, disconnect, connected, attempts, error } = useWebSocket()
   const router = useRouter()
 
   useEffect(() => {
-    connect()
+    if (session) {
+      connect((client) => setupSubscriptions(client, session.gameId))
+    }
     return () => disconnect()
-  }, [connect, disconnect])
+  }, [session, connect, disconnect])
 
   useEffect(() => {
     if (!error) return

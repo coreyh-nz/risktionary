@@ -51,7 +51,7 @@ const reducer = (
 }
 
 interface WebSocketContextValue {
-  connect: () => void
+  connect: (onConnect: (client: Client) => void) => void
   disconnect: () => void
   connected: boolean
   attempts: number
@@ -66,58 +66,62 @@ export const WebSocketProvider = ({ children }: PropsWithChildren) => {
   const clientRef = useRef<Client | null>(null)
   const attemptsRef = useRef(0)
 
-  const connect = useCallback(() => {
-    if (!session) return
-    if (clientRef.current?.active) return
+  const connect = useCallback(
+    (onConnect: (client: Client) => void) => {
+      if (!session) return
+      if (clientRef.current?.active) return
 
-    attemptsRef.current = 0
-    dispatch({ type: "RESET" })
+      attemptsRef.current = 0
+      dispatch({ type: "RESET" })
 
-    const url =
-      session.role === "player"
-        ? `ws://localhost:8080/ws?ticket=${session.ticket}`
-        : `ws://localhost:8080/ws`
+      const url =
+        session.role === "player"
+          ? `ws://localhost:8080/ws?ticket=${session.ticket}`
+          : `ws://localhost:8080/ws`
 
-    const stompClient = new Client({
-      brokerURL: url,
-      reconnectDelay: 1000,
+      const stompClient = new Client({
+        brokerURL: url,
+        reconnectDelay: 1000,
 
-      onConnect: () => {
-        dispatch({ type: "CONNECTED" })
+        onConnect: () => {
+          dispatch({ type: "CONNECTED" })
+          onConnect(stompClient)
 
-        stompClient.publish({
-          destination: "/app/player/ready",
-          body: JSON.stringify({ gameId: session.gameId }),
-        })
-      },
-
-      onDisconnect: () => {
-        dispatch({ type: "DISCONNECTED" })
-      },
-
-      onWebSocketClose: () => {
-        dispatch({ type: "DISCONNECTED" })
-        attemptsRef.current += 1
-        dispatch({ type: "ATTEMPT" })
-
-        if (attemptsRef.current >= MAX_RETRIES) {
-          stompClient.reconnectDelay = 0
-          void stompClient.deactivate()
-          dispatch({
-            type: "ERROR",
-            message: `Failed to connect after ${MAX_RETRIES} attempts.`,
+          stompClient.publish({
+            destination: "/app/player/ready",
+            body: JSON.stringify({ gameId: session.gameId }),
           })
-        }
-      },
+        },
 
-      onStompError: (frame) => {
-        console.error("STOMP error", frame)
-      },
-    })
+        onDisconnect: () => {
+          dispatch({ type: "DISCONNECTED" })
+        },
 
-    clientRef.current = stompClient
-    stompClient.activate()
-  }, [session])
+        onWebSocketClose: () => {
+          dispatch({ type: "DISCONNECTED" })
+          attemptsRef.current += 1
+          dispatch({ type: "ATTEMPT" })
+
+          if (attemptsRef.current >= MAX_RETRIES) {
+            stompClient.reconnectDelay = 0
+            void stompClient.deactivate()
+            dispatch({
+              type: "ERROR",
+              message: `Failed to connect after ${MAX_RETRIES} attempts.`,
+            })
+          }
+        },
+
+        onStompError: (frame) => {
+          console.error("STOMP error", frame)
+        },
+      })
+
+      clientRef.current = stompClient
+      stompClient.activate()
+    },
+    [session]
+  )
 
   const disconnect = useCallback(() => {
     clientRef.current?.deactivate()

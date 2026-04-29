@@ -36,3 +36,8 @@ export interface PlayerSession {
 export type UserSession = HostSession | PlayerSession
 
 export type GameSession = GameSessionHostView | GameSessionPlayerView
+
+export interface GameSessionPlayer {
+  id: string
+  displayName: string
+}

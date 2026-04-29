@@ -1,11 +1,12 @@
 import { config } from "@/lib/config"
-import { GameState, UserSession } from "@/types/game"
+import { GameSessionPlayer, GameState, UserSession } from "@/types/game"
 import { create, StateCreator } from "zustand"
 import { createJSONStorage, persist } from "zustand/middleware"
 
 interface GameStore {
   session: UserSession | null
   state: GameState
+  players: GameSessionPlayer[]
 
   setHost: (gameId: string, gameCode: string) => void
   setPlayer: (
@@ -16,12 +17,17 @@ interface GameStore {
     displayName: string
   ) => void
   clear: () => void
+
+  setPlayers: (players: GameSessionPlayer[]) => void
+  addPlayer: (player: GameSessionPlayer) => void
+  removePlayer: (playerId: string) => void
 }
 
 const storeDefinition: StateCreator<GameStore> = (set) => ({
   session: null,
   isHost: false,
   state: "LOBBY",
+  players: [],
 
   setHost: (gameId, gameCode) =>
     set({ session: { role: "host", gameId, gameCode } }),
@@ -39,6 +45,20 @@ const storeDefinition: StateCreator<GameStore> = (set) => ({
     }),
 
   clear: () => set({ session: null }),
+
+  addPlayer: (player) =>
+    set((state) => ({
+      players: state.players.some((p) => p.id === player.id)
+        ? state.players
+        : [...state.players, player],
+    })),
+
+  setPlayers: (players) => set({ players }),
+
+  removePlayer: (playerId) =>
+    set((state) => ({
+      players: state.players.filter((p) => p.id !== playerId),
+    })),
 })
 
 export const useGameStore = config.persistGameSession
