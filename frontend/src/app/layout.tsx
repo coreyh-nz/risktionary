@@ -2,9 +2,10 @@ import { Geist_Mono, Outfit } from "next/font/google"
 
 import "./globals.css"
 import { cn } from "@/lib/utils"
-import { AuthProvider } from "@/provider/AuthProvider"
-import { getCurrentUser } from "@/lib/auth/get-current-user"
+import { AuthProvider } from "@/providers/auth-provider"
+import { getCurrentUser } from "@/features/auth/api/auth.api"
 import { Toaster } from "@/components/ui/sonner"
+import { ReactNode } from "react"
 
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-sans" })
 
@@ -16,7 +17,7 @@ const fontMono = Geist_Mono({
 export default async function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: ReactNode
 }>) {
   const user = await getCurrentUser()
 

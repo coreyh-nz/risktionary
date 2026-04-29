@@ -7,11 +7,17 @@ import { useCreateGame } from "@/features/game/hooks/use-create-game"
 import { toast } from "sonner"
 import { Spinner } from "@/components/ui/spinner"
 import { useRouter } from "next/navigation"
-import { useGameStore } from "@/stores/game-store"
+import {
+  useGameReset,
+  useGameSetHost,
+  useGameSetPhase,
+} from "@/features/game/stores/game-store-selectors"
 
 export const CreateGameForm = () => {
   const { createGame, isLoading } = useCreateGame()
-  const { setHost } = useGameStore()
+  const reset = useGameReset()
+  const setPhase = useGameSetPhase()
+  const setHost = useGameSetHost()
   const router = useRouter()
 
   const onSubmit = async () => {
@@ -22,7 +28,9 @@ export const CreateGameForm = () => {
     }
 
     const session = response.data.session
+    reset()
     setHost(session.id, session.code)
+    setPhase(session.state)
     router.push(ROUTES.GAME.PLAY)
   }
 

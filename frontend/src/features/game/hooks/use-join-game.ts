@@ -1,5 +1,5 @@
-import { GameSessionPlayerView } from "@/types/game"
-import { useApi } from "@/hooks/api/use-api"
+import { GameSessionPlayerView } from "@/features/game/types/game"
+import { useApi } from "@/hooks/use-api"
 import { API_ROUTES } from "@/lib/api/api-routes"
 
 interface JoinGameRequest {
