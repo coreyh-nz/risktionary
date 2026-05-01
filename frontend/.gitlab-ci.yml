@@ -1,0 +1,54 @@
+stages:
+  - lint
+  - build
+  - push
+  - deploy
+
+variables:
+  IMAGE_NAME: risktionary-frontend
+  CONTAINER_NAME: risktionary-frontend
+
+lint:
+  stage: lint
+  tags:
+    - docker
+  image: node:24-alpine
+  script:
+    - npm ci
+    - npm run lint
+
+build:
+  stage: build
+  tags:
+    - shell
+  script:
+    - docker build -t $IMAGE_NAME:$CI_COMMIT_SHORT_SHA .
+  after_script:
+    - |
+      if [ "$CI_COMMIT_BRANCH" != "main" ]; then
+        docker rmi $IMAGE_NAME:$CI_COMMIT_SHORT_SHA || true
+      fi
+
+push:
+  stage: push
+  tags:
+    - shell
+  only:
+    - main
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker tag $IMAGE_NAME:$CI_COMMIT_SHORT_SHA $IMAGE_NAME:latest
+    - docker push $IMAGE_NAME:latest
+
+deploy:
+  stage: deploy
+  tags:
+    - shell
+  only:
+    - main
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker pull $IMAGE_NAME:latest
+    - docker stop $CONTAINER_NAME || true
+    - docker rm $CONTAINER_NAME || true
+    - docker run -d --name $CONTAINER_NAME --restart unless-stopped -p 3000:3000 $IMAGE_NAME:latest
