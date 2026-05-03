@@ -12,7 +12,8 @@ export async function getCurrentUser(): Promise<User | null> {
   })
 
   if (!response.ok) {
-    if (response.error.status === 503) {
+    // bad gateway or service unavailable
+    if (response.error.status === 502 || response.error.status === 503) {
       throw Error(response.error.message)
     }
     return null
