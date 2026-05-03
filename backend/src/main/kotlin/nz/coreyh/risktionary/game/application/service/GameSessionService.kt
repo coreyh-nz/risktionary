@@ -2,7 +2,6 @@ package nz.coreyh.risktionary.game.application.service
 
 import nz.coreyh.risktionary.game.application.exception.GameNotFoundException
 import nz.coreyh.risktionary.game.application.exception.GamePlayerDisplayNameInUseException
-import nz.coreyh.risktionary.game.application.exception.GameTicketInvalidException
 import nz.coreyh.risktionary.game.application.session.GamePlayerSession
 import nz.coreyh.risktionary.game.application.session.GameSession
 import nz.coreyh.risktionary.game.application.store.GameSessionStore
@@ -12,8 +11,8 @@ import nz.coreyh.risktionary.game.domain.model.player.GamePlayerId
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerIdentity
 import nz.coreyh.risktionary.game.domain.model.player.GameTicket
 import nz.coreyh.risktionary.game.domain.model.player.createPlayerId
+import nz.coreyh.risktionary.game.socket.messages.GameEventPublisher
 import nz.coreyh.risktionary.user.domain.model.UserId
-import org.springframework.security.oauth2.jwt.BadJwtException
 import org.springframework.stereotype.Service
 
 /**
@@ -23,6 +22,7 @@ import org.springframework.stereotype.Service
 class GameSessionService(
     private val gameTicketService: GameTicketService,
     private val gameSessionStore: GameSessionStore,
+    private val gameEventPublisher: GameEventPublisher,
 ) {
     /**
      * Creates a new in‑memory [GameSession] and registers it in the session store.
@@ -92,15 +92,12 @@ class GameSessionService(
      * The session validates that the ticket is valid and that the player is in a state
      * that allows connection.
      */
-    fun handleConnecting(token: String) {
-        val ticket =
-            try {
-                gameTicketService.decodeTicket(token)
-            } catch (_: BadJwtException) {
-                throw GameTicketInvalidException()
-            }
-        val gameSession = getSession(ticket.gameId)
-        gameSession.connect(ticket.playerId)
+    fun handleConnecting(
+        gameId: GameId,
+        playerId: GamePlayerId,
+    ) {
+        val gameSession = getSession(gameId)
+        gameSession.connect(playerId)
     }
 
     /**
@@ -115,7 +112,32 @@ class GameSessionService(
         playerId: GamePlayerId,
     ) {
         val gameSession = getSession(gameId)
-        gameSession.activate(playerId)
+        val player = gameSession.activate(playerId)
+
+        gameEventPublisher.publishPlayerJoined(
+            gameId = gameId,
+            player = player,
+        )
+    }
+
+    fun handleReady(playerId: GamePlayerId) {
+        val session =
+            gameSessionStore.findByPlayerId(playerId)
+                ?: throw GameNotFoundException()
+        gameEventPublisher.publishPlayerList(playerId, session.getPlayers())
+    }
+
+    fun handleDisconnected(
+        gameId: GameId,
+        playerId: GamePlayerId,
+    ) {
+        val gameSession = getSession(gameId)
+        gameSession.disconnect(playerId)
+
+        gameEventPublisher.publishPlayerLeft(
+            gameId = gameId,
+            playerId = playerId,
+        )
     }
 
     private fun generateCode(): String {

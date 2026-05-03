@@ -76,7 +76,7 @@ class GameSession(
     /**
      * Marks a player as fully connected and active in the session.
      */
-    fun activate(playerId: GamePlayerId) =
+    fun activate(playerId: GamePlayerId): GamePlayerSession =
         lock.withLock {
             val player = getPlayer(playerId)
             when (player.status) {
@@ -88,6 +88,7 @@ class GameSession(
                     throw GamePlayerStateInvalidException()
                 }
             }
+            player
         }
 
     fun disconnect(playerId: GamePlayerId) =

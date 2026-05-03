@@ -18,10 +18,14 @@ object WebSocketDestinations {
         fun base(gameId: GameId) = "$BASE/${gameId.value}"
 
         fun lobby(gameId: GameId) = "$BASE/${gameId.value}/lobby"
+
+        fun players(gameId: GameId) = "$BASE/${gameId.value}/players"
     }
 
     // Server -> Specific subscriber
     object Queue {
-        const val PREFIX = "${USER_PREFIX}/queue"
+        const val PREFIX = "/queue"
+
+        const val PLAYER_LIST = "$PREFIX/player-list"
     }
 }
