@@ -4,11 +4,14 @@ import nz.coreyh.risktionary.user.domain.model.User
 import nz.coreyh.risktionary.user.domain.service.UserService
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.springframework.stereotype.Component
+import java.util.concurrent.atomic.AtomicInteger
 
 @Component
 class TestUserCreator(
     private val userService: UserService,
 ) {
+    private val counter = AtomicInteger(0)
+
     fun createTestUser(
         firstName: String = "John",
         lastName: String = "Smith",
@@ -24,4 +27,20 @@ class TestUserCreator(
             )
             requireNotNull(userService.findByEmail(email))
         }
+
+    fun createUniqueTestUser(
+        firstName: String = "John",
+        lastName: String = "Smith",
+        displayName: String = "$firstName $lastName",
+        email: String = "john@smith.com",
+    ): User {
+        val count = counter.incrementAndGet()
+        val uniqueEmail = email.replace("@", "+$count@")
+        return createTestUser(
+            firstName = firstName,
+            lastName = lastName,
+            displayName = displayName,
+            email = uniqueEmail,
+        )
+    }
 }

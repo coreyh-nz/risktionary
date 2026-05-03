@@ -9,7 +9,6 @@ import nz.coreyh.risktionary.game.application.service.GameTicketService
 import nz.coreyh.risktionary.game.config.TicketProperties
 import nz.coreyh.risktionary.shared.application.service.TokenService
 import nz.coreyh.risktionary.shared.domain.model.Token
-import nz.coreyh.risktionary.shared.exception.UnauthenticatedException
 import nz.coreyh.risktionary.support.factory.game.createTestGameId
 import nz.coreyh.risktionary.support.factory.game.createTestGamePlayerId
 import org.junit.jupiter.api.BeforeEach
@@ -95,7 +94,7 @@ class GameTicketServiceTests {
         val tokenValue = "invalid"
         every { tokenService.decodeToken(tokenValue, GameTicketService.TOKEN_TYPE) } throws BadJwtException("")
 
-        shouldThrow<UnauthenticatedException> {
+        shouldThrow<GameTicketInvalidException> {
             service.decodeTicket(tokenValue)
         }
     }
