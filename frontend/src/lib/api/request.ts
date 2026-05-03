@@ -54,7 +54,7 @@ export async function apiRequest<TResult, TBody = unknown>(
 
     return {
       ok: false,
-      error: new ApiError(ErrorCode.INTERNAL_ERROR, "Unexpected error", 500),
+      error: new ApiError(ErrorCode.INTERNAL_ERROR, "Unexpected error", 503),
     }
   }
 }

@@ -4,6 +4,38 @@ A Next.js frontend application for Risktionary, built with TypeScript, Tailwind 
 
 ---
 
+## Project Structure
+
+The codebase follows a feature-first architecture. Logic is organized by domain rather than by technical layer, so
+everything related to a feature (components, hooks, types, API calls) lives together under `features/`.
+
+```
+src/
+├── app/                  # Next.js routing
+├── components/           # Shared UI primitives
+├── features/             # Domain features
+│   ├── auth/
+│   └── game/
+├── hooks/                # Shared React hooks used across multiple features
+├── lib/                  # Framework-agnostic utilities (API, config, routes)
+└── providers/            # React context providers
+```
+
+### Features
+
+Each feature is self-contained and follows a consistent internal structure:
+
+```
+features/<name>/
+├── components/   # UI components scoped to this feature
+├── hooks/        # React hooks scoped to this feature
+├── stores/       # Zustand stores, slices, and selectors
+├── socket/       # WebSocket subscription setup
+└── types/        # TypeScript types scoped to this feature
+```
+
+---
+
 ## Getting Started
 
 ### Development
@@ -56,3 +88,20 @@ docker compose up --build -d
 ```
 
 The app runs at http://localhost:3000
+
+## Environment Variables
+
+### Optional
+
+The following environment variables are used to configure frontend runtime behaviour. If not provided, sensible defaults
+will be used.
+
+| Variable            | Description                                    | Default                |
+|---------------------|------------------------------------------------|------------------------|
+| NEXT_PUBLIC_API_URL | Base URL for the backend API                   | http://localhost:8080  |
+| NEXT_PUBLIC_WS_URL  | WebSocket endpoint for real-time communication | ws://localhost:8080/ws |
+
+### Notes
+
+- All variables are prefixed with `NEXT_PUBLIC_`, meaning they are exposed to the browser.
+- Defaults are applied when variables are undefined, making local development easier without additional setup.

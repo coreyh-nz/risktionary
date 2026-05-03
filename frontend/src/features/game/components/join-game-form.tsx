@@ -6,14 +6,16 @@ import { Button } from "@/components/ui/button"
 import { FieldGroup, FieldSet } from "@/components/ui/field"
 import { useJoinGame } from "@/features/game/hooks/use-join-game"
 import { ErrorCode } from "@/lib/api/errors"
-import { useGameStore } from "@/stores/game-store"
 import { ROUTES } from "@/lib/routes"
 import { useRouter } from "next/navigation"
+import { useGameReset, useGameSetPhase, useGameSetPlayer, } from "@/features/game/stores/game-store-selectors"
 
 export const JoinGameForm = () => {
-  const { joinGame } = useJoinGame()
   const form = useJoinGameForm()
-  const { setPlayer } = useGameStore()
+  const { joinGame } = useJoinGame()
+  const reset = useGameReset()
+  const setPhase = useGameSetPhase()
+  const setPlayer = useGameSetPlayer()
   const router = useRouter()
 
   const onSubmit = async (values: JoinGameFormValues) => {
@@ -42,7 +44,10 @@ export const JoinGameForm = () => {
     const ticket = response.data.ticket
     const playerId = response.data.playerId
     const displayName = response.data.displayName
-    setPlayer(session.code, ticket, playerId, displayName)
+
+    reset()
+    setPlayer(session.id, session.code, ticket, playerId, displayName)
+    setPhase(session.state)
     router.push(ROUTES.GAME.PLAY)
   }
 

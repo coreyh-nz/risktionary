@@ -11,8 +11,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { LogOut } from "lucide-react"
-import { useAuth } from "@/provider/AuthProvider"
-import { useLogout } from "@/hooks/use-logout"
+import { useAuth } from "@/providers/auth-provider"
+import { useLogout } from "@/features/auth/hooks/use-logout"
 import { UserAvatar } from "@/components/common/user-avatar"
 
 export const Navbar = () => {
