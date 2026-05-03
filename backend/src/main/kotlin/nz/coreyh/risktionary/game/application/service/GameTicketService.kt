@@ -8,7 +8,6 @@ import nz.coreyh.risktionary.game.domain.model.player.GameTicket
 import nz.coreyh.risktionary.game.domain.model.player.toGamePlayerIdOrNull
 import nz.coreyh.risktionary.game.domain.model.toGameIdOrNull
 import nz.coreyh.risktionary.shared.application.service.TokenService
-import nz.coreyh.risktionary.shared.exception.UnauthenticatedException
 import org.springframework.stereotype.Service
 import kotlin.time.Clock
 
@@ -43,11 +42,9 @@ class GameTicketService(
 
     fun decodeTicket(ticket: String): GameTicket {
         val token =
-            try {
+            runCatching {
                 tokenService.decodeToken(ticket, TOKEN_TYPE)
-            } catch (e: Exception) {
-                throw UnauthenticatedException(e)
-            }
+            }.getOrElse { throw GameTicketInvalidException() }
 
         val playerId =
             token.subject.toGamePlayerIdOrNull()
