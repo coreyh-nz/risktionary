@@ -88,3 +88,20 @@ docker compose up --build -d
 ```
 
 The app runs at http://localhost:3000
+
+## Environment Variables
+
+### Optional
+
+The following environment variables are used to configure frontend runtime behaviour. If not provided, sensible defaults
+will be used.
+
+| Variable            | Description                                    | Default                |
+|---------------------|------------------------------------------------|------------------------|
+| NEXT_PUBLIC_API_URL | Base URL for the backend API                   | http://localhost:8080  |
+| NEXT_PUBLIC_WS_URL  | WebSocket endpoint for real-time communication | ws://localhost:8080/ws |
+
+### Notes
+
+- All variables are prefixed with `NEXT_PUBLIC_`, meaning they are exposed to the browser.
+- Defaults are applied when variables are undefined, making local development easier without additional setup.
