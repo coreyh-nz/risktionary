@@ -6,6 +6,7 @@ import { WebSocketProvider } from "@/providers/web-socket-provider"
 import ConnectingScreen from "@/features/game/components/lobby/connecting-screen"
 import { useGamePhase } from "@/features/game/stores/game-store-selectors"
 import { useGameConnection } from "@/features/game/hooks/use-game-connection"
+import { CenteredLayout } from "@/components/layout/centered-layout"
 
 const GamePlayPage = () => {
   return (
@@ -21,7 +22,11 @@ const GameScreen = () => {
   const { connected, attempts } = useGameConnection()
 
   if (!connected) {
-    return <ConnectingScreen attempts={attempts} />
+    return (
+      <CenteredLayout>
+        <ConnectingScreen attempts={attempts} />
+      </CenteredLayout>
+    )
   }
   if (!phase) return null
 
@@ -29,7 +34,11 @@ const GameScreen = () => {
     case "INITIALIZING":
       return <p>INITIALIZING</p>
     case "LOBBY":
-      return <GamePlayLobbyScreen />
+      return (
+        <CenteredLayout size="3xl">
+          <GamePlayLobbyScreen />
+        </CenteredLayout>
+      )
     case "STARTING":
       return <p>STARTING</p>
     case "IN_PROGRESS":

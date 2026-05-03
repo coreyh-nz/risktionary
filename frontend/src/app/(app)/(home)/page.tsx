@@ -5,7 +5,7 @@ import { AuthSection } from "@/features/auth/components/auth-section"
 
 const HomePage = async () => {
   return (
-    <>
+    <div className="flex w-full max-w-lg flex-col gap-8">
       <Logo size="xl" className="justify-center" />
 
       <Card>
@@ -15,7 +15,7 @@ const HomePage = async () => {
       </Card>
 
       <AuthSection />
-    </>
+    </div>
   )
 }
 

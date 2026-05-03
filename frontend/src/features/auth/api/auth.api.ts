@@ -10,5 +10,12 @@ export async function getCurrentUser(): Promise<User | null> {
       Cookie: cookieHeader,
     },
   })
-  return response.ok ? response.data : null
+
+  if (!response.ok) {
+    if (response.error.status === 503) {
+      throw Error(response.error.message)
+    }
+    return null
+  }
+  return response.data
 }
