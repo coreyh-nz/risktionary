@@ -1,0 +1,65 @@
+stages:
+  - test
+  - build
+  - deploy
+
+variables:
+  IMAGE_NAME: risktionary-backend
+  CONTAINER_NAME: risktionary-backend
+
+test:
+  stage: test
+  tags:
+    - docker
+  image: gradle:9.5-jdk25-alpine
+  script:
+    - gradle test
+  artifacts:
+    when: always
+    reports:
+      junit: build/test-results/test/**/*.xml
+    paths:
+      - build/reports/tests/
+    expire_in: 7 days
+
+build:
+  stage: build
+  tags:
+    - shell
+  script:
+    - |
+      docker build \
+        --build-arg SPRING_PROFILES_ACTIVE=$SPRING_PROFILES_ACTIVE \
+        --build-arg DATABASE_URL=$DATABASE_URL \
+        -t $IMAGE_NAME:$CI_COMMIT_SHORT_SHA .
+  after_script:
+    - |
+      if [ "$CI_COMMIT_BRANCH" != "main" ]; then
+        docker rmi $IMAGE_NAME:$CI_COMMIT_SHORT_SHA || true
+      fi
+
+deploy:
+  stage: deploy
+  tags:
+    - shell
+  only:
+    - main
+  script:
+    - docker stop $CONTAINER_NAME || true
+    - docker rm $CONTAINER_NAME || true
+    - |
+      docker run -d \
+        --name "$CONTAINER_NAME" \
+        --restart unless-stopped \
+        -p 8080:8080 \
+        -e GOOGLE_CLIENT_ID="$GOOGLE_CLIENT_ID" \
+        -e GOOGLE_CLIENT_SECRET="$GOOGLE_CLIENT_SECRET" \
+        -e MICROSOFT_CLIENT_ID="$MICROSOFT_CLIENT_ID" \
+        -e MICROSOFT_CLIENT_SECRET="$MICROSOFT_CLIENT_SECRET" \
+        -e MICROSOFT_TENANT_ID="$MICROSOFT_TENANT_ID" \
+        -e DATABASE_URL="$DATABASE_URL" \
+        -e DATABASE_USER="$DATABASE_USER" \
+        -e DATABASE_PASSWORD="$DATABASE_PASSWORD" \
+        -e JWT_SECRET="$JWT_SECRET" \
+        -e SPRING_PROFILES_ACTIVE="prod,mariadb" \
+        "$IMAGE_NAME:$CI_COMMIT_SHORT_SHA"
