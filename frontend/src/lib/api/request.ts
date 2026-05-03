@@ -1,5 +1,6 @@
 import { ApiError, ErrorCode } from "@/lib/api/errors"
 import { config } from "@/lib/config"
+import { logger } from "@/lib/logger"
 
 export interface ApiRequestOptions<TBody> extends Omit<RequestInit, "body"> {
   body?: TBody
@@ -8,12 +9,14 @@ export interface ApiRequestOptions<TBody> extends Omit<RequestInit, "body"> {
 export type ApiResponse<T> =
   | { ok: true; data: T }
   | { ok: false; error: ApiError }
+
 export async function apiRequest<TResult, TBody = unknown>(
   url: string,
   options?: ApiRequestOptions<TBody>
 ): Promise<ApiResponse<TResult>> {
   const { body, ...rest } = options ?? {}
   const fullUrl = `${config.apiUrl}${url}`
+  const method = rest.method ?? "GET"
 
   try {
     const res = await fetch(fullUrl, {
@@ -26,7 +29,10 @@ export async function apiRequest<TResult, TBody = unknown>(
     })
 
     const json = await res.json().catch(() => {
-      console.warn("[apiRequest] Failed to parse JSON response")
+      logger.warn(
+        { url: fullUrl, method },
+        "Failed to parse JSON response"
+      )
       return null
     })
 
@@ -37,7 +43,15 @@ export async function apiRequest<TResult, TBody = unknown>(
         res.status
       )
 
-      console.warn("[apiRequest] Returning error", error)
+      logger.warn(
+        {
+          url: fullUrl,
+          method,
+          status: res.status,
+          errorCode: error.errorCode,
+        },
+        "API request failed"
+      )
 
       return {
         ok: false,
@@ -50,11 +64,22 @@ export async function apiRequest<TResult, TBody = unknown>(
       data: json as TResult,
     }
   } catch (err) {
-    console.error("[apiRequest] Network or unexpected error", err)
+    logger.error(
+      {
+        url: fullUrl,
+        method,
+        err: err instanceof Error ? err.message : String(err),
+      },
+      "API request network or unexpected failure"
+    )
 
     return {
       ok: false,
-      error: new ApiError(ErrorCode.INTERNAL_ERROR, "Unexpected error", 503),
+      error: new ApiError(
+        ErrorCode.INTERNAL_ERROR,
+        "Unexpected error",
+        503
+      ),
     }
   }
 }
