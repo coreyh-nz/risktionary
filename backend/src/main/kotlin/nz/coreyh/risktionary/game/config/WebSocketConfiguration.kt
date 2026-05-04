@@ -15,6 +15,9 @@ import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBr
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer
 
+/**
+ * WebSocket configuration that establishes the STOMP message broker infrastructure for real-time game communication.
+ */
 @Configuration
 @EnableWebSocketMessageBroker
 class WebSocketConfiguration(
@@ -23,21 +26,41 @@ class WebSocketConfiguration(
     private val webSocketHandshakeHandler: WebSocketHandshakeHandler,
     private val appProperties: AppProperties,
 ) : WebSocketMessageBrokerConfigurer {
+    /**
+     * Configures the message broker and application destination prefixes.
+     *
+     * Enables a simple in-memory broker that handles:
+     * - Topic destinations (`/topic/...`): Broadcast messages to all subscribers of that topic
+     * - Queue destinations (`/queue/...`): Point-to-point messaging for user-specific messages
+     *
+     * Sets up application destination prefixes for client-to-server messages:
+     * - Messages sent to `/app/...` are routed to `@MessageMapping` annotated controller methods
+     *
+     * Configures user destination prefix to support user-specific routing:
+     * - Clients subscribe to `/user/queue/...` which gets translated to `/queue/...-user{sessionId}`
+     * - Enables private messages and user-specific notifications
+     */
     override fun configureMessageBroker(registry: MessageBrokerRegistry) {
-        // destinations prefixed with Topic.PREFIX are broadcast to all subscribers
-        // destinations prefixed with USER_PREFIX are routed to a specific user
         registry.enableSimpleBroker(
             Topic.PREFIX,
             Queue.PREFIX,
         )
-
-        // destinations prefixed with App.PREFIX are routed to @MessageMapping methods
         registry.setApplicationDestinationPrefixes(App.PREFIX)
-
-        // required for WebSocketDestinations.USER_PREFIX destinations to work
         registry.setUserDestinationPrefix(WebSocketDestinations.USER_PREFIX)
     }
 
+    /**
+     * Registers the STOMP endpoint that clients connect to for WebSocket communication.
+     *
+     * Configures the endpoint at `/ws` with:
+     * - Custom handshake handler ([WebSocketHandshakeHandler]) that assigns the [nz.coreyh.risktionary.game.socket.security.GameSocketPrincipal]
+     *   to the WebSocket session after successful authentication
+     * - Handshake interceptor ([WebSocketHandshakeInterceptor]) that validates player tickets
+     *   or host authentication before the WebSocket connection is established
+     * - Allowed origin patterns from application configuration to enforce CORS policies
+     *
+     * @param registry The STOMP endpoint registry to configure
+     */
     override fun registerStompEndpoints(registry: StompEndpointRegistry) {
         registry
             .addEndpoint("/ws")
@@ -46,6 +69,14 @@ class WebSocketConfiguration(
             .setAllowedOriginPatterns(appProperties.frontendUrl)
     }
 
+    /**
+     * Adds channel interceptors to the client inbound channel for message validation.
+     *
+     * Registers [WebSocketChannelInterceptor] which intercepts all messages sent from clients
+     * to the server before they reach the message broker or controller methods.
+     *
+     * @param registration The channel registration to add interceptors to
+     */
     override fun configureClientInboundChannel(registration: ChannelRegistration) {
         registration.interceptors(webSocketChannelInterceptor)
     }

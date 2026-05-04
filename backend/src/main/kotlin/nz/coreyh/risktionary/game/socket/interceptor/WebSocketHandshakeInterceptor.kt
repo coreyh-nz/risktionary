@@ -23,8 +23,18 @@ import tools.jackson.databind.ObjectMapper
 private val kLogger = KotlinLogging.logger {}
 
 /**
- * This interceptor ensures that only authenticated and authorized players can establish a WebSocket
- * connection for a given game.
+ * Handshake interceptor that authenticates and authorizes WebSocket connections before STOMP session establishment.
+ *
+ * This interceptor validates two types of connection attempts:
+ * - **Player connections**: Authenticated via a one-time ticket provided as a query parameter
+ * - **Host connections**: Authenticated via the existing HTTP session's Spring Security context
+ *
+ * On successful validation, a [GameSocketPrincipal] (either Player or Host) is stored in the handshake
+ * attributes for later retrieval by [WebSocketHandshakeHandler]. The handshake then proceeds normally.
+ *
+ * On validation failure, the handshake is rejected with HTTP 400 Bad Request and a JSON error response
+ * containing [ErrorCode.GAME_TICKET_INVALID] with a descriptive message. The WebSocket connection is
+ * closed before the STOMP protocol upgrades.
  */
 @Component
 class WebSocketHandshakeInterceptor(
@@ -33,21 +43,17 @@ class WebSocketHandshakeInterceptor(
     private val objectMapper: ObjectMapper,
 ) : HandshakeInterceptor {
     /**
-     * Intercepts and validates incoming WebSocket handshake requests before a STOMP session is created.
+     * Intercepts and validates the WebSocket handshake request before the WebSocket session is created.
      *
-     * This interceptor enforces that every WebSocket connection supplies a valid `ticket` query parameter.
-     * - The `ticket` query parameter must be present.
-     * - The ticket must successfully decode via [GameTicketService].
-     * - The referenced game must exist in [GameSessionStore].
-     * - The referenced player must already be part of that game session.
+     * Determines the connection type based on query parameters:
+     * - If a `ticket` parameter is present: attempts to authenticate as a game player
+     * - If no `ticket` parameter: attempts to authenticate as a game host via the HTTP session
      *
-     * If validation fails, the handshake is rejected with:
-     * - HTTP 400 Bad Request
-     * - A JSON body containing an [ApiErrorResponse] with [ErrorCode.GAME_TICKET_INVALID]
-     *
-     * On success:
-     * - The handshake proceeds.
-     * - The decoded `gameId` and `playerId` are stored in the WebSocket session attributes.
+     * @param request The HTTP request that initiated the WebSocket upgrade
+     * @param response The HTTP response for rejecting the handshake if validation fails
+     * @param wsHandler The WebSocket handler that will be used
+     * @param attributes Mutable map for storing handshake attributes (populated on success)
+     * @return `true` if validation passes and handshake should continue, `false` to reject the handshake
      */
     override fun beforeHandshake(
         request: ServerHttpRequest,
@@ -79,6 +85,22 @@ class WebSocketHandshakeInterceptor(
     ) {
     }
 
+    /**
+     * Validates and authenticates a player WebSocket connection using a game ticket.
+     *
+     * Performs validation steps:
+     * 1. Decodes the ticket - fails with [GameTicketInvalidException] if invalid or expired
+     * 2. Verifies the game session exists - fails if game was never created or has ended
+     * 3. Verifies the player has joined the game - fails if player is not a participant
+     *
+     * On success, creates a [GameSocketPrincipal.Player] and stores it in the handshake attributes
+     * under the key "principal".
+     *
+     * @param ticketParam The raw ticket string from the query parameter
+     * @param attributes The handshake attributes map to populate with the principal
+     * @param response The HTTP response to send rejection details if validation fails
+     * @return `true` if validation passes, `false` if rejected
+     */
     private fun handlePlayerHandshake(
         ticketParam: String,
         attributes: MutableMap<String, Any>,
@@ -118,6 +140,24 @@ class WebSocketHandshakeInterceptor(
         return true
     }
 
+    /**
+     * Validates and authenticates a host WebSocket connection using the existing HTTP session.
+     *
+     * Extracts the authenticated user from the Spring Security context and verifies they
+     * have an active game session as the host. Host connections do not require a ticket
+     * because host privileges are established through standard authentication.
+     *
+     * A host is considered valid if:
+     * - There is an authenticated [UserPrincipal] in the security context
+     * - That user has an active game session where they are the host
+     *
+     * On success, creates a [GameSocketPrincipal.Host] and stores it in the handshake attributes
+     * under the key "principal".
+     *
+     * @param attributes The handshake attributes map to populate with the principal
+     * @param response The HTTP response to send rejection details if validation fails
+     * @return `true` if validation passes, `false` if rejected
+     */
     private fun handleHostHandshake(
         attributes: MutableMap<String, Any>,
         response: ServerHttpResponse,
@@ -148,6 +188,17 @@ class WebSocketHandshakeInterceptor(
         return true
     }
 
+    /**
+     * Helper extension function that rejects a WebSocket handshake with an HTTP error response.
+     *
+     * Sets HTTP status to 400 Bad Request, Content-Type to application/json, and writes an
+     * [ApiErrorResponse] containing the error code [ErrorCode.GAME_TICKET_INVALID] and the provided
+     * message. This response is sent before the WebSocket protocol upgrade, allowing the client
+     * to receive proper error semantics over HTTP.
+     *
+     * @param message The error message to include in the response body
+     * @return `false` to indicate the handshake should be rejected
+     */
     private fun ServerHttpResponse.rejectHandshake(message: String): Boolean {
         setStatusCode(HttpStatus.BAD_REQUEST)
         headers.contentType = MediaType.APPLICATION_JSON

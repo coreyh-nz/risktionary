@@ -14,23 +14,38 @@ import org.springframework.stereotype.Component
 private val kLogger = KotlinLogging.logger {}
 
 /**
- * This interceptor prevents clients from subscribing to topics belonging to other games, ensuring
- * strict isolation between game sessions and protecting in‑game events from unauthorized listeners.
+ * Channel interceptor that validates STOMP SUBSCRIBE messages on the WebSocket inbound channel.
+ *
+ * This interceptor enforces strict isolation between game sessions by ensuring clients can only
+ * subscribe to destinations belonging to their authenticated game or user-specific queues.
+ * It acts as a security boundary preventing cross-game eavesdropping and unauthorized subscription
+ * attempts.
  */
 @Component
 class WebSocketChannelInterceptor : ChannelInterceptor {
     /**
-     * Validates STOMP SUBSCRIBE messages sent through the WebSocket inbound channel.
+     * Validates a STOMP SUBSCRIBE message before it is processed by the message broker.
      *
-     * This interceptor ensures that a client may only subscribe to destinations belonging to the game
-     * they authenticated into during the WebSocket handshake.
+     * The validation ensures that a client's subscription destination is authorized based on
+     * their authenticated [GameSocketPrincipal]:
+     * - Player principals can subscribe to their game-specific topics and user-specific queues
+     * - Host principals can subscribe to their game-specific topics and user-specific queues
      *
-     * Rejects the subscription if:
-     * - `gameId` is missing from the session (unauthenticated session)
-     * - The destination header is missing
-     * - The destination does not begin with the expected game‑scoped prefix
+     * A subscription is rejected with a [MessageDeliveryException] if:
+     * - The WebSocket session lacks a [GameSocketPrincipal] (unauthenticated session)
+     * - The STOMP message has no destination header
+     * - The destination does not start with either:
+     *   - The game-scoped topic prefix for their game (e.g., `/topic/games/{gameId}`)
+     *   - The user-scoped queue prefix (e.g., `/user/queue/...`)
      *
-     * On rejection a [MessageDeliveryException] is thrown, preventing the subscription from being registered.
+     * User queues are always permitted regardless of game ID, as they represent private
+     * message channels scoped to the individual client connection.
+     *
+     * @param message The incoming STOMP message to validate
+     * @param channel The message channel through which the message is being sent
+     * @return The original message if validation passes, or throws an exception
+     * @throws MessageDeliveryException When subscription is unauthorized (missing principal,
+     *                                  missing destination, or invalid destination prefix)
      */
     override fun preSend(
         message: Message<*>,
