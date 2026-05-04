@@ -8,7 +8,3 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
     validate-on-migrate: true
-
-logging:
-  level:
-    nz.coreyh.risktionary: debug
