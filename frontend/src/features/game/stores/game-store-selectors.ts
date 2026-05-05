@@ -5,6 +5,7 @@ export const useGameSession = () => useGameStore(useShallow((s) => s.session))
 
 export const useGamePhase = () => useGameStore((s) => s.phase)
 export const useGameSetPhase = () => useGameStore((s) => s.setPhase)
+export const useGameStartingAt = () => useGameStore((s) => s.startingAt)
 
 export const useGamePlayers = () => useGameStore(useShallow((s) => s.players))
 

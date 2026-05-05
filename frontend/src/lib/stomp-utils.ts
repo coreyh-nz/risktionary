@@ -3,7 +3,7 @@ import { IMessage } from "@stomp/stompjs"
 export const parseStompMessage = <T>(message: IMessage): T => {
   try {
     return JSON.parse(message.body) as T
-  } catch (error) {
+  } catch {
     throw new Error("Failed to parse STOMP message body")
   }
 }

@@ -34,13 +34,12 @@ const GameScreen = () => {
     case "INITIALIZING":
       return <p>INITIALIZING</p>
     case "LOBBY":
+    case "STARTING":
       return (
         <CenteredLayout size="3xl">
           <GamePlayLobbyScreen />
         </CenteredLayout>
       )
-    case "STARTING":
-      return <p>STARTING</p>
     case "IN_PROGRESS":
       return <p>IN_PROGRESS</p>
     case "PAUSED":

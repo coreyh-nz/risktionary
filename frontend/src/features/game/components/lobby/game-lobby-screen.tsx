@@ -4,14 +4,30 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { PlayerList } from "./player-list"
-import { useGameSession } from "@/features/game/stores/game-store-selectors"
+import {
+  useGamePhase,
+  useGameSession,
+  useGameStartingAt,
+} from "@/features/game/stores/game-store-selectors"
+import { useGameSocket } from "../../hooks/use-game-socket"
+import { GameStartingCountdown } from "./starting-countdown"
 
 export const GamePlayLobbyScreen = () => {
   const session = useGameSession()
+  const state = useGamePhase()
+  const startingAt = useGameStartingAt()
+  const { start } = useGameSocket()
+
   if (!session) return null
+
+  const isHost = session.role == "host"
 
   return (
     <div className="flex w-full flex-col gap-6">
+      {state === "STARTING" && startingAt && (
+        <GameStartingCountdown startsAt={startingAt} isHost={isHost} />
+      )}
+
       <div className="flex flex-col items-center gap-2">
         {/* Game Code */}
         <p className="font-semibold tracking-widest text-muted-foreground">
@@ -39,9 +55,9 @@ export const GamePlayLobbyScreen = () => {
       </Card>
 
       {/* Host Controls */}
-      {session.role === "host" && (
+      {isHost && (
         <div className="flex gap-3">
-          <Button size="lg" className="flex-1">
+          <Button size="lg" className="flex-1" onClick={start}>
             Start Game
           </Button>
         </div>
