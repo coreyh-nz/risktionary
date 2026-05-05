@@ -11,10 +11,12 @@ import io.mockk.verify
 import nz.coreyh.risktionary.game.application.exception.GameNotFoundException
 import nz.coreyh.risktionary.game.application.exception.GamePlayerDisplayNameInUseException
 import nz.coreyh.risktionary.game.application.service.GameSessionService
+import nz.coreyh.risktionary.game.application.service.GameSessionTaskService
 import nz.coreyh.risktionary.game.application.service.GameTicketService
 import nz.coreyh.risktionary.game.application.session.GamePlayerSession
 import nz.coreyh.risktionary.game.application.session.GameSession
 import nz.coreyh.risktionary.game.application.store.GameSessionStore
+import nz.coreyh.risktionary.game.domain.model.GameState
 import nz.coreyh.risktionary.game.domain.model.player.GameTicket
 import nz.coreyh.risktionary.game.socket.messages.GameEventPublisher
 import nz.coreyh.risktionary.support.factory.game.createTestGameId
@@ -26,23 +28,31 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.seconds
 
 class GameSessionServiceTests {
+    private lateinit var gameSessionTaskService: GameSessionTaskService
     private lateinit var gameTicketService: GameTicketService
     private lateinit var gameSessionStore: GameSessionStore
     private lateinit var gameEventPublisher: GameEventPublisher
+    private lateinit var clock: Clock
     private lateinit var service: GameSessionService
 
     @BeforeEach
     fun setup() {
+        gameSessionTaskService = mockk()
         gameTicketService = mockk()
         gameSessionStore = mockk()
-        gameEventPublisher = mockk(relaxed = true)
+        gameEventPublisher = mockk()
+        clock = mockk()
         service =
             GameSessionService(
+                gameSessionTaskService,
                 gameTicketService,
                 gameSessionStore,
                 gameEventPublisher,
+                clock,
             )
     }
 
@@ -235,6 +245,69 @@ class GameSessionServiceTests {
 
             shouldThrow<GameNotFoundException> {
                 service.handleDisconnected(gameId, playerId)
+            }
+        }
+    }
+
+    @Nested
+    inner class TransitionToStarting {
+        @Test
+        fun `transition to starting updates session state publishes event and schedules task`() {
+            val gameId = createTestGameId()
+            val session = mockk<GameSession>()
+            val gameState = GameState.Lobby
+            val now = Clock.System.now()
+            val expectedStart = now + 10.seconds // todo - change this to use time from settings when implemented
+            every { gameSessionStore.findById(gameId) } returns session
+            every { gameEventPublisher.publishStateChanged(gameId, gameState) } just Runs
+            every { gameSessionTaskService.schedule(gameId, expectedStart, any()) } just Runs
+            every { session.state } returns gameState
+            every { session.transitionToStarting(expectedStart) } just Runs
+            every { clock.now() } returns now
+
+            service.transitionToStarting(gameId)
+
+            verify { session.transitionToStarting(expectedStart) }
+            verify { gameEventPublisher.publishStateChanged(gameId, gameState) }
+            verify { gameSessionTaskService.schedule(gameId, expectedStart, any()) }
+        }
+
+        @Test
+        fun `transition to starting throws when session does not exist`() {
+            val gameId = createTestGameId()
+            every { gameSessionStore.findById(gameId) } returns null
+
+            shouldThrow<GameNotFoundException> {
+                service.transitionToStarting(gameId)
+            }
+        }
+    }
+
+    @Nested
+    inner class TransitionToInProgress {
+        @Test
+        fun `transition to in progress updates session state publishes event`() {
+            val gameId = createTestGameId()
+            val session = mockk<GameSession>()
+            val gameState = GameState.InProgress
+            every { gameSessionStore.findById(gameId) } returns session
+            every { gameEventPublisher.publishStateChanged(gameId, gameState) } just Runs
+            every { session.state } returns gameState
+            every { session.transitionToInProgress() } just Runs
+
+            service.transitionToInProgress(gameId)
+
+            verify { session.transitionToInProgress() }
+            verify { gameEventPublisher.publishStateChanged(gameId, gameState) }
+        }
+
+        @Test
+        fun `transition to starting throws when session does not exist`() {
+            val gameId = createTestGameId()
+            every { gameSessionStore.findById(gameId) } returns null
+
+            shouldThrow<GameNotFoundException> {
+                service.transitionToInProgress(gameId)
             }
         }
     }

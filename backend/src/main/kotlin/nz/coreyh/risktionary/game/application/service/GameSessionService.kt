@@ -14,15 +14,19 @@ import nz.coreyh.risktionary.game.domain.model.player.createPlayerId
 import nz.coreyh.risktionary.game.socket.messages.GameEventPublisher
 import nz.coreyh.risktionary.user.domain.model.UserId
 import org.springframework.stereotype.Service
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Coordinates the lifecycle of active game sessions and the players within them.
  */
 @Service
 class GameSessionService(
+    private val gameSessionTaskService: GameSessionTaskService,
     private val gameTicketService: GameTicketService,
     private val gameSessionStore: GameSessionStore,
     private val gameEventPublisher: GameEventPublisher,
+    private val clock: Clock = Clock.System,
 ) {
     /**
      * Creates a new in‑memory [GameSession] and registers it in the session store.
@@ -50,6 +54,7 @@ class GameSessionService(
 
     fun removeSession(gameId: GameId) {
         gameSessionStore.remove(gameId)
+        gameSessionTaskService.cancelAll(gameId)
     }
 
     /**
@@ -137,6 +142,32 @@ class GameSessionService(
         gameEventPublisher.publishPlayerLeft(
             gameId = gameId,
             playerId = playerId,
+        )
+    }
+
+    fun transitionToStarting(gameId: GameId) {
+        val session = getSession(gameId)
+
+        // todo - change this to use time from settings when implemented
+        val startAt = clock.now() + 10.seconds
+        session.transitionToStarting(startAt)
+
+        gameEventPublisher.publishStateChanged(
+            gameId = gameId,
+            gameState = session.state,
+        )
+
+        // schedule task to transition to in progress
+        gameSessionTaskService.schedule(gameId, startAt) { transitionToInProgress(gameId) }
+    }
+
+    fun transitionToInProgress(gameId: GameId) {
+        val session = getSession(gameId)
+        session.transitionToInProgress()
+
+        gameEventPublisher.publishStateChanged(
+            gameId = gameId,
+            gameState = session.state,
         )
     }
 

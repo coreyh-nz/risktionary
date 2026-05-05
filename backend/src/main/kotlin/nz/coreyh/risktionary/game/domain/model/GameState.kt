@@ -1,46 +1,40 @@
 package nz.coreyh.risktionary.game.domain.model
 
+import kotlin.time.Instant
+
 /**
- * Represents the lifecycle state of a game from creation through completion.
+ * Represents the lifecycle state of a game session.
+ *
+ * This abstraction allows the domain to express state-specific behaviour
+ * and data in a type-safe way, rather than relying on a single enum with
+ * optional fields.
  */
-enum class GameState {
-    /**
-     * The game has been created but is not yet ready for players to join.
-     * Any required initialization or configuration occurs during this phase.
-     */
-    INITIALIZING,
+sealed interface GameState {
+    val type: GameStateType
 
-    /**
-     * The game has been created but is not yet ready to start.
-     * Players may join during this phase, but no gameplay actions
-     * or turns can occur.
-     */
-    LOBBY,
+    data object Initialising : GameState {
+        override val type = GameStateType.INITIALIZING
+    }
 
-    /**
-     * All required players have joined and the game is preparing to begin.
-     * A countdown or pre-start sequence is in progress, after which the
-     * game will transition to IN_PROGRESS.
-     */
-    STARTING,
+    data object Lobby : GameState {
+        override val type = GameStateType.LOBBY
+    }
 
-    /**
-     * The game has officially begun. All required players have joined,
-     * and the game is now progressing through its normal turn or round
-     * sequence.
-     */
-    IN_PROGRESS,
+    data class Starting(
+        val startingAt: Instant,
+    ) : GameState {
+        override val type = GameStateType.STARTING
+    }
 
-    /**
-     * The game is temporarily paused. No gameplay actions may occur
-     * until the game is resumed, but the session and player states
-     * remain intact.
-     */
-    PAUSED,
+    data object InProgress : GameState {
+        override val type = GameStateType.IN_PROGRESS
+    }
 
-    /**
-     * The game has concluded. A final outcome has been reached and
-     * no further actions or state changes are permitted.
-     */
-    COMPLETED,
+    data object Paused : GameState {
+        override val type = GameStateType.PAUSED
+    }
+
+    data object Completed : GameState {
+        override val type = GameStateType.COMPLETED
+    }
 }

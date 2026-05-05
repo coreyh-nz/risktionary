@@ -3,11 +3,14 @@ package nz.coreyh.risktionary.game.socket.messages
 import io.github.oshai.kotlinlogging.KotlinLogging
 import nz.coreyh.risktionary.game.application.session.GamePlayerSession
 import nz.coreyh.risktionary.game.domain.model.GameId
+import nz.coreyh.risktionary.game.domain.model.GameState
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerId
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerStatus
+import nz.coreyh.risktionary.game.socket.messages.event.GameEvent
 import nz.coreyh.risktionary.game.socket.messages.outbound.PlayerJoinedEvent
 import nz.coreyh.risktionary.game.socket.messages.outbound.PlayerLeftEvent
 import nz.coreyh.risktionary.game.socket.messages.outbound.PlayerListUpdatedEvent
+import nz.coreyh.risktionary.game.socket.messages.outbound.StateChangedEvent
 import nz.coreyh.risktionary.game.socket.messages.view.toView
 import nz.coreyh.risktionary.game.socket.support.WebSocketDestinations
 import nz.coreyh.risktionary.user.domain.model.UserId
@@ -50,36 +53,44 @@ class GameEventPublisher(
                         .map { it.toView() },
             ),
     )
+
+    fun publishStateChanged(
+        gameId: GameId,
+        gameState: GameState,
+    ) = messagingTemplate.sendToTopic(
+        destination = WebSocketDestinations.Topic.base(gameId),
+        message = StateChangedEvent(gameState),
+    )
 }
 
-private inline fun <reified T : Any> SimpMessagingTemplate.sendToTopic(
+private inline fun <reified T : GameEvent> SimpMessagingTemplate.sendToTopic(
     destination: String,
     message: T,
 ) {
     kLogger.debug {
-        "Publishing ${T::class.simpleName} [broadcast] → $destination"
+        "Publishing ${message.type} [broadcast] → $destination"
     }
     convertAndSend(destination, message)
 }
 
-private inline fun <reified T : Any> SimpMessagingTemplate.sendToPlayer(
+private inline fun <reified T : GameEvent> SimpMessagingTemplate.sendToPlayer(
     playerId: GamePlayerId,
     destination: String,
     message: T,
 ) {
     kLogger.debug {
-        "Publishing ${T::class.simpleName} [playerId=$playerId] -> $destination"
+        "Publishing ${message.type} [playerId=$playerId] -> $destination"
     }
     convertAndSendToUser(playerId.value.toString(), destination, message)
 }
 
-private inline fun <reified T : Any> SimpMessagingTemplate.sendToUser(
+private inline fun <reified T : GameEvent> SimpMessagingTemplate.sendToUser(
     userId: UserId,
     destination: String,
     message: T,
 ) {
     kLogger.debug {
-        "Publishing ${T::class.simpleName} [userId=$userId] -> $destination"
+        "Publishing ${message.type} [userId=$userId] -> $destination"
     }
     convertAndSendToUser(userId.value.toString(), destination, message)
 }
