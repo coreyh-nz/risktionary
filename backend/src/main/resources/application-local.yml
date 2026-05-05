@@ -4,3 +4,7 @@ spring:
 
   exposed:
     show-sql: true
+
+logging:
+  level:
+    nz.coreyh.risktionary: debug

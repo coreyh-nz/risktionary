@@ -34,7 +34,7 @@ class GameSession(
     private val players: MutableMap<GamePlayerId, GamePlayerSession> = mutableMapOf()
     private val lock = ReentrantLock()
 
-    var state: GameState = GameState.INITIALIZING
+    var state: GameState = GameState.LOBBY
         get() = lock.withLock { field }
         set(value) = lock.withLock { field = value }
 
@@ -76,7 +76,7 @@ class GameSession(
     /**
      * Marks a player as fully connected and active in the session.
      */
-    fun activate(playerId: GamePlayerId) =
+    fun activate(playerId: GamePlayerId): GamePlayerSession =
         lock.withLock {
             val player = getPlayer(playerId)
             when (player.status) {
@@ -88,6 +88,7 @@ class GameSession(
                     throw GamePlayerStateInvalidException()
                 }
             }
+            player
         }
 
     fun disconnect(playerId: GamePlayerId) =

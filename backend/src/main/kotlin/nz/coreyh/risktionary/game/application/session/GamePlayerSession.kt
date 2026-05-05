@@ -7,5 +7,5 @@ import nz.coreyh.risktionary.game.domain.model.player.GamePlayerStatus
 class GamePlayerSession(
     val id: GamePlayerId,
     val identity: GamePlayerIdentity,
-    var status: GamePlayerStatus? = null,
+    var status: GamePlayerStatus = GamePlayerStatus.PENDING,
 )
