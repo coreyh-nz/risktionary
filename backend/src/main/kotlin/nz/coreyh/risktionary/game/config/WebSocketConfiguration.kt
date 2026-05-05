@@ -3,6 +3,8 @@ package nz.coreyh.risktionary.game.config
 import nz.coreyh.risktionary.game.socket.interceptor.WebSocketChannelInterceptor
 import nz.coreyh.risktionary.game.socket.interceptor.WebSocketHandshakeHandler
 import nz.coreyh.risktionary.game.socket.interceptor.WebSocketHandshakeInterceptor
+import nz.coreyh.risktionary.game.socket.interceptor.WebSocketLoggingDirection
+import nz.coreyh.risktionary.game.socket.interceptor.WebSocketLoggingInterceptor
 import nz.coreyh.risktionary.game.socket.support.WebSocketDestinations
 import nz.coreyh.risktionary.game.socket.support.WebSocketDestinations.App
 import nz.coreyh.risktionary.game.socket.support.WebSocketDestinations.Queue
@@ -47,6 +49,7 @@ class WebSocketConfiguration(
         )
         registry.setApplicationDestinationPrefixes(App.PREFIX)
         registry.setUserDestinationPrefix(WebSocketDestinations.USER_PREFIX)
+        registry.configureBrokerChannel().interceptors(WebSocketLoggingInterceptor(WebSocketLoggingDirection.OUTBOUND))
     }
 
     /**
@@ -78,6 +81,9 @@ class WebSocketConfiguration(
      * @param registration The channel registration to add interceptors to
      */
     override fun configureClientInboundChannel(registration: ChannelRegistration) {
-        registration.interceptors(webSocketChannelInterceptor)
+        registration.interceptors(
+            webSocketChannelInterceptor,
+            WebSocketLoggingInterceptor(WebSocketLoggingDirection.INBOUND),
+        )
     }
 }
