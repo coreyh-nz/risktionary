@@ -10,13 +10,13 @@ import { useRouter } from "next/navigation"
 import {
   useGameReset,
   useGameSetHost,
-  useGameSetPhase,
+  useGameSetState,
 } from "@/features/game/stores/game-store-selectors"
 
 export const CreateGameForm = () => {
   const { createGame, isLoading } = useCreateGame()
   const reset = useGameReset()
-  const setPhase = useGameSetPhase()
+  const setState = useGameSetState()
   const setHost = useGameSetHost()
   const router = useRouter()
 
@@ -30,7 +30,7 @@ export const CreateGameForm = () => {
     const session = response.data.session
     reset()
     setHost(session.id, session.code)
-    setPhase(session.state)
+    setState(session.state)
     router.push(ROUTES.GAME.PLAY)
   }
 

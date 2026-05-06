@@ -4,7 +4,7 @@ import { GamePlayLobbyScreen } from "@/features/game/components/lobby/game-lobby
 import { assertNever } from "@/lib/utils"
 import { WebSocketProvider } from "@/providers/web-socket-provider"
 import ConnectingScreen from "@/features/game/components/lobby/connecting-screen"
-import { useGamePhase } from "@/features/game/stores/game-store-selectors"
+import { useGameState } from "@/features/game/stores/game-store-selectors"
 import { useGameConnection } from "@/features/game/hooks/use-game-connection"
 import { CenteredLayout } from "@/components/layout/centered-layout"
 
@@ -17,8 +17,7 @@ const GamePlayPage = () => {
 }
 
 const GameScreen = () => {
-  const phase = useGamePhase()
-
+  const state = useGameState()
   const { connected, attempts } = useGameConnection()
 
   if (!connected) {
@@ -28,9 +27,9 @@ const GameScreen = () => {
       </CenteredLayout>
     )
   }
-  if (!phase) return null
 
-  switch (phase) {
+  const stateType = state.type
+  switch (stateType) {
     case "INITIALIZING":
       return <p>INITIALIZING</p>
     case "LOBBY":
@@ -48,7 +47,7 @@ const GameScreen = () => {
       return <p>COMPLETED</p>
     default:
       // type safe - makes the switch cause exhaustive
-      assertNever(phase)
+      assertNever(stateType)
   }
 }
 export default GamePlayPage

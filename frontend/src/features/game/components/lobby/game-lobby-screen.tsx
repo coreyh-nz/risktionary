@@ -5,17 +5,15 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { PlayerList } from "./player-list"
 import {
-  useGamePhase,
   useGameSession,
-  useGameStartingAt,
+  useGameState,
 } from "@/features/game/stores/game-store-selectors"
 import { useGameSocket } from "../../hooks/use-game-socket"
 import { GameStartingCountdown } from "./starting-countdown"
 
 export const GamePlayLobbyScreen = () => {
   const session = useGameSession()
-  const state = useGamePhase()
-  const startingAt = useGameStartingAt()
+  const state = useGameState()
   const { start } = useGameSocket()
 
   if (!session) return null
@@ -24,8 +22,8 @@ export const GamePlayLobbyScreen = () => {
 
   return (
     <div className="flex w-full flex-col gap-6">
-      {state === "STARTING" && startingAt && (
-        <GameStartingCountdown startsAt={startingAt} isHost={isHost} />
+      {state.type === "STARTING" && (
+        <GameStartingCountdown startsAt={state.startingAt} isHost={isHost} />
       )}
 
       <div className="flex flex-col items-center gap-2">
