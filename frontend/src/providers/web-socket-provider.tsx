@@ -1,3 +1,4 @@
+import { JsonSerializable } from "@/types/json"
 import { Client } from "@stomp/stompjs"
 import {
   createContext,
@@ -55,6 +56,8 @@ interface WebSocketContextValue {
   connected: boolean
   attempts: number
   error: string | null
+
+  send: (destination: string, body?: JsonSerializable) => void
 }
 
 const WebSocketContext = createContext<WebSocketContextValue | null>(null)
@@ -116,11 +119,31 @@ export const WebSocketProvider = ({ children }: PropsWithChildren) => {
     dispatch({ type: "DISCONNECTED" })
   }, [])
 
+  const send = useCallback(
+    (destination: string, body: JsonSerializable = {}) => {
+      const client = clientRef.current
+      if (!client?.active) {
+        console.warn(
+          `[WebSocket] Cannot send to ${destination} - not connected`
+        )
+        return
+      }
+
+      client.publish({
+        destination,
+        body: typeof body === "string" ? body : JSON.stringify(body),
+        headers: { "content-type": "application/json" },
+      })
+    },
+    []
+  )
+
   return (
     <WebSocketContext.Provider
       value={{
         connect,
         disconnect,
+        send,
         connected: state.connected,
         attempts: state.attempts,
         error: state.error,
