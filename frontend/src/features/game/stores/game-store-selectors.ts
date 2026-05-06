@@ -3,9 +3,8 @@ import { useGameStore } from "@/features/game/stores/game-store"
 
 export const useGameSession = () => useGameStore(useShallow((s) => s.session))
 
-export const useGamePhase = () => useGameStore((s) => s.phase)
-export const useGameSetPhase = () => useGameStore((s) => s.setPhase)
-export const useGameStartingAt = () => useGameStore((s) => s.startingAt)
+export const useGameState = () => useGameStore((s) => s.state)
+export const useGameSetState = () => useGameStore((s) => s.setState)
 
 export const useGamePlayers = () => useGameStore(useShallow((s) => s.players))
 

@@ -1,5 +1,4 @@
-import { Instant } from "@/types/instant"
-import { GameState } from "./game"
+import { GameStateWire } from "./game"
 
 export type GameEventType = "STATE_CHANGED"
 
@@ -8,9 +7,5 @@ export interface GameEvent {
 }
 
 export interface StateChangedEvent extends GameEvent {
-  state: GameState
-}
-
-export interface StateChangedEventStarting extends StateChangedEvent {
-  startAt: Instant
+  state: GameStateWire
 }

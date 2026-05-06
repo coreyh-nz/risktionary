@@ -1,10 +1,32 @@
-export type GameState =
+import { Instant } from "@/types/instant"
+
+export type GameStateType =
   | "INITIALIZING"
   | "LOBBY"
   | "STARTING"
   | "IN_PROGRESS"
   | "PAUSED"
   | "COMPLETED"
+
+type GameStateWireDataMap = {
+  STARTING: { startingAt: Instant }
+}
+
+type GameStateDomainDataMap = {
+  STARTING: { startingAt: Date }
+}
+
+export type GameStateWire = {
+  [K in GameStateType]: K extends keyof GameStateWireDataMap
+    ? { type: K } & GameStateWireDataMap[K]
+    : { type: K }
+}[GameStateType]
+
+export type GameState = {
+  [K in GameStateType]: K extends keyof GameStateDomainDataMap
+    ? { type: K } & GameStateDomainDataMap[K]
+    : { type: K }
+}[GameStateType]
 
 export interface GameSessionHostView {
   id: string

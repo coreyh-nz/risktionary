@@ -11,11 +11,11 @@ import { config } from "@/lib/config"
 import { createJSONStorage, persist } from "zustand/middleware"
 import {
   createGamePhaseSlice,
-  GamePhaseSlice,
-} from "@/features/game/stores/slices/phase.slice"
+  GameStateSlice,
+} from "@/features/game/stores/slices/state.slice"
 
 type GameStore = SessionSlice &
-  GamePhaseSlice &
+  GameStateSlice &
   PlayersSlice & {
     reset: () => void
   }
@@ -28,8 +28,8 @@ const storeDefinition: StateCreator<GameStore> = (...args) => {
     ...createPlayersSlice(...args),
 
     reset: () => {
-      get().resetPhase()
-      // get().resetSession()
+      get().resetState()
+      get().resetSession()
       get().resetPlayers()
     },
   }

@@ -1,12 +1,9 @@
 import { Client } from "@stomp/stompjs"
 import { stompHandler } from "@/lib/stomp-utils"
 import { useGameStore } from "@/features/game/stores/game-store"
-import {
-  GameEvent,
-  StateChangedEvent,
-  StateChangedEventStarting,
-} from "../../types/game-events"
+import { GameEvent, StateChangedEvent } from "../../types/game-events"
 import { instantToDate } from "@/types/instant"
+import { GameState, GameStateWire } from "../../types/game"
 
 const handleGameEvent = (event: GameEvent) => {
   switch (event.type) {
@@ -18,20 +15,15 @@ const handleGameEvent = (event: GameEvent) => {
 }
 
 const handleStateChanged = (event: StateChangedEvent) => {
-  useGameStore.getState().setPhase(event.state)
-  switch (event.state) {
-    case "STARTING": {
-      handleStateChangedEventStarting(event as StateChangedEventStarting)
-      break
-    }
-  }
+  useGameStore.getState().setState(toGameState(event.state))
 }
 
-const handleStateChangedEventStarting = ({
-  startAt: startAtInstant,
-}: StateChangedEventStarting) => {
-  const startAt = instantToDate(startAtInstant)
-  useGameStore.getState().setStartingAt(startAt)
+const toGameState = (wire: GameStateWire): GameState => {
+  if (wire.type === "STARTING") {
+    const { startingAt, ...rest } = wire
+    return { ...rest, startingAt: instantToDate(startingAt) }
+  }
+  return wire
 }
 
 export const setupGameSubscriptions = (client: Client, gameId: string) => {

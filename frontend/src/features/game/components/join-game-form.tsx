@@ -1,6 +1,9 @@
 "use client"
 
-import { JoinGameFormValues, useJoinGameForm, } from "@/features/game/hooks/use-join-game-form"
+import {
+  JoinGameFormValues,
+  useJoinGameForm,
+} from "@/features/game/hooks/use-join-game-form"
 import { FormInput } from "@/components/common/form"
 import { Button } from "@/components/ui/button"
 import { FieldGroup, FieldSet } from "@/components/ui/field"
@@ -8,13 +11,17 @@ import { useJoinGame } from "@/features/game/hooks/use-join-game"
 import { ErrorCode } from "@/lib/api/errors"
 import { ROUTES } from "@/lib/routes"
 import { useRouter } from "next/navigation"
-import { useGameReset, useGameSetPhase, useGameSetPlayer, } from "@/features/game/stores/game-store-selectors"
+import {
+  useGameReset,
+  useGameSetPlayer,
+  useGameSetState,
+} from "@/features/game/stores/game-store-selectors"
 
 export const JoinGameForm = () => {
   const form = useJoinGameForm()
   const { joinGame } = useJoinGame()
   const reset = useGameReset()
-  const setPhase = useGameSetPhase()
+  const setState = useGameSetState()
   const setPlayer = useGameSetPlayer()
   const router = useRouter()
 
@@ -47,7 +54,7 @@ export const JoinGameForm = () => {
 
     reset()
     setPlayer(session.id, session.code, ticket, playerId, displayName)
-    setPhase(session.state)
+    setState(session.state)
     router.push(ROUTES.GAME.PLAY)
   }
 
