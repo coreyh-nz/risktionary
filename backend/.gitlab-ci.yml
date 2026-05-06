@@ -65,5 +65,5 @@ deploy:
         -e DATABASE_USER="$DATABASE_USER" \
         -e DATABASE_PASSWORD="$DATABASE_PASSWORD" \
         -e JWT_SECRET="$JWT_SECRET" \
-        -e SPRING_PROFILES_ACTIVE="prod,mariadb" \
+        -e SPRING_PROFILES_ACTIVE="prod,postgres" \
         "$IMAGE_NAME:$CI_COMMIT_SHORT_SHA"

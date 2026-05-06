@@ -1,2 +1,6 @@
+spring:
+  config:
+    import: optional:file:.prod.env[.properties]
+
 app:
   frontend-url: "https://risktionary.csse.canterbury.ac.nz"
