@@ -1,5 +1,5 @@
 import { PropsWithChildren, useState } from "react"
-import Link from "next/link"
+// eslint-disable-next-line @next/next/no-html-link-for-pages
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
@@ -15,9 +15,11 @@ export const OAuthButton = ({
   className,
 }: OAuthButtonProps) => {
   const [loading, setLoading] = useState(false)
-
+  // Use <a> instead of <Link> because this href points to an external backend
+  // OAuth endpoint. <Link> would prefetch the URL as an RSC request and intercept
+  // the redirect response, breaking the OAuth flow.
   return (
-    <Link
+    <a
       href={href}
       onClick={() => setLoading(true)}
       className={cn(
@@ -28,6 +30,6 @@ export const OAuthButton = ({
       )}
     >
       {loading ? <Spinner /> : children}
-    </Link>
+    </a>
   )
 }
