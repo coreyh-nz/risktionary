@@ -2,5 +2,8 @@ spring:
   config:
     import: optional:file:.prod.env[.properties]
 
+server:
+  forward-headers-strategy: framework
+
 app:
   frontend-url: "https://risktionary.csse.canterbury.ac.nz"
