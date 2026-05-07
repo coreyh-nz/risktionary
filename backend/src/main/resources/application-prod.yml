@@ -7,3 +7,10 @@ server:
 
 app:
   frontend-url: "https://risktionary.csse.canterbury.ac.nz"
+  auth:
+    cookie:
+      path: "/"
+      secure: true
+      same-site: strict
+      access-token-name: risktionary_at
+      login-success-redirect-url-name: risktionary_lr
