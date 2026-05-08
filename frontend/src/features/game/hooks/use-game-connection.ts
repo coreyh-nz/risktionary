@@ -17,7 +17,7 @@ export const useGameConnection = () => {
       const url =
         session.role === "player"
           ? `${config.wsUrl}?ticket=${session.ticket}`
-          : config.wsUrl
+          : `${config.wsUrl}?gameId=${session.gameId}`
       connect(url, (client) => setupSubscriptions(client, session.gameId))
     }
     return () => {
