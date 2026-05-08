@@ -1,22 +1,21 @@
 "use client"
+
 import { useState } from "react"
 import { useCountdown } from "@/features/game/hooks/use-countdown"
 import { CountdownRing } from "@/features/game/components/countdown/countdown-ring"
 import { CountdownDigit } from "@/features/game/components/countdown/countdown-digit"
 
 interface GameStartingCountdownProps {
-  startsAt: Date
+  durationMs: number
   isHost?: boolean
 }
 
 export const GameStartingCountdown = ({
-  startsAt,
+  durationMs,
   isHost = false,
 }: GameStartingCountdownProps) => {
-  const secondsLeft = useCountdown(startsAt.getTime())
-  const [total] = useState(() =>
-    Math.max(1, Math.ceil((startsAt.getTime() - Date.now()) / 1000))
-  )
+  const secondsLeft = useCountdown(durationMs)
+  const [total] = useState(() => Math.max(1, Math.ceil(durationMs / 1000)))
 
   return isHost ? (
     <HostCountdown secondsLeft={secondsLeft} total={total} />

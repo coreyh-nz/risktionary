@@ -1,5 +1,3 @@
-import { Instant } from "@/types/instant"
-
 export type GameStateType =
   | "INITIALIZING"
   | "LOBBY"
@@ -8,23 +6,13 @@ export type GameStateType =
   | "PAUSED"
   | "COMPLETED"
 
-type GameStateWireDataMap = {
-  STARTING: { startingAt: Instant }
+type GameStateDataMap = {
+  STARTING: { startingIn: number }
 }
-
-type GameStateDomainDataMap = {
-  STARTING: { startingAt: Date }
-}
-
-export type GameStateWire = {
-  [K in GameStateType]: K extends keyof GameStateWireDataMap
-    ? { type: K } & GameStateWireDataMap[K]
-    : { type: K }
-}[GameStateType]
 
 export type GameState = {
-  [K in GameStateType]: K extends keyof GameStateDomainDataMap
-    ? { type: K } & GameStateDomainDataMap[K]
+  [K in GameStateType]: K extends keyof GameStateDataMap
+    ? { type: K } & GameStateDataMap[K]
     : { type: K }
 }[GameStateType]
 

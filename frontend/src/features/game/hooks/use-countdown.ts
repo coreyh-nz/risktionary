@@ -1,22 +1,23 @@
 import { useState, useEffect } from "react"
 
-export function useCountdown(targetMs: number | null): number {
+export function useCountdown(durationMs: number): number {
   const [secondsLeft, setSecondsLeft] = useState<number>(() =>
-    targetMs ? Math.max(0, Math.ceil((targetMs - Date.now()) / 1000)) : 0
+    Math.max(0, Math.ceil(durationMs / 1000))
   )
 
   useEffect(() => {
-    if (!targetMs) return
+    if (!durationMs) return
+    const endsAt = Date.now() + durationMs
 
     const tick = () => {
-      const remaining = Math.max(0, Math.ceil((targetMs - Date.now()) / 1000))
+      const remaining = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000))
       setSecondsLeft(remaining)
     }
 
-    tick() // run immediately
-    const id = setInterval(tick, 200) // poll at 200 ms for accuracy
+    tick()
+    const id = setInterval(tick, 200)
     return () => clearInterval(id)
-  }, [targetMs])
+  }, [durationMs])
 
   return secondsLeft
 }

@@ -23,7 +23,7 @@ export const GamePlayLobbyScreen = () => {
   return (
     <div className="flex w-full flex-col gap-6">
       {state.type === "STARTING" && (
-        <GameStartingCountdown startsAt={state.startingAt} isHost={isHost} />
+        <GameStartingCountdown durationMs={state.startingIn} isHost={isHost} />
       )}
 
       <div className="flex flex-col items-center gap-2">

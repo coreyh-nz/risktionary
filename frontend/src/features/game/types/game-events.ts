@@ -1,4 +1,4 @@
-import { GameStateWire } from "./game"
+import { GameState } from "./game"
 
 export type GameEventType = "STATE_CHANGED"
 
@@ -7,5 +7,5 @@ export interface GameEvent {
 }
 
 export interface StateChangedEvent extends GameEvent {
-  state: GameStateWire
+  state: GameState
 }
