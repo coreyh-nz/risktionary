@@ -18,12 +18,13 @@ object WebSocketTestSupport {
     fun connect(
         port: Int,
         ticket: String? = null,
+        gameId: String? = null,
         handshakeHeaders: WebSocketHttpHeaders = WebSocketHttpHeaders(),
         onError: (Throwable) -> Unit = {},
     ): StompSession {
         val client = WebSocketStompClient(StandardWebSocketClient())
         val future = CompletableFuture<StompSession>()
-        val url = buildUrl(port, ticket)
+        val url = buildUrl(port, ticket, gameId)
 
         client.connectAsync(
             url,
@@ -49,29 +50,6 @@ object WebSocketTestSupport {
         return future.get(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
     }
 
-    fun connectExpectingFailure(
-        port: Int,
-        ticket: String?,
-    ): CompletableFuture<Throwable> {
-        val client = WebSocketStompClient(StandardWebSocketClient())
-        val failed = CompletableFuture<Throwable>()
-        val url = buildUrl(port, ticket)
-
-        client.connectAsync(
-            url,
-            object : StompSessionHandlerAdapter() {
-                override fun handleTransportError(
-                    session: StompSession,
-                    exception: Throwable,
-                ) {
-                    failed.complete(exception)
-                }
-            },
-        )
-
-        return failed
-    }
-
     val noopFrameHandler: StompFrameHandler =
         object : StompFrameHandler {
             override fun getPayloadType(headers: StompHeaders) = String::class.java
@@ -86,8 +64,12 @@ object WebSocketTestSupport {
     private fun buildUrl(
         port: Int,
         ticket: String?,
+        gameId: String?,
     ): String {
         val base = "ws://localhost:$port${Routes.V1.Game.SOCKET}"
-        return if (ticket != null) "$base?ticket=$ticket" else base
+        val params = listOfNotNull(ticket?.let { "ticket=$it" }, gameId?.let { "gameId=$it" })
+        return params
+            .takeIf { it.isNotEmpty() }
+            ?.let { "$base?${it.joinToString("&")}" } ?: base
     }
 }

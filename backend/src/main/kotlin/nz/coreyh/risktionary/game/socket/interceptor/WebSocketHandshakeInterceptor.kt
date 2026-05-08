@@ -6,6 +6,7 @@ import nz.coreyh.risktionary.game.application.exception.GamePlayerNotInSessionEx
 import nz.coreyh.risktionary.game.application.exception.GameTicketInvalidException
 import nz.coreyh.risktionary.game.application.service.GameTicketService
 import nz.coreyh.risktionary.game.application.store.GameSessionStore
+import nz.coreyh.risktionary.game.domain.model.toGameIdOrNull
 import nz.coreyh.risktionary.game.socket.security.GameSocketPrincipal
 import nz.coreyh.risktionary.shared.exception.code.ErrorCode
 import nz.coreyh.risktionary.shared.web.dto.ApiErrorResponse
@@ -26,8 +27,8 @@ private val kLogger = KotlinLogging.logger {}
  * Handshake interceptor that authenticates and authorizes WebSocket connections before STOMP session establishment.
  *
  * This interceptor validates two types of connection attempts:
- * - **Player connections**: Authenticated via a one-time ticket provided as a query parameter
- * - **Host connections**: Authenticated via the existing HTTP session's Spring Security context
+ * - Player connections: Authenticated using a one-time game ticket provided as a query parameter
+ * - Host connections: Authenticated using the existing HTTP session and Spring Security context
  *
  * On successful validation, a [GameSocketPrincipal] (either Player or Host) is stored in the handshake
  * attributes for later retrieval by [WebSocketHandshakeHandler]. The handshake then proceeds normally.
@@ -69,12 +70,13 @@ class WebSocketHandshakeInterceptor(
                     return response.rejectHandshake("Invalid request type")
                 }
 
-        val ticketParam = servletRequest.getParameter("ticket")
-        return if (ticketParam != null) {
-            handlePlayerHandshake(ticketParam, attributes, response)
-        } else {
-            handleHostHandshake(attributes, response)
+        servletRequest.getParameter("ticket")?.let {
+            return handlePlayerHandshake(it, attributes, response)
         }
+        servletRequest.getParameter("gameId")?.let {
+            return handleHostHandshake(it, attributes, response)
+        }
+        return response.rejectHandshake("")
     }
 
     override fun afterHandshake(
@@ -143,22 +145,25 @@ class WebSocketHandshakeInterceptor(
     /**
      * Validates and authenticates a host WebSocket connection using the existing HTTP session.
      *
-     * Extracts the authenticated user from the Spring Security context and verifies they
-     * have an active game session as the host. Host connections do not require a ticket
-     * because host privileges are established through standard authentication.
+     * Performs validation steps:
+     * 1. Extracts the authenticated [UserPrincipal] from the Spring Security context
+     * 2. Parses the provided game ID - fails if the ID format is invalid
+     * 3. Verifies the game session exists - fails if the game was never created or has ended
+     * 4. Verifies the authenticated user is the host of the game session
      *
-     * A host is considered valid if:
-     * - There is an authenticated [UserPrincipal] in the security context
-     * - That user has an active game session where they are the host
+     * Host connections do not require a ticket because host privileges are established
+     * through standard HTTP authentication.
      *
      * On success, creates a [GameSocketPrincipal.Host] and stores it in the handshake attributes
-     * under the key "principal".
+     * under the key `"principal"`.
      *
+     * @param gameIdParam The raw game ID string from the query parameter
      * @param attributes The handshake attributes map to populate with the principal
      * @param response The HTTP response to send rejection details if validation fails
      * @return `true` if validation passes, `false` if rejected
      */
     private fun handleHostHandshake(
+        gameIdParam: String,
         attributes: MutableMap<String, Any>,
         response: ServerHttpResponse,
     ): Boolean {
@@ -168,15 +173,20 @@ class WebSocketHandshakeInterceptor(
             return response.rejectHandshake("Unauthorized")
         }
 
-        val hostId = principal.userId
-        val game = gameSessionStore.findByHostId(hostId)
-        if (game == null) {
-            kLogger.debug { "Host handshake rejected: no active game found for host with userId=${principal.name}" }
-            return response.rejectHandshake("No active game found for host")
+        val gameId = gameIdParam.toGameIdOrNull()
+        if (gameId == null) {
+            kLogger.debug { "Host handshake rejected: invalid gameId format: $gameIdParam" }
+            return response.rejectHandshake("Handshake rejected: invalid game id")
         }
 
-        kLogger.debug {
-            "Host handshake accepted: gameId=${game.id}, userId=${principal.name}"
+        val game = gameSessionStore.findById(gameId)
+        if (game == null) {
+            kLogger.debug { "Host handshake rejected: no game found for gameId=$gameId" }
+            return response.rejectHandshake("Handshake rejected: invalid game id")
+        }
+        if (game.hostId != principal.userId) {
+            kLogger.debug { "Host handshake rejected: user ${principal.userId} is not host of game ${game.id}" }
+            return response.rejectHandshake("Handshake rejected: invalid game id")
         }
 
         val socketPrincipal =
@@ -185,6 +195,8 @@ class WebSocketHandshakeInterceptor(
                 id = principal.userId,
             )
         attributes["principal"] = socketPrincipal
+
+        kLogger.debug { "Host handshake accepted: gameId=${game.id}, userId=${principal.userId}" }
         return true
     }
 

@@ -36,7 +36,6 @@ import tools.jackson.databind.ObjectMapper
 @Transactional
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-    properties = ["logging.level.nz.coreyh.risktionary=debug"],
 )
 class WebSocketHandshakeInterceptorIntegrationTests(
     @LocalServerPort private val port: Int,
@@ -142,19 +141,27 @@ class WebSocketHandshakeInterceptorIntegrationTests(
         @Test
         fun `host handshake succeeds when authenticated host has an active game`() {
             val user = testUserCreator.createTestUser()
-            testGameSessionCreator.createTestGameSession(host = user)
+            val session = testGameSessionCreator.createTestGameSession(host = user)
 
             assertDoesNotThrow {
-                connect(port, ticket = null, handshakeHeaders = buildHostHandshakeHeaders(user))
+                connect(
+                    port,
+                    ticket = null,
+                    gameId = session.id.value.toString(),
+                    handshakeHeaders = buildHostHandshakeHeaders(user),
+                )
             }
         }
 
         @Test
         fun `host handshake fails when user is not authenticated`() {
+            val session = testGameSessionCreator.createTestGameSession()
+
             val response =
                 mockMvc
                     .get(Routes.V1.Game.SOCKET) {
                         websocketUpgradeHeaders()
+                        param("gameId", session.id.value.toString())
                     }.andExpect {
                         status { isBadRequest() }
                     }.andReturn<ApiErrorResponse>(objectMapper)
@@ -171,6 +178,43 @@ class WebSocketHandshakeInterceptorIntegrationTests(
                     .get(Routes.V1.Game.SOCKET) {
                         websocketUpgradeHeaders()
                         auth(user)
+                        param("gameId", createTestGameId().value.toString())
+                    }.andExpect {
+                        status { isBadRequest() }
+                    }.andReturn<ApiErrorResponse>(objectMapper)
+
+            response.errorCode shouldBe ErrorCode.GAME_TICKET_INVALID.code
+        }
+
+        @Test
+        fun `host handshake fails when gameId is invalid`() {
+            val user = testUserCreator.createTestUser()
+
+            val response =
+                mockMvc
+                    .get(Routes.V1.Game.SOCKET) {
+                        websocketUpgradeHeaders()
+                        auth(user)
+                        param("gameId", "invalid-game-id")
+                    }.andExpect {
+                        status { isBadRequest() }
+                    }.andReturn<ApiErrorResponse>(objectMapper)
+
+            response.errorCode shouldBe ErrorCode.GAME_TICKET_INVALID.code
+        }
+
+        @Test
+        fun `host handshake fails when authenticated user is not the game host`() {
+            val host = testUserCreator.createUniqueTestUser()
+            val otherUser = testUserCreator.createUniqueTestUser()
+            val session = testGameSessionCreator.createTestGameSession(host = host)
+
+            val response =
+                mockMvc
+                    .get(Routes.V1.Game.SOCKET) {
+                        websocketUpgradeHeaders()
+                        auth(otherUser)
+                        param("gameId", session.id.value.toString())
                     }.andExpect {
                         status { isBadRequest() }
                     }.andReturn<ApiErrorResponse>(objectMapper)
