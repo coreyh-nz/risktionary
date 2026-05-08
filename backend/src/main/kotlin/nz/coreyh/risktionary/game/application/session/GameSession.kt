@@ -12,7 +12,7 @@ import nz.coreyh.risktionary.game.domain.model.player.GamePlayerStatus
 import nz.coreyh.risktionary.user.domain.model.UserId
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
-import kotlin.time.Instant
+import kotlin.time.Duration
 
 /**
  * Represents the live, in‑memory state of an active game session.
@@ -108,10 +108,10 @@ class GameSession(
             }
         }
 
-    fun transitionToStarting(startingAt: Instant) {
+    fun transitionToStarting(startingIn: Duration) {
         lock.withLock {
             requireState(GameStateType.LOBBY)
-            state = GameState.Starting(startingAt)
+            state = GameState.Starting(startingIn)
         }
     }
 

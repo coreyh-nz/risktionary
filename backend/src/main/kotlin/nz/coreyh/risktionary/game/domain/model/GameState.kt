@@ -1,6 +1,6 @@
 package nz.coreyh.risktionary.game.domain.model
 
-import kotlin.time.Instant
+import kotlin.time.Duration
 
 /**
  * Represents the lifecycle state of a game session.
@@ -21,7 +21,7 @@ sealed interface GameState {
     }
 
     data class Starting(
-        val startingAt: Instant,
+        val startingIn: Duration,
     ) : GameState {
         override val type = GameStateType.STARTING
     }

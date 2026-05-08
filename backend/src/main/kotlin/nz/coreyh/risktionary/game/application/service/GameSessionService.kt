@@ -149,7 +149,7 @@ class GameSessionService(
         val session = getSession(gameId)
 
         // todo - change this to use time from settings when implemented
-        val startAt = clock.now() + 10.seconds
+        val startAt = 10.seconds
         session.transitionToStarting(startAt)
 
         gameEventPublisher.publishStateChanged(
@@ -158,7 +158,7 @@ class GameSessionService(
         )
 
         // schedule task to transition to in progress
-        gameSessionTaskService.schedule(gameId, startAt) { transitionToInProgress(gameId) }
+        gameSessionTaskService.schedule(gameId, clock.now() + startAt) { transitionToInProgress(gameId) }
     }
 
     fun transitionToInProgress(gameId: GameId) {

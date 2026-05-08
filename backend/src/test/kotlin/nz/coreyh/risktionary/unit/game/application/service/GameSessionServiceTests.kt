@@ -257,17 +257,18 @@ class GameSessionServiceTests {
             val session = mockk<GameSession>()
             val gameState = GameState.Lobby
             val now = Clock.System.now()
-            val expectedStart = now + 10.seconds // todo - change this to use time from settings when implemented
+            val expectedStartIn = 10.seconds // todo - change this to use time from settings when implemented
+            val expectedStart = now + expectedStartIn
             every { gameSessionStore.findById(gameId) } returns session
             every { gameEventPublisher.publishStateChanged(gameId, gameState) } just Runs
             every { gameSessionTaskService.schedule(gameId, expectedStart, any()) } just Runs
             every { session.state } returns gameState
-            every { session.transitionToStarting(expectedStart) } just Runs
+            every { session.transitionToStarting(expectedStartIn) } just Runs
             every { clock.now() } returns now
 
             service.transitionToStarting(gameId)
 
-            verify { session.transitionToStarting(expectedStart) }
+            verify { session.transitionToStarting(expectedStartIn) }
             verify { gameEventPublisher.publishStateChanged(gameId, gameState) }
             verify { gameSessionTaskService.schedule(gameId, expectedStart, any()) }
         }
