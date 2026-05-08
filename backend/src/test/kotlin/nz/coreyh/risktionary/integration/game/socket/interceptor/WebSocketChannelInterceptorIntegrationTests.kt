@@ -78,7 +78,7 @@ class WebSocketChannelInterceptorIntegrationTests(
 
         val disconnected = CompletableFuture<Throwable>()
         val client = WebSocketTestSupport.connect(port, ticket.value, onError = { disconnected.complete(it) })
-        client.subscribe(WebSocketDestinations.Topic.lobby(session2.id), WebSocketTestSupport.noopFrameHandler)
+        client.subscribe(WebSocketDestinations.Topic.players(session2.id), WebSocketTestSupport.noopFrameHandler)
 
         val error = disconnected.get(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
         error.shouldNotBeNull()

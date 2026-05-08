@@ -3,13 +3,16 @@ package nz.coreyh.risktionary.game.application.session
 import nz.coreyh.risktionary.game.application.exception.GamePlayerAlreadyInSessionException
 import nz.coreyh.risktionary.game.application.exception.GamePlayerNotInSessionException
 import nz.coreyh.risktionary.game.application.exception.GamePlayerStateInvalidException
+import nz.coreyh.risktionary.game.application.exception.GameStateInvalidException
 import nz.coreyh.risktionary.game.domain.model.GameId
 import nz.coreyh.risktionary.game.domain.model.GameState
+import nz.coreyh.risktionary.game.domain.model.GameStateType
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerId
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerStatus
 import nz.coreyh.risktionary.user.domain.model.UserId
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
+import kotlin.time.Instant
 
 /**
  * Represents the live, in‑memory state of an active game session.
@@ -34,7 +37,7 @@ class GameSession(
     private val players: MutableMap<GamePlayerId, GamePlayerSession> = mutableMapOf()
     private val lock = ReentrantLock()
 
-    var state: GameState = GameState.LOBBY
+    var state: GameState = GameState.Lobby
         get() = lock.withLock { field }
         set(value) = lock.withLock { field = value }
 
@@ -104,4 +107,22 @@ class GameSession(
                 }
             }
         }
+
+    fun transitionToStarting(startingAt: Instant) {
+        lock.withLock {
+            requireState(GameStateType.LOBBY)
+            state = GameState.Starting(startingAt)
+        }
+    }
+
+    fun transitionToInProgress() {
+        lock.withLock {
+            requireState(GameStateType.STARTING)
+            state = GameState.InProgress
+        }
+    }
+
+    private fun requireState(requiredState: GameStateType) {
+        if (state.type != requiredState) throw GameStateInvalidException()
+    }
 }

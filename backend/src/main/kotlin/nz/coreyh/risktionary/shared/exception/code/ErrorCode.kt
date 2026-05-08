@@ -30,6 +30,13 @@ enum class ErrorCode(
         httpStatus = HttpStatus.BAD_REQUEST,
         defaultMessage = "Game ticket invalid",
     ),
+    GAME_STATE_INVALID(
+        code = "game.state-invalid",
+        httpStatus = HttpStatus.BAD_REQUEST,
+        defaultMessage = "Game state invalid",
+    ),
+
+    // Game player
     GAME_PLAYER_STATE_INVALID(
         code = "game.player-state-invalid",
         httpStatus = HttpStatus.BAD_REQUEST,

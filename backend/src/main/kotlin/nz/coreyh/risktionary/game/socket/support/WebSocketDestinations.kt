@@ -17,8 +17,6 @@ object WebSocketDestinations {
 
         fun base(gameId: GameId) = "$BASE/${gameId.value}"
 
-        fun lobby(gameId: GameId) = "$BASE/${gameId.value}/lobby"
-
         fun players(gameId: GameId) = "$BASE/${gameId.value}/players"
     }
 

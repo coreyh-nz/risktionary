@@ -16,4 +16,11 @@ class GameSocketController(
         val playerId = principal.id
         gameSessionService.handleReady(playerId)
     }
+
+    @MessageMapping("/game/start")
+    fun startGame(principal: GameSocketPrincipal) {
+        if (principal !is GameSocketPrincipal.Host) return
+        val gameId = principal.gameId
+        gameSessionService.transitionToStarting(gameId)
+    }
 }
