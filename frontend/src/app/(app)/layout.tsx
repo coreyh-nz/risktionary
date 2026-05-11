@@ -23,9 +23,9 @@ const AppLayout = async ({ children }: PropsWithChildren) => {
 
   return (
     <AuthProvider user={user}>
-      <div className="relative min-h-svh">
+      <div className="flex min-h-svh flex-col">
         <Navbar />
-        <main className="relative">{children}</main>
+        <main className="mt-18 flex flex-1">{children}</main>
       </div>
     </AuthProvider>
   )

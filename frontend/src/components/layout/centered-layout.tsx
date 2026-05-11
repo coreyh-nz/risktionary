@@ -3,7 +3,7 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { PropsWithChildren } from "react"
 import { cn } from "@/lib/utils"
 
-const centeredVariants = cva("flex min-h-svh items-center justify-center p-6", {
+const centeredVariants = cva("flex items-center justify-center p-6", {
   variants: {
     size: {
       sm: "max-w-sm",
@@ -28,7 +28,7 @@ export const CenteredLayout = ({
   size = "lg",
 }: CenteredLayoutProps) => {
   return (
-    <div className="flex min-h-svh items-center justify-center">
+    <div className="flex w-full items-center justify-center">
       <div className={cn(centeredVariants({ size }), "w-full p-6")}>
         {children}
       </div>
