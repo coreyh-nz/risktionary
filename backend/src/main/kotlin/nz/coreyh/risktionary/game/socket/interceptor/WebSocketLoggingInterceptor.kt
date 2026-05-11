@@ -33,7 +33,8 @@ class WebSocketLoggingInterceptor(
                     "${"[$direction]".padEnd(10)} " +
                         "${accessor.command?.name?.padEnd(16)} " +
                         "user=${accessor.user?.name ?: "anonymous"} " +
-                        "destination=${accessor.destination}"
+                        "destination=${accessor.destination} " +
+                        "payload=$payload"
                 }
 
                 WebSocketLoggingDirection.OUTBOUND -> {
