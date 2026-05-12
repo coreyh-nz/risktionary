@@ -9,6 +9,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.ScheduledFuture
+import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlin.time.toJavaInstant
 
@@ -23,6 +24,7 @@ private val kLogger = KotlinLogging.logger {}
 @Service
 class GameSessionTaskService(
     private val taskScheduler: TaskScheduler,
+    private val clock: Clock = Clock.System,
 ) {
     private val tasks = ConcurrentHashMap<GameId, MutableSet<ScheduledFuture<*>>>()
 
@@ -42,11 +44,14 @@ class GameSessionTaskService(
         at: Instant,
         block: () -> Unit,
     ) {
+        kLogger.debug { "Scheduling task for game $gameId at $at (now=${clock.now()})" }
+
         val gameTasks = tasks.computeIfAbsent(gameId) { CopyOnWriteArraySet() }
         val futureRef = CompletableFuture<ScheduledFuture<*>>()
         val scheduled =
             taskScheduler.schedule({
                 try {
+                    kLogger.debug { "Executing task for game $gameId (scheduled at $at, now=${clock.now()})" }
                     block()
                 } catch (e: Exception) {
                     kLogger.error(e) { "Error in scheduled task for game $gameId" }
