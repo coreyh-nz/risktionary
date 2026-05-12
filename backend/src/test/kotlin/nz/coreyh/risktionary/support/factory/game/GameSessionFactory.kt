@@ -2,16 +2,21 @@ package nz.coreyh.risktionary.support.factory.game
 
 import nz.coreyh.risktionary.game.application.session.GameSession
 import nz.coreyh.risktionary.game.domain.model.GameId
-import nz.coreyh.risktionary.support.factory.user.createTestUserId
-import nz.coreyh.risktionary.user.domain.model.UserId
+import nz.coreyh.risktionary.game.domain.model.host.GameSessionHost
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 fun createTestGameSession(
     id: GameId = createTestGameId(),
-    hostId: UserId = createTestUserId(),
+    host: GameSessionHost = createTestGameSessionHostConnected(),
     code: String = "123456",
+    clock: Clock = Clock.System,
+    createdAt: Instant = clock.now(),
 ): GameSession =
     GameSession(
         id = id,
-        hostId = hostId,
+        host = host,
         code = code,
+        createdAt = createdAt,
+        clock = clock,
     )

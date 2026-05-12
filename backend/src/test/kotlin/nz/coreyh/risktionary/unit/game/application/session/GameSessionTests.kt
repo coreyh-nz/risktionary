@@ -10,9 +10,11 @@ import nz.coreyh.risktionary.game.domain.model.player.GamePlayerStatus
 import nz.coreyh.risktionary.support.factory.game.createTestGameId
 import nz.coreyh.risktionary.support.factory.game.createTestGamePlayerId
 import nz.coreyh.risktionary.support.factory.game.createTestGamePlayerSession
+import nz.coreyh.risktionary.support.factory.game.createTestGameSessionHostConnected
 import nz.coreyh.risktionary.support.factory.user.createTestUserId
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import kotlin.time.Clock
 
 class GameSessionTests {
     private lateinit var session: GameSession
@@ -22,7 +24,13 @@ class GameSessionTests {
 
     @BeforeEach
     fun setup() {
-        session = GameSession(gameId, hostId, code)
+        session =
+            GameSession(
+                id = gameId,
+                host = createTestGameSessionHostConnected(hostId),
+                code = code,
+                createdAt = Clock.System.now(),
+            )
     }
 
     @Test

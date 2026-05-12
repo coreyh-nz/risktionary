@@ -43,6 +43,12 @@ app:
   game:
     ticket:
       lifetime: 30m
+    session:
+      cleanup:
+        interval: 30s
+        host-join-grace-period: 60s
+        host-abandoned-timeout: 5m
+        stuck-starting-timeout: 2m
 
 jwt:
   access-lifetime: 30d
