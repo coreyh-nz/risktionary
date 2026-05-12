@@ -7,6 +7,8 @@ import nz.coreyh.risktionary.game.application.session.GameSession
 import nz.coreyh.risktionary.game.application.store.GameSessionStore
 import nz.coreyh.risktionary.game.domain.model.GameId
 import nz.coreyh.risktionary.game.domain.model.createGameId
+import nz.coreyh.risktionary.game.domain.model.host.GameSessionHost
+import nz.coreyh.risktionary.game.domain.model.host.GameSessionHostStatus
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerId
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerIdentity
 import nz.coreyh.risktionary.game.domain.model.player.GameTicket
@@ -38,14 +40,28 @@ class GameSessionService(
      */
     fun createSession(hostId: UserId): GameSession {
         val gameId = createGameId()
+        val host = GameSessionHost(hostId, GameSessionHostStatus.Pending)
         val code = generateCode()
-        val session = GameSession(gameId, hostId, code)
+        val createdAt = clock.now()
+        val session =
+            GameSession(
+                id = gameId,
+                host = host,
+                code = code,
+                createdAt = createdAt,
+            )
         gameSessionStore.addSession(gameId, session)
         return session
     }
 
+    fun getSessions(): List<GameSession> = gameSessionStore.getAll()
+
     fun getSessionByCode(code: String): GameSession =
         gameSessionStore.findByCode(code)
+            ?: throw GameNotFoundException()
+
+    fun getSessionByHostId(hostId: UserId): GameSession =
+        gameSessionStore.findByHostId(hostId)
             ?: throw GameNotFoundException()
 
     fun getSession(gameId: GameId): GameSession =
@@ -123,6 +139,26 @@ class GameSessionService(
             gameId = gameId,
             player = player,
         )
+    }
+
+    fun handleHostConnected(
+        hostId: UserId,
+        gameId: GameId,
+    ) {
+        val session = getSession(gameId)
+        if (session.host.id != hostId) throw GameNotFoundException()
+
+        session.host.connect(clock.now())
+    }
+
+    fun handleHostDisconnected(
+        hostId: UserId,
+        gameId: GameId,
+    ) {
+        val session = getSession(gameId)
+        if (session.host.id != hostId) throw GameNotFoundException()
+
+        session.host.disconnect(clock.now())
     }
 
     fun handleReady(playerId: GamePlayerId) {

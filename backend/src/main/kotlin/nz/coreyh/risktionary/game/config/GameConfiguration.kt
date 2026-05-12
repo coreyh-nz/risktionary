@@ -7,14 +7,23 @@ import java.time.Duration
 import kotlin.time.toKotlinDuration
 
 @Configuration
-@EnableConfigurationProperties(TicketProperties::class)
-class GameConfiguration(
-    val ticketProperties: TicketProperties,
-)
+@EnableConfigurationProperties(TicketProperties::class, GameSessionCleanupProperties::class)
+class GameConfiguration
 
 @ConfigurationProperties("app.game.ticket")
 class TicketProperties(
     lifetime: Duration, // spring only supports java duration afaik
 ) {
     val lifetime = lifetime.toKotlinDuration()
+}
+
+@ConfigurationProperties(prefix = "app.game.session.cleanup")
+class GameSessionCleanupProperties(
+    hostJoinGracePeriod: Duration,
+    hostAbandonedTimeout: Duration,
+    stuckStartingTimeout: Duration,
+) {
+    val hostJoinGracePeriod = hostJoinGracePeriod.toKotlinDuration()
+    val hostAbandonedTimeout = hostAbandonedTimeout.toKotlinDuration()
+    val stuckStartingTimeout = stuckStartingTimeout.toKotlinDuration()
 }

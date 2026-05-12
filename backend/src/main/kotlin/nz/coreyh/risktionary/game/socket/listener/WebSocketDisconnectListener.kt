@@ -12,7 +12,20 @@ class WebSocketDisconnectListener(
 ) : ApplicationListener<SessionDisconnectEvent> {
     override fun onApplicationEvent(event: SessionDisconnectEvent) {
         val principal = event.user as? GameSocketPrincipal ?: return
-        if (principal !is GameSocketPrincipal.Player) return
-        gameSessionService.handleDisconnected(gameId = principal.gameId, playerId = principal.id)
+        when (principal) {
+            is GameSocketPrincipal.Player -> {
+                gameSessionService.handleDisconnected(
+                    gameId = principal.gameId,
+                    playerId = principal.id,
+                )
+            }
+
+            is GameSocketPrincipal.Host -> {
+                gameSessionService.handleHostDisconnected(
+                    gameId = principal.gameId,
+                    hostId = principal.id,
+                )
+            }
+        }
     }
 }

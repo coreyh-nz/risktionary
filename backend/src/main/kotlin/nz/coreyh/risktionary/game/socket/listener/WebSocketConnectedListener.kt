@@ -12,7 +12,20 @@ class WebSocketConnectedListener(
 ) : ApplicationListener<SessionConnectedEvent> {
     override fun onApplicationEvent(event: SessionConnectedEvent) {
         val principal = event.user as? GameSocketPrincipal ?: return
-        if (principal !is GameSocketPrincipal.Player) return
-        gameSessionService.handleConnected(gameId = principal.gameId, playerId = principal.id)
+        when (principal) {
+            is GameSocketPrincipal.Player -> {
+                gameSessionService.handleConnected(
+                    gameId = principal.gameId,
+                    playerId = principal.id,
+                )
+            }
+
+            is GameSocketPrincipal.Host -> {
+                gameSessionService.handleHostConnected(
+                    gameId = principal.gameId,
+                    hostId = principal.id,
+                )
+            }
+        }
     }
 }

@@ -3,6 +3,7 @@ package nz.coreyh.risktionary.unit.game.application.service
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.Runs
 import io.mockk.every
 import io.mockk.just
@@ -17,6 +18,7 @@ import nz.coreyh.risktionary.game.application.session.GamePlayerSession
 import nz.coreyh.risktionary.game.application.session.GameSession
 import nz.coreyh.risktionary.game.application.store.GameSessionStore
 import nz.coreyh.risktionary.game.domain.model.GameState
+import nz.coreyh.risktionary.game.domain.model.host.GameSessionHostStatus
 import nz.coreyh.risktionary.game.domain.model.player.GameTicket
 import nz.coreyh.risktionary.game.socket.messages.GameEventPublisher
 import nz.coreyh.risktionary.support.factory.game.createTestGameId
@@ -60,15 +62,19 @@ class GameSessionServiceTests {
     inner class Create {
         @Test
         fun `create session creates session when host id is provided`() {
+            val now = Clock.System.now()
             val hostId = createTestUserId()
+            every { clock.now() } returns now
             every { gameSessionStore.findByCode(any()) } returns null
             every { gameSessionStore.addSession(any(), any()) } just Runs
 
             val session = service.createSession(hostId)
 
-            session.hostId shouldBe hostId
+            session.host.id shouldBe hostId
+            session.host.status.shouldBeInstanceOf<GameSessionHostStatus.Pending>()
             session.id shouldNotBe null
             session.code.length shouldBe GameSessionService.CODE_LENGTH
+            session.createdAt shouldBe now
             verify { gameSessionStore.addSession(session.id, session) }
         }
 

@@ -7,12 +7,13 @@ import nz.coreyh.risktionary.game.application.exception.GameStateInvalidExceptio
 import nz.coreyh.risktionary.game.domain.model.GameId
 import nz.coreyh.risktionary.game.domain.model.GameState
 import nz.coreyh.risktionary.game.domain.model.GameStateType
+import nz.coreyh.risktionary.game.domain.model.host.GameSessionHost
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerId
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerStatus
-import nz.coreyh.risktionary.user.domain.model.UserId
 import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
+import kotlin.time.Clock
 import kotlin.time.Duration
+import kotlin.time.Instant
 
 /**
  * Represents the live, in‑memory state of an active game session.
@@ -31,60 +32,87 @@ import kotlin.time.Duration
  */
 class GameSession(
     val id: GameId,
-    val hostId: UserId,
+    val host: GameSessionHost,
     val code: String,
-) {
+    val createdAt: Instant,
+    private val clock: Clock = Clock.System,
+) : LockableSession() {
     private val players: MutableMap<GamePlayerId, GamePlayerSession> = mutableMapOf()
-    private val lock = ReentrantLock()
 
+    /** The current lifecycle state of the game session. */
     var state: GameState = GameState.Lobby
-        get() = lock.withLock { field }
-        set(value) = lock.withLock { field = value }
+        get() = withLock { field }
+        set(value) = withLock { field = value }
 
-    fun getPlayers(): List<GamePlayerSession> = lock.withLock { players.values.toList() }
+    /** The timestamp of the most recent meaningful session activity.*/
+    var lastActivityAt: Instant = createdAt
+        get() = withLock { field }
+        private set
 
-    fun getPlayer(playerId: GamePlayerId): GamePlayerSession =
-        lock.withLock { players[playerId] ?: throw GamePlayerNotInSessionException() }
+    fun getPlayers(): List<GamePlayerSession> = withLock { players.values.toList() }
 
-    fun findPlayer(playerId: GamePlayerId): GamePlayerSession? = lock.withLock { players[playerId] }
+    fun getPlayer(playerId: GamePlayerId): GamePlayerSession = withLock { players[playerId] ?: throw GamePlayerNotInSessionException() }
+
+    fun findPlayer(playerId: GamePlayerId): GamePlayerSession? = withLock { players[playerId] }
 
     /**
      * Registers a player as having requested to join the session.
      *
+     * @param player the player session to register.
      * @throws GamePlayerAlreadyInSessionException if the player is already present.
      */
-    fun requestJoin(player: GamePlayerSession) =
-        lock.withLock {
+    fun requestJoin(player: GamePlayerSession): Unit =
+        withLock {
             if (players.containsKey(player.id)) {
                 throw GamePlayerAlreadyInSessionException()
             }
-            players[player.id] = player
+            withActivity { players[player.id] = player }
         }
 
     /**
      * Marks a player as attempting to establish a WebSocket connection.
+     *
+     * Valid transitions:
+     * - [GamePlayerStatus.PENDING] -> [GamePlayerStatus.CONNECTING]
+     * - [GamePlayerStatus.DISCONNECTED] -> [GamePlayerStatus.CONNECTING]
+     *
+     * @param playerId the identifier of the player connecting.
+     * @throws GamePlayerNotInSessionException if the player does not belong to this session.
+     * @throws GamePlayerStateInvalidException if the player's current state is invalid.
      */
-    fun connect(playerId: GamePlayerId) =
-        lock.withLock {
+    fun connect(playerId: GamePlayerId): Unit =
+        withLock {
             val player = getPlayer(playerId)
             when (player.status) {
                 GamePlayerStatus.PENDING,
                 GamePlayerStatus.DISCONNECTED,
-                -> player.status = GamePlayerStatus.CONNECTING
+                -> {
+                    withActivity { player.status = GamePlayerStatus.CONNECTING }
+                }
 
-                else -> throw GamePlayerStateInvalidException()
+                else -> {
+                    throw GamePlayerStateInvalidException()
+                }
             }
         }
 
     /**
      * Marks a player as fully connected and active in the session.
+     *
+     * Valid transitions:
+     * - [GamePlayerStatus.CONNECTING] -> [GamePlayerStatus.ACTIVE]
+     *
+     * @param playerId the identifier of the player activating.
+     * @return the activated player session.
+     * @throws GamePlayerNotInSessionException if the player does not belong to this session.
+     * @throws GamePlayerStateInvalidException if the player's current state is invalid.
      */
     fun activate(playerId: GamePlayerId): GamePlayerSession =
-        lock.withLock {
+        withLock {
             val player = getPlayer(playerId)
             when (player.status) {
                 GamePlayerStatus.CONNECTING -> {
-                    player.status = GamePlayerStatus.ACTIVE
+                    withActivity { player.status = GamePlayerStatus.ACTIVE }
                 }
 
                 else -> {
@@ -94,12 +122,22 @@ class GameSession(
             player
         }
 
-    fun disconnect(playerId: GamePlayerId) =
-        lock.withLock {
+    /**
+     * Marks a player as disconnected from the session.
+     *
+     * Valid transitions:
+     * - [GamePlayerStatus.ACTIVE] -> [GamePlayerStatus.DISCONNECTED]
+     *
+     * @param playerId the identifier of the player disconnecting.
+     * @throws GamePlayerNotInSessionException if the player does not belong to this session.
+     * @throws GamePlayerStateInvalidException if the player's current state is invalid.
+     */
+    fun disconnect(playerId: GamePlayerId): Unit =
+        withLock {
             val player = getPlayer(playerId)
             when (player.status) {
                 GamePlayerStatus.ACTIVE -> {
-                    player.status = GamePlayerStatus.DISCONNECTED
+                    withActivity { player.status = GamePlayerStatus.DISCONNECTED }
                 }
 
                 else -> {
@@ -108,21 +146,50 @@ class GameSession(
             }
         }
 
-    fun transitionToStarting(startingIn: Duration) {
-        lock.withLock {
+    /**
+     * Transitions the session into the starting state.
+     *
+     * Valid transitions:
+     * - [GameStateType.LOBBY] -> [GameStateType.STARTING]
+     *
+     * @param startingIn the remaining duration before the game begins.
+     * @throws GameStateInvalidException if the current session state is invalid.
+     */
+    fun transitionToStarting(startingIn: Duration): Unit =
+        withLock {
             requireState(GameStateType.LOBBY)
-            state = GameState.Starting(startingIn)
+            withActivity { state = GameState.Starting(startingIn) }
         }
-    }
 
-    fun transitionToInProgress() {
-        lock.withLock {
+    /**
+     * Transitions the session into the in-progress state.
+     *
+     * Valid transitions:
+     * - [GameStateType.STARTING] -> [GameStateType.IN_PROGRESS]
+     *
+     * @throws GameStateInvalidException if the current session state is invalid.
+     */
+    fun transitionToInProgress(): Unit =
+        withLock {
             requireState(GameStateType.STARTING)
-            state = GameState.InProgress
+            withActivity { state = GameState.InProgress }
         }
-    }
 
+    /**
+     * Verifies that the session is currently in the required state.
+     *
+     * @param requiredState the required current state type.
+     * @throws GameStateInvalidException if the current state does not match.
+     */
     private fun requireState(requiredState: GameStateType) {
         if (state.type != requiredState) throw GameStateInvalidException()
     }
+
+    /**
+     * Executes the given block and updates the session activity timestamp.
+     *
+     * This helper should be used for all mutating operations that represent
+     * meaningful session activity.
+     */
+    private inline fun <T> withActivity(block: () -> T): T = block().also { lastActivityAt = clock.now() }
 }

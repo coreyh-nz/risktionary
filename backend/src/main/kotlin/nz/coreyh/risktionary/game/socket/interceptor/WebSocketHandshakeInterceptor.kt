@@ -184,7 +184,7 @@ class WebSocketHandshakeInterceptor(
             kLogger.debug { "Host handshake rejected: no game found for gameId=$gameId" }
             return response.rejectHandshake("Handshake rejected: invalid game id")
         }
-        if (game.hostId != principal.userId) {
+        if (game.host.id != principal.userId) {
             kLogger.debug { "Host handshake rejected: user ${principal.userId} is not host of game ${game.id}" }
             return response.rejectHandshake("Handshake rejected: invalid game id")
         }

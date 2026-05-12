@@ -13,11 +13,13 @@ class GameSessionStore {
     private val codeIndex: ConcurrentHashMap<String, GameId> = ConcurrentHashMap()
     private val playerIndex: ConcurrentHashMap<GamePlayerId, GameId> = ConcurrentHashMap()
 
+    fun getAll() = sessions.values.toList()
+
     fun findById(gameId: GameId): GameSession? = sessions[gameId]
 
     fun findByCode(code: String): GameSession? = codeIndex[code]?.let { sessions[it] }
 
-    fun findByHostId(userId: UserId): GameSession? = sessions.values.find { it.hostId == userId }
+    fun findByHostId(userId: UserId): GameSession? = sessions.values.find { it.host.id == userId }
 
     fun findByPlayerId(playerId: GamePlayerId): GameSession? = sessions.values.find { it.findPlayer(playerId) != null }
 
