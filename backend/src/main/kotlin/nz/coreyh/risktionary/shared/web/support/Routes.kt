@@ -25,5 +25,10 @@ object Routes {
             const val JOIN = "$BASE/join"
             const val SOCKET = "/ws"
         }
+
+        object Words {
+            const val BASE = "${V1.BASE}/words"
+            const val INDIVIDUAL = "$BASE/{id}"
+        }
     }
 }
