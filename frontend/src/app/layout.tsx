@@ -39,7 +39,9 @@ const RootLayout = async ({ children }: PropsWithChildren) => {
             }}
           />
 
-          <div className="relative z-10 min-h-svh">{children}</div>
+          <div className="relative z-10 min-h-svh flex flex-col">
+            {children}
+          </div>
         </div>
         <Toaster />
       </body>
