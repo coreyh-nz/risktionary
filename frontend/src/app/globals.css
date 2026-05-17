@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -150,5 +151,52 @@
     100% {
       transform: scale(1);
     }
+  }
+}
+
+.tiptap {
+  outline: none;
+  max-height: 30rem;
+  overflow-y: auto;
+
+  p {
+    @apply text-sm leading-7;
+  }
+
+  h1 {
+    @apply mb-2 text-2xl font-semibold tracking-tight;
+  }
+
+  h2 {
+    @apply mb-2 text-xl font-semibold tracking-tight;
+  }
+
+  h3 {
+    @apply mb-2 text-lg font-semibold tracking-tight;
+  }
+
+  ul {
+    @apply list-disc pl-6 text-sm leading-7;
+  }
+
+  ol {
+    @apply list-decimal pl-6 text-sm leading-7;
+  }
+
+  li {
+    @apply mb-1;
+  }
+
+  blockquote {
+    @apply border-l-2 border-muted-foreground pl-4 text-muted-foreground italic;
+  }
+
+  code {
+    @apply rounded bg-muted px-1 py-0.5 font-mono text-sm text-muted-foreground;
+  }
+
+  p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    @apply pointer-events-none float-left h-0 text-muted-foreground;
   }
 }
