@@ -1,37 +1,17 @@
-// components/layout/centered-layout.tsx
-import { cva, type VariantProps } from "class-variance-authority"
+import { type VariantProps } from "class-variance-authority"
 import { PropsWithChildren } from "react"
-import { cn } from "@/lib/utils"
-
-const centeredVariants = cva("flex items-center justify-center p-6", {
-  variants: {
-    size: {
-      sm: "max-w-sm",
-      md: "max-w-md",
-      lg: "max-w-lg",
-      xl: "max-w-2xl",
-      "2xl": "max-w-3xl",
-      "3xl": "max-w-4xl",
-      full: "max-w-full px-4",
-    },
-  },
-  defaultVariants: {
-    size: "lg",
-  },
-})
+import { Container, containerVariants } from "./container"
 
 interface CenteredLayoutProps
-  extends PropsWithChildren, VariantProps<typeof centeredVariants> {}
+  extends PropsWithChildren, VariantProps<typeof containerVariants> {}
 
 export const CenteredLayout = ({
   children,
   size = "lg",
 }: CenteredLayoutProps) => {
   return (
-    <div className="flex w-full items-center justify-center">
-      <div className={cn(centeredVariants({ size }), "w-full p-6")}>
-        {children}
-      </div>
+    <div className="flex flex-1 items-center justify-center">
+      <Container size={size}>{children}</Container>
     </div>
   )
 }
