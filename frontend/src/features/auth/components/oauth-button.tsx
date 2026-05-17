@@ -1,5 +1,4 @@
 import { PropsWithChildren, useState } from "react"
-// eslint-disable-next-line @next/next/no-html-link-for-pages
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"

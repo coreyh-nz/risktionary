@@ -1,5 +1,4 @@
-import { JsonSerializable } from "@/types/json"
-import { Client } from "@stomp/stompjs"
+import { Client, IMessage, StompSubscription } from "@stomp/stompjs"
 import {
   createContext,
   PropsWithChildren,
@@ -57,7 +56,12 @@ interface WebSocketContextValue {
   attempts: number
   error: string | null
 
-  send: (destination: string, body?: JsonSerializable) => void
+  send: (destination: string, body?: unknown) => void
+  subscribe: (
+    destination: string,
+    handler: (message: IMessage) => void
+  ) => StompSubscription | undefined
+  unsubscribe: (destination: string) => void
 }
 
 const WebSocketContext = createContext<WebSocketContextValue | null>(null)
@@ -119,24 +123,44 @@ export const WebSocketProvider = ({ children }: PropsWithChildren) => {
     dispatch({ type: "DISCONNECTED" })
   }, [])
 
-  const send = useCallback(
-    (destination: string, body: JsonSerializable = {}) => {
+  const send = useCallback((destination: string, body: unknown = {}) => {
+    const client = clientRef.current
+    if (!client?.active) {
+      console.warn(`[WebSocket] Cannot send to ${destination} - not connected`)
+      return
+    }
+
+    client.publish({
+      destination,
+      body: typeof body === "string" ? body : JSON.stringify(body),
+      headers: { "content-type": "application/json" },
+    })
+  }, [])
+
+  const subscribe = useCallback(
+    (destination: string, handler: (message: IMessage) => void) => {
       const client = clientRef.current
       if (!client?.active) {
         console.warn(
-          `[WebSocket] Cannot send to ${destination} - not connected`
+          `[WebSocket] Cannot subscribe to ${destination} - not connected`
         )
         return
       }
-
-      client.publish({
-        destination,
-        body: typeof body === "string" ? body : JSON.stringify(body),
-        headers: { "content-type": "application/json" },
-      })
+      return client.subscribe(destination, handler)
     },
     []
   )
+
+  const unsubscribe = useCallback((destination: string) => {
+    const client = clientRef.current
+    if (!client?.active) {
+      console.warn(
+        `[WebSocket] Cannot unsubscribe to ${destination} - not connected`
+      )
+      return
+    }
+    client.unsubscribe(destination)
+  }, [])
 
   return (
     <WebSocketContext.Provider
@@ -147,6 +171,8 @@ export const WebSocketProvider = ({ children }: PropsWithChildren) => {
         connected: state.connected,
         attempts: state.attempts,
         error: state.error,
+        subscribe,
+        unsubscribe,
       }}
     >
       {children}
