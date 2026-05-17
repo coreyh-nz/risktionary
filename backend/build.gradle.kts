@@ -26,6 +26,7 @@ dependencies {
 
     // database
     implementation("org.jetbrains.exposed:exposed-spring-boot4-starter:1.1.1")
+    implementation("org.jetbrains.exposed:exposed-kotlin-datetime:1.1.1")
     runtimeOnly("com.h2database:h2:2.4.240")
     runtimeOnly("org.postgresql:postgresql:42.7.11")
 

@@ -58,6 +58,13 @@ enum class ErrorCode(
         defaultMessage = "Game player not in use",
     ),
 
+    // Words
+    WORD_NOT_FOUND(
+        code = "word.not-found",
+        httpStatus = HttpStatus.NOT_FOUND,
+        defaultMessage = "Word not found",
+    ),
+
     // Generic
     INTERNAL_ERROR(
         code = "generic.internal-error",
