@@ -1,12 +1,13 @@
 package nz.coreyh.risktionary.user.domain.model
 
+import nz.coreyh.risktionary.shared.domain.model.Identifiable
 import nz.coreyh.risktionary.shared.extensions.toUuidOrNull
 import java.util.UUID
 
 @JvmInline
 value class UserId(
-    val value: UUID,
-) {
+    override val value: UUID,
+) : Identifiable {
     override fun toString(): String = value.toString()
 }
 
