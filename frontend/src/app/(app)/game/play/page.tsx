@@ -1,12 +1,14 @@
 "use client"
 
-import { GamePlayLobbyScreen } from "@/features/game/components/lobby/game-lobby-screen"
 import { assertNever } from "@/lib/utils"
 import { WebSocketProvider } from "@/providers/web-socket-provider"
 import ConnectingScreen from "@/features/game/components/lobby/connecting-screen"
 import { useGameState } from "@/features/game/stores/game-store-selectors"
 import { useGameConnection } from "@/features/game/hooks/use-game-connection"
 import { CenteredLayout } from "@/components/layout/centered-layout"
+import { GamePlayLobbyScreen } from "@/features/game/components/lobby/game-lobby-screen"
+import { FullPageLayout } from "@/components/layout/full-page-layout"
+import { DrawingScreen } from "@/features/game/components/drawing/drawing-screen"
 
 const GamePlayPage = () => {
   return (
@@ -40,7 +42,11 @@ const GameScreen = () => {
         </CenteredLayout>
       )
     case "IN_PROGRESS":
-      return <p>IN_PROGRESS</p>
+      return (
+        <FullPageLayout>
+          <DrawingScreen />
+        </FullPageLayout>
+      )
     case "PAUSED":
       return <p>PAUSED</p>
     case "COMPLETED":
