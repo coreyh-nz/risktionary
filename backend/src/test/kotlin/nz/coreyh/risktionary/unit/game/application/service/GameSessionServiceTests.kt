@@ -14,6 +14,7 @@ import nz.coreyh.risktionary.game.application.exception.GamePlayerDisplayNameInU
 import nz.coreyh.risktionary.game.application.service.GameSessionService
 import nz.coreyh.risktionary.game.application.service.GameSessionTaskService
 import nz.coreyh.risktionary.game.application.service.GameTicketService
+import nz.coreyh.risktionary.game.application.service.round.GameRoundSessionService
 import nz.coreyh.risktionary.game.application.session.GamePlayerSession
 import nz.coreyh.risktionary.game.application.session.GameSession
 import nz.coreyh.risktionary.game.application.store.GameSessionStore
@@ -26,6 +27,7 @@ import nz.coreyh.risktionary.support.factory.game.createTestGamePlayerId
 import nz.coreyh.risktionary.support.factory.game.createTestGamePlayerIdentityGuest
 import nz.coreyh.risktionary.support.factory.game.createTestGamePlayerSession
 import nz.coreyh.risktionary.support.factory.user.createTestUserId
+import nz.coreyh.risktionary.words.application.service.WordService
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -36,6 +38,8 @@ import kotlin.time.Duration.Companion.seconds
 class GameSessionServiceTests {
     private lateinit var gameSessionTaskService: GameSessionTaskService
     private lateinit var gameTicketService: GameTicketService
+    private lateinit var wordService: WordService
+    private lateinit var gameRoundSessionService: GameRoundSessionService
     private lateinit var gameSessionStore: GameSessionStore
     private lateinit var gameEventPublisher: GameEventPublisher
     private lateinit var clock: Clock
@@ -45,6 +49,8 @@ class GameSessionServiceTests {
     fun setup() {
         gameSessionTaskService = mockk()
         gameTicketService = mockk()
+        wordService = mockk()
+        gameRoundSessionService = mockk()
         gameSessionStore = mockk()
         gameEventPublisher = mockk()
         clock = mockk()
@@ -52,6 +58,8 @@ class GameSessionServiceTests {
             GameSessionService(
                 gameSessionTaskService,
                 gameTicketService,
+                wordService,
+                gameRoundSessionService,
                 gameSessionStore,
                 gameEventPublisher,
                 clock,

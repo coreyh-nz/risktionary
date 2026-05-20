@@ -39,6 +39,7 @@ class GameSession(
     private val clock: Clock = Clock.System,
 ) : LockableSession() {
     private val players: MutableMap<GamePlayerId, GamePlayerSession> = mutableMapOf()
+    val volunteers: GameVolunteerSession = GameVolunteerSession()
 
     /** The current lifecycle state of the game session. */
     var state: GameState = GameState.Lobby

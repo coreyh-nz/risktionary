@@ -12,6 +12,7 @@ import nz.coreyh.risktionary.game.socket.messages.outbound.PlayerJoinedEvent
 import nz.coreyh.risktionary.game.socket.messages.outbound.PlayerLeftEvent
 import nz.coreyh.risktionary.game.socket.messages.outbound.PlayerListUpdatedEvent
 import nz.coreyh.risktionary.game.socket.messages.outbound.StateChangedEvent
+import nz.coreyh.risktionary.game.socket.messages.outbound.VolunteersUpdatedEvent
 import nz.coreyh.risktionary.game.socket.messages.outbound.round.RoundStateChangedEvent
 import nz.coreyh.risktionary.game.socket.messages.view.toView
 import nz.coreyh.risktionary.game.socket.support.WebSocketDestinations
@@ -62,6 +63,14 @@ class GameEventPublisher(
     ) = messagingTemplate.sendToTopic(
         destination = WebSocketDestinations.Topic.base(gameId),
         message = StateChangedEvent(gameState),
+    )
+
+    fun publishVolunteersUpdated(
+        gameId: GameId,
+        volunteers: List<GamePlayerId>,
+    ) = messagingTemplate.sendToTopic(
+        destination = WebSocketDestinations.Topic.base(gameId),
+        message = VolunteersUpdatedEvent(volunteers),
     )
 
     fun publishRoundStateChanged(

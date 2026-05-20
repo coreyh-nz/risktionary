@@ -2,8 +2,11 @@ package nz.coreyh.risktionary.game.application.service
 
 import nz.coreyh.risktionary.game.application.exception.GameNotFoundException
 import nz.coreyh.risktionary.game.application.exception.GamePlayerDisplayNameInUseException
+import nz.coreyh.risktionary.game.application.exception.GameStateInvalidException
+import nz.coreyh.risktionary.game.application.service.round.GameRoundSessionService
 import nz.coreyh.risktionary.game.application.session.GamePlayerSession
 import nz.coreyh.risktionary.game.application.session.GameSession
+import nz.coreyh.risktionary.game.application.session.round.GameRoundSession
 import nz.coreyh.risktionary.game.application.store.GameSessionStore
 import nz.coreyh.risktionary.game.domain.model.GameId
 import nz.coreyh.risktionary.game.domain.model.createGameId
@@ -15,6 +18,7 @@ import nz.coreyh.risktionary.game.domain.model.player.GameTicket
 import nz.coreyh.risktionary.game.domain.model.player.createPlayerId
 import nz.coreyh.risktionary.game.socket.messages.GameEventPublisher
 import nz.coreyh.risktionary.user.domain.model.UserId
+import nz.coreyh.risktionary.words.application.service.WordService
 import org.springframework.stereotype.Service
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
@@ -26,6 +30,8 @@ import kotlin.time.Duration.Companion.seconds
 class GameSessionService(
     private val gameSessionTaskService: GameSessionTaskService,
     private val gameTicketService: GameTicketService,
+    private val wordService: WordService,
+    private val gameRoundSessionService: GameRoundSessionService,
     private val gameSessionStore: GameSessionStore,
     private val gameEventPublisher: GameEventPublisher,
     private val clock: Clock = Clock.System,
@@ -34,7 +40,6 @@ class GameSessionService(
      * Creates a new in‑memory [GameSession] and registers it in the session store.
      *
      * @param hostId The user who created the game.
-     * @param code   The join code associated with the game.
      *
      * @return The newly created session.
      */
@@ -172,12 +177,17 @@ class GameSessionService(
         gameId: GameId,
         playerId: GamePlayerId,
     ) {
-        val gameSession = getSession(gameId)
-        gameSession.disconnect(playerId)
+        val session = getSession(gameId)
+        session.disconnect(playerId)
+        session.volunteers.removeIfPresent(playerId)
 
         gameEventPublisher.publishPlayerLeft(
             gameId = gameId,
             playerId = playerId,
+        )
+        gameEventPublisher.publishVolunteersUpdated(
+            gameId = gameId,
+            volunteers = session.volunteers.getVolunteers(),
         )
     }
 
@@ -200,12 +210,89 @@ class GameSessionService(
     fun transitionToInProgress(gameId: GameId) {
         val session = getSession(gameId)
         session.transitionToInProgress()
-
         gameEventPublisher.publishStateChanged(
             gameId = gameId,
             gameState = session.state,
         )
+
+        // TODO: replace this with actually getting a word
+        val word = wordService.findWords().first()
+        gameRoundSessionService.createRound(gameId = gameId, word = word)
     }
+
+    /**
+     * Registers a player as a volunteer to draw.
+     *
+     * @param gameId the game session.
+     * @param playerId the player volunteering.
+     * @throws GameNotFoundException if the session does not exist.
+     * @throws GamePlayerNotInSessionException if the player is not active in the session.
+     * @throws GamePlayerStateInvalidException if the player has already volunteered.
+     */
+    fun handleVolunteer(
+        gameId: GameId,
+        playerId: GamePlayerId,
+    ) {
+        val session = getSession(gameId)
+        requireActivePlayer(session, playerId)
+        session.volunteers.volunteer(playerId)
+
+        gameEventPublisher.publishVolunteersUpdated(
+            gameId = gameId,
+            volunteers = session.volunteers.getVolunteers(),
+        )
+    }
+
+    /**
+     * Removes a player's volunteer nomination.
+     *
+     * @param gameId the game session.
+     * @param playerId the player withdrawing their volunteer.
+     * @throws GameNotFoundException if the session does not exist.
+     * @throws GamePlayerNotInSessionException if the player is not active in the session.
+     * @throws GamePlayerStateInvalidException if the player has not volunteered.
+     */
+    fun handleUnvolunteer(
+        gameId: GameId,
+        playerId: GamePlayerId,
+    ) {
+        val session = getSession(gameId)
+        requireActivePlayer(session, playerId)
+        session.volunteers.unvolunteer(playerId)
+
+        gameEventPublisher.publishVolunteersUpdated(
+            gameId = gameId,
+            volunteers = session.volunteers.getVolunteers(),
+        )
+    }
+
+    fun handleSelectDrawer(
+        gameId: GameId,
+        playerId: GamePlayerId,
+    ) {
+        val session = getSession(gameId)
+        val round = session.currentRound.requireActiveRound()
+        round.selectDrawer(drawerId = playerId)
+
+        gameEventPublisher.publishRoundStateChanged(gameId, round.state)
+
+        // unvolunteer for the next round
+        session.volunteers.unvolunteer(playerId)
+
+        gameEventPublisher.publishVolunteersUpdated(
+            gameId = gameId,
+            volunteers = session.volunteers.getVolunteers(),
+        )
+    }
+
+    private fun requireActivePlayer(
+        session: GameSession,
+        playerId: GamePlayerId,
+    ) {
+        session.getPlayer(playerId)
+    }
+
+    private fun (GameRoundSession?).requireActiveRound(): GameRoundSession = this ?: throw GameStateInvalidException()
 
     private fun generateCode(): String {
         repeat(10) {

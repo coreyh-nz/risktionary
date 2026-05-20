@@ -6,6 +6,7 @@ import nz.coreyh.risktionary.game.socket.messages.inbound.drawing.DrawingCommand
 import nz.coreyh.risktionary.game.socket.messages.inbound.drawing.DrawingStrokeEndCommand
 import nz.coreyh.risktionary.game.socket.messages.inbound.drawing.DrawingStrokePointsCommand
 import nz.coreyh.risktionary.game.socket.messages.inbound.drawing.DrawingStrokeStartCommand
+import nz.coreyh.risktionary.game.socket.messages.inbound.round.SelectDrawerCommand
 import nz.coreyh.risktionary.game.socket.messages.outbound.drawing.DrawingCanvasClearEvent
 import nz.coreyh.risktionary.game.socket.messages.outbound.drawing.DrawingStrokeEndEvent
 import nz.coreyh.risktionary.game.socket.messages.outbound.drawing.DrawingStrokePointsEvent
@@ -80,5 +81,29 @@ class GameSocketController(
             WebSocketDestinations.Topic.draw(gameId),
             event,
         )
+    }
+
+    @MessageMapping("/game/volunteer")
+    fun onVolunteer(principal: GameSocketPrincipal) {
+        if (principal !is GameSocketPrincipal.Player) return
+
+        gameSessionService.handleVolunteer(principal.gameId, principal.id)
+    }
+
+    @MessageMapping("/game/unvolunteer")
+    fun onUnvolunteer(principal: GameSocketPrincipal) {
+        if (principal !is GameSocketPrincipal.Player) return
+
+        gameSessionService.handleUnvolunteer(principal.gameId, principal.id)
+    }
+
+    @MessageMapping("/game/select-drawer")
+    fun onSelectDrawer(
+        principal: GameSocketPrincipal,
+        command: SelectDrawerCommand,
+    ) {
+        if (principal !is GameSocketPrincipal.Host) return
+
+        gameSessionService.handleSelectDrawer(principal.gameId, command.drawerId)
     }
 }
