@@ -4,6 +4,7 @@ import nz.coreyh.risktionary.game.application.exception.GamePlayerAlreadyInSessi
 import nz.coreyh.risktionary.game.application.exception.GamePlayerNotInSessionException
 import nz.coreyh.risktionary.game.application.exception.GamePlayerStateInvalidException
 import nz.coreyh.risktionary.game.application.exception.GameStateInvalidException
+import nz.coreyh.risktionary.game.application.session.round.GameRoundSession
 import nz.coreyh.risktionary.game.domain.model.GameId
 import nz.coreyh.risktionary.game.domain.model.GameState
 import nz.coreyh.risktionary.game.domain.model.GameStateType
@@ -48,6 +49,10 @@ class GameSession(
     var lastActivityAt: Instant = createdAt
         get() = withLock { field }
         private set
+
+    var currentRound: GameRoundSession? = null
+        get() = withLock { field }
+        set(value) = withLock { field = value }
 
     fun getPlayers(): List<GamePlayerSession> = withLock { players.values.toList() }
 

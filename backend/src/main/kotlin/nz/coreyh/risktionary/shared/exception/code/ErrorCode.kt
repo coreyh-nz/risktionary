@@ -58,6 +58,18 @@ enum class ErrorCode(
         defaultMessage = "Game player not in use",
     ),
 
+    // Game round
+    GAME_ROUND_NOT_FOUND(
+        code = "game.round-not-found",
+        httpStatus = HttpStatus.NOT_FOUND,
+        defaultMessage = "Game round not found",
+    ),
+    GAME_ROUND_STATE_INVALID(
+        code = "game.round-state-invalid",
+        httpStatus = HttpStatus.BAD_REQUEST,
+        defaultMessage = "Game round state invalid",
+    ),
+
     // Words
     WORD_NOT_FOUND(
         code = "word.not-found",
