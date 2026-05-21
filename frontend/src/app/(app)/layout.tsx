@@ -1,10 +1,10 @@
-import { Navbar } from "@/components/layout/navbar"
-import { getCurrentUser } from "@/features/auth/api/auth.api"
-import { AuthProvider } from "@/providers/auth-provider"
-import { PropsWithChildren } from "react"
-import { User } from "@/features/auth/types/user"
 import { ServiceUnavailablePage } from "@/components/error/service-unavailable-page"
 import { CenteredLayout } from "@/components/layout/centered-layout"
+import { Navbar } from "@/components/layout/navbar"
+import { getCurrentUser } from "@/features/auth/api/auth.api"
+import { User } from "@/features/auth/types/user"
+import { AuthProvider } from "@/providers/auth-provider"
+import { PropsWithChildren } from "react"
 
 const AppLayout = async ({ children }: PropsWithChildren) => {
   let user: User | null = null
@@ -25,7 +25,7 @@ const AppLayout = async ({ children }: PropsWithChildren) => {
     <AuthProvider user={user}>
       <div className="flex min-h-svh flex-col">
         <Navbar />
-        <main className="mt-18 flex flex-1">{children}</main>
+        <main className="flex flex-1">{children}</main>
       </div>
     </AuthProvider>
   )
