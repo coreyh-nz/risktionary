@@ -69,7 +69,7 @@ const RootLayout = ({ children }: PropsWithChildren) => {
             }}
           />
 
-          <div className="relative z-10 min-h-svh flex flex-col">
+          <div className="relative z-10 min-h-svh flex flex-col gap-4">
             <AppShell>{children}</AppShell>
           </div>
         </div>

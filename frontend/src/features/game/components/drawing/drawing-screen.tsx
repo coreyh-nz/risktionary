@@ -1,4 +1,8 @@
-import { useGameRoundState, useGameSession, } from "../../stores/game-store-selectors"
+import {
+  useGameRoundState,
+  useGameSession,
+} from "../../stores/game-store-selectors"
+import { RoundWordView } from "../round/round-word-view"
 import { DrawerPanel } from "./panel/drawer-panel"
 import { SpectatorPanel } from "./panel/spectator-panel"
 
@@ -12,7 +16,10 @@ export const DrawingScreen = () => {
     session?.role === "player" && session.playerId === roundState.drawerId
 
   return (
-    <div className="mx-auto flex max-w-7xl flex-1">
+    <div className="mx-auto flex flex-col max-w-7xl flex-1">
+      <div className="flex justify-center">
+        <RoundWordView />
+      </div>
       {isDrawer ? <DrawerPanel /> : <SpectatorPanel />}
     </div>
   )

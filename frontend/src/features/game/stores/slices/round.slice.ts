@@ -1,30 +1,28 @@
 import { StateCreator } from "zustand"
-import { RoundState } from "../../types/round"
+import { RoundRole, RoundState, WordHint } from "../../types/round"
 
 export interface RoundSlice {
   roundState: RoundState | null
-  setRoundState: (state: RoundState) => void
-  resetRound: () => void
+  roundRole: RoundRole | null
 
-  volunteers: string[]
-  addVolunteer: (playerId: string) => void
-  removeVolunteer: (playerId: string) => void
+  setRoundState: (state: RoundState) => void
+
+  setRoundDrawer: (word: string) => void
+  setRoundGuesser: (hint: WordHint) => void
+
+  resetRound: () => void
 }
 
 export const createRoundSlice: StateCreator<RoundSlice, [], [], RoundSlice> = (
   set
 ) => ({
   roundState: null,
-  setRoundState: (roundState) => set({ roundState }),
-  resetRound: () => set({ roundState: null }),
+  roundRole: null,
 
-  volunteers: [],
-  addVolunteer: (playerId: string) =>
-    set((state) => ({
-      volunteers: [...state.volunteers, playerId],
-    })),
-  removeVolunteer: (playerId: string) =>
-    set((state) => ({
-      volunteers: state.volunteers.filter((id) => id !== playerId),
-    })),
+  setRoundState: (roundState) => set({ roundState }),
+
+  setRoundDrawer: (word) => set({ roundRole: { type: "DRAWER", word } }),
+  setRoundGuesser: (hint) => set({ roundRole: { type: "GUESSER", hint } }),
+
+  resetRound: () => set({ roundState: null }),
 })
