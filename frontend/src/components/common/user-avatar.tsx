@@ -29,20 +29,25 @@ const COLORS = [
 ]
 
 const getInitials = (props: UserAvatarProps) => {
+  const first = props.firstName?.trim()
+  const last = props.lastName?.trim()
+
+  if (first || last) {
+    return `${first?.[0] ?? ""}${last?.[0] ?? ""}`.toUpperCase()
+  }
+
   if (props.displayName) {
-    const parts = props.displayName.trim().split(" ").filter(Boolean)
+    const parts = props.displayName.trim().split(/\s+/).filter(Boolean)
+
+    if (parts.length === 0) {
+      return "?"
+    }
 
     if (parts.length === 1) {
       return parts[0][0].toUpperCase()
     }
 
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-  }
-
-  if (props.firstName || props.lastName) {
-    const first = props.firstName?.[0] ?? ""
-    const last = props.lastName?.[0] ?? ""
-    return (first + last).toUpperCase()
+    return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
   }
 
   return "?"
