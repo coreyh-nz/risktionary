@@ -6,11 +6,13 @@ import io.mockk.every
 import io.mockk.mockk
 import nz.coreyh.risktionary.auth.domain.model.OAuthProvider
 import nz.coreyh.risktionary.auth.infrastructure.extractor.MicrosoftOAuthUserInfoExtractor
+import nz.coreyh.risktionary.support.annotation.MockKTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.security.oauth2.core.oidc.user.OidcUser
 import org.springframework.security.oauth2.core.user.OAuth2User
 
+@MockKTest
 class MicrosoftOAuthUserInfoExtractorTests {
     private lateinit var extractor: MicrosoftOAuthUserInfoExtractor
 
@@ -51,7 +53,6 @@ class MicrosoftOAuthUserInfoExtractorTests {
     fun `extract throws when oid attribute is missing`() {
         val oidcUser = mockk<OidcUser>()
         every { oidcUser.getAttribute<String>("oid") } returns null
-        every { oidcUser.email } returns "jane@example.com"
 
         shouldThrow<IllegalArgumentException> {
             extractor.extract(oidcUser)

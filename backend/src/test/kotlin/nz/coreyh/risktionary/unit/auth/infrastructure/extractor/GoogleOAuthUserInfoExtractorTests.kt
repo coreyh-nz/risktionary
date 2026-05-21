@@ -6,11 +6,13 @@ import io.mockk.every
 import io.mockk.mockk
 import nz.coreyh.risktionary.auth.domain.model.OAuthProvider
 import nz.coreyh.risktionary.auth.infrastructure.extractor.GoogleOAuthUserInfoExtractor
+import nz.coreyh.risktionary.support.annotation.MockKTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.security.oauth2.core.oidc.user.OidcUser
 import org.springframework.security.oauth2.core.user.OAuth2User
 
+@MockKTest
 class GoogleOAuthUserInfoExtractorTests {
     private lateinit var extractor: GoogleOAuthUserInfoExtractor
 
@@ -52,9 +54,6 @@ class GoogleOAuthUserInfoExtractorTests {
         val oidcUser = mockk<OidcUser>()
         every { oidcUser.subject } returns "google-123"
         every { oidcUser.email } returns null
-        every { oidcUser.givenName } returns "Jane"
-        every { oidcUser.familyName } returns "Doe"
-        every { oidcUser.fullName } returns "Jane Doe"
 
         shouldThrow<IllegalArgumentException> {
             extractor.extract(oidcUser)
