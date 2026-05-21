@@ -1,14 +1,13 @@
 package nz.coreyh.risktionary.unit.game.application.service
 
-import io.mockk.Runs
 import io.mockk.every
-import io.mockk.just
 import io.mockk.justRun
 import io.mockk.mockk
 import io.mockk.verify
 import nz.coreyh.risktionary.game.application.service.GameSessionCleanupService
 import nz.coreyh.risktionary.game.application.service.GameSessionService
 import nz.coreyh.risktionary.game.config.GameSessionCleanupProperties
+import nz.coreyh.risktionary.support.annotation.MockKTest
 import nz.coreyh.risktionary.support.factory.game.createTestGameSession
 import nz.coreyh.risktionary.support.factory.game.createTestGameSessionHostConnected
 import nz.coreyh.risktionary.support.factory.game.createTestGameSessionHostDisconnected
@@ -20,6 +19,7 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 
+@MockKTest
 class GameSessionCleanupServiceTests {
     private lateinit var gameSessionService: GameSessionService
     private lateinit var clock: Clock
@@ -120,7 +120,6 @@ class GameSessionCleanupServiceTests {
             )
         every { clock.now() } returns now
         every { gameSessionService.getSessions() } returns listOf(session)
-        every { gameSessionService.removeSession(session.id) } just Runs
 
         gameSessionCleanupService.cleanupStaleSessions()
 
@@ -176,10 +175,7 @@ class GameSessionCleanupServiceTests {
     @Test
     fun `cleanup stale sessions does not remove session when host is connected and session is not in starting state`() {
         val now = Clock.System.now()
-        val sessionClock =
-            mockk<Clock> {
-                every { now() } returns now - cleanupProperties.stuckStartingTimeout - 1.minutes
-            }
+        val sessionClock = mockk<Clock>()
         every { clock.now() } returns now
 
         val session =

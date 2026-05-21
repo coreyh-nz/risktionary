@@ -14,3 +14,5 @@ value class WordId(
 fun UUID.toWordId(): WordId = WordId(this)
 
 fun String.toWordIdOrNull(): WordId? = toUuidOrNull()?.let(::WordId)
+
+fun createWordId(): WordId = WordId(UUID.randomUUID())

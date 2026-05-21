@@ -4,6 +4,7 @@ import nz.coreyh.risktionary.game.application.exception.GamePlayerAlreadyInSessi
 import nz.coreyh.risktionary.game.application.exception.GamePlayerNotInSessionException
 import nz.coreyh.risktionary.game.application.exception.GamePlayerStateInvalidException
 import nz.coreyh.risktionary.game.application.exception.GameStateInvalidException
+import nz.coreyh.risktionary.game.application.session.round.GameRoundSession
 import nz.coreyh.risktionary.game.domain.model.GameId
 import nz.coreyh.risktionary.game.domain.model.GameState
 import nz.coreyh.risktionary.game.domain.model.GameStateType
@@ -38,6 +39,7 @@ class GameSession(
     private val clock: Clock = Clock.System,
 ) : LockableSession() {
     private val players: MutableMap<GamePlayerId, GamePlayerSession> = mutableMapOf()
+    val volunteers: GameVolunteerSession = GameVolunteerSession()
 
     /** The current lifecycle state of the game session. */
     var state: GameState = GameState.Lobby
@@ -48,6 +50,10 @@ class GameSession(
     var lastActivityAt: Instant = createdAt
         get() = withLock { field }
         private set
+
+    var currentRound: GameRoundSession? = null
+        get() = withLock { field }
+        set(value) = withLock { field = value }
 
     fun getPlayers(): List<GamePlayerSession> = withLock { players.values.toList() }
 
