@@ -146,26 +146,6 @@ class GameSessionService(
         )
     }
 
-    fun handleHostConnected(
-        hostId: UserId,
-        gameId: GameId,
-    ) {
-        val session = getSession(gameId)
-        if (session.host.id != hostId) throw GameNotFoundException()
-
-        session.host.connect(clock.now())
-    }
-
-    fun handleHostDisconnected(
-        hostId: UserId,
-        gameId: GameId,
-    ) {
-        val session = getSession(gameId)
-        if (session.host.id != hostId) throw GameNotFoundException()
-
-        session.host.disconnect(clock.now())
-    }
-
     fun handleReady(playerId: GamePlayerId) {
         val session =
             gameSessionStore.findByPlayerId(playerId)
@@ -189,6 +169,26 @@ class GameSessionService(
             gameId = gameId,
             volunteers = session.volunteers.getVolunteers(),
         )
+    }
+
+    fun handleHostConnected(
+        hostId: UserId,
+        gameId: GameId,
+    ) {
+        val session = getSession(gameId)
+        if (session.host.id != hostId) throw GameNotFoundException()
+
+        session.host.connect(clock.now())
+    }
+
+    fun handleHostDisconnected(
+        hostId: UserId,
+        gameId: GameId,
+    ) {
+        val session = getSession(gameId)
+        if (session.host.id != hostId) throw GameNotFoundException()
+
+        session.host.disconnect(clock.now())
     }
 
     fun transitionToStarting(gameId: GameId) {
