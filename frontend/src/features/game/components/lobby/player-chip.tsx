@@ -1,19 +1,21 @@
 import { UserAvatar } from "@/components/common/user-avatar"
-import { cn } from "@/lib/utils"
 import { GameSessionPlayer } from "@/features/game/types/game"
+import { cn } from "@/lib/utils"
+import { HTMLAttributes } from "react"
 
-interface PlayerChipProps {
+interface PlayerChipProps extends HTMLAttributes<HTMLDivElement> {
   player: GameSessionPlayer
   isMe: boolean
 }
 
-export const PlayerChip = ({ player, isMe }: PlayerChipProps) => {
+export const PlayerChip = ({ className, player, isMe }: PlayerChipProps) => {
   return (
     <div
       className={cn(
         "flex flex-col items-center gap-2 rounded-xl border border-border bg-card px-2 py-3",
         "animate-in duration-300 zoom-in-50 fade-in",
-        "transition-colors hover:border-border/80 hover:bg-accent/40"
+        "transition-colors hover:border-border/80 hover:bg-accent/40",
+        className
       )}
     >
       <div className="relative">

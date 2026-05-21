@@ -1,14 +1,14 @@
 "use client"
 
+import { CenteredLayout } from "@/components/layout/centered-layout"
+import { FullPageLayout } from "@/components/layout/full-page-layout"
+import { GamePlayScreen } from "@/features/game/components/game-play-screen"
+import ConnectingScreen from "@/features/game/components/lobby/connecting-screen"
+import { GamePlayLobbyScreen } from "@/features/game/components/lobby/game-lobby-screen"
+import { useGameConnection } from "@/features/game/hooks/use-game-connection"
+import { useGameState } from "@/features/game/stores/game-store-selectors"
 import { assertNever } from "@/lib/utils"
 import { WebSocketProvider } from "@/providers/web-socket-provider"
-import ConnectingScreen from "@/features/game/components/lobby/connecting-screen"
-import { useGameState } from "@/features/game/stores/game-store-selectors"
-import { useGameConnection } from "@/features/game/hooks/use-game-connection"
-import { CenteredLayout } from "@/components/layout/centered-layout"
-import { GamePlayLobbyScreen } from "@/features/game/components/lobby/game-lobby-screen"
-import { FullPageLayout } from "@/components/layout/full-page-layout"
-import { DrawingScreen } from "@/features/game/components/drawing/drawing-screen"
 
 const GamePlayPage = () => {
   return (
@@ -44,7 +44,7 @@ const GameScreen = () => {
     case "IN_PROGRESS":
       return (
         <FullPageLayout>
-          <DrawingScreen />
+          <GamePlayScreen />
         </FullPageLayout>
       )
     case "PAUSED":
