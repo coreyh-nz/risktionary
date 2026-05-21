@@ -85,6 +85,7 @@ export const Navbar = () => {
                 <UserAvatar
                   firstName={user.firstName}
                   lastName={user.lastName}
+                  displayName={user.displayName}
                 />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
