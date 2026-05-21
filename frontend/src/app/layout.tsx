@@ -1,18 +1,48 @@
-import { Geist_Mono, Outfit } from "next/font/google"
-
-import "./globals.css"
-import { cn } from "@/lib/utils"
 import { Toaster } from "@/components/ui/sonner"
+import { cn } from "@/lib/utils"
+import { Geist_Mono, Outfit } from "next/font/google"
 import { PropsWithChildren } from "react"
+import "./globals.css"
+
+import { ServiceUnavailablePage } from "@/components/error/service-unavailable-page"
+import { Navbar } from "@/components/layout/navbar"
+import { AuthProvider } from "@/providers/auth-provider"
+
+import { getCurrentUser } from "@/features/auth/api/auth.api"
+import { User } from "@/features/auth/types/user"
 
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-sans" })
+const fontMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" })
 
-const fontMono = Geist_Mono({
-  subsets: ["latin"],
-  variable: "--font-mono",
-})
+const AppShell = async ({ children }: PropsWithChildren) => {
+  let user: User | null = null
+  let isOffline = false
 
-const RootLayout = async ({ children }: PropsWithChildren) => {
+  try {
+    user = await getCurrentUser()
+  } catch {
+    isOffline = true
+  }
+
+  if (isOffline) {
+    return (
+      <>
+        <main className="flex flex-1 items-center justify-center">
+          <ServiceUnavailablePage />
+        </main>
+      </>
+    )
+  }
+
+  return (
+    <AuthProvider user={user}>
+      <Navbar />
+      <main className="flex flex-1">{children}</main>
+    </AuthProvider>
+  )
+}
+
+const RootLayout = ({ children }: PropsWithChildren) => {
   return (
     <html
       lang="en"
@@ -30,19 +60,20 @@ const RootLayout = async ({ children }: PropsWithChildren) => {
             className="pointer-events-none fixed inset-0 z-10"
             style={{
               background: `radial-gradient(
-                  circle at center,
-                  oklch(from var(--primary) calc(l * 0.85) calc(c * 0.8) h / 0.12) 0%,
-                  oklch(from var(--primary) calc(l * 0.8) calc(c * 0.75) h / 0.08) 30%,
-                  oklch(from var(--primary) calc(l * 0.75) calc(c * 0.7) h / 0.04) 60%,
-                  transparent 80%
-                )`,
+                circle at center,
+                oklch(from var(--primary) calc(l * 0.85) calc(c * 0.8) h / 0.12) 0%,
+                oklch(from var(--primary) calc(l * 0.8) calc(c * 0.75) h / 0.08) 30%,
+                oklch(from var(--primary) calc(l * 0.75) calc(c * 0.7) h / 0.04) 60%,
+                transparent 80%
+              )`,
             }}
           />
 
           <div className="relative z-10 min-h-svh flex flex-col">
-            {children}
+            <AppShell>{children}</AppShell>
           </div>
         </div>
+
         <Toaster />
       </body>
     </html>
