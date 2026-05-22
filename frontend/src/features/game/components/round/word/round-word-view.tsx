@@ -2,7 +2,7 @@ import { assertNever } from "@/lib/utils"
 import {
   useGameRoundRole,
   useGameRoundState,
-} from "../../stores/game-store-selectors"
+} from "../../../stores/game-store-selectors"
 import { DrawWordView } from "./draw-word-view"
 import { GuessWordView } from "./guess-word-view"
 

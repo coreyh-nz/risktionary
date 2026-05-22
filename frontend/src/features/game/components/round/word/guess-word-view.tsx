@@ -1,4 +1,4 @@
-import { WordHint } from "../../types/round"
+import { WordHint } from "../../../types/round"
 
 interface GuessWordViewProps {
   hint: WordHint

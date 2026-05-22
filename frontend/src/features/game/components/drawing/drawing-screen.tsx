@@ -3,7 +3,7 @@ import {
   useGameRoundState,
   useGameSession,
 } from "../../stores/game-store-selectors"
-import { RoundWordView } from "../round/round-word-view"
+import { RoundWordView } from "../round/word/round-word-view"
 import { DrawerPanel } from "./panel/drawer-panel"
 import { SpectatorPanel } from "./panel/spectator-panel"
 
