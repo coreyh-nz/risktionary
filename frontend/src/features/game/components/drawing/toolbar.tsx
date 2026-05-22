@@ -1,7 +1,5 @@
 "use client"
 
-import { cn } from "@/lib/utils"
-import { Eraser, Pencil } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Tooltip,
@@ -9,6 +7,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { cn } from "@/lib/utils"
+import { Eraser, Pencil } from "lucide-react"
 import { useDrawingSetTool, useDrawingTool } from "../../stores/drawing-store"
 
 export const Toolbar = () => {

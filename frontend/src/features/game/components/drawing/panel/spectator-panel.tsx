@@ -1,16 +1,18 @@
 import { Canvas } from "@/features/game/components/drawing/canvas/canvas"
 import { useCanvasRenderer } from "@/features/game/hooks/canvas/use-canvas-renderer"
+import { useConstrainedCanvasSize } from "@/features/game/hooks/canvas/use-constrained-canvas-size"
 import { useGameSocketDrawingEvents } from "@/features/game/hooks/socket/use-game-socket-drawing-events"
 
-export const SpectatorPanel = () => {
-  const {
-    canvasRef,
-    containerRef,
-    canvasReady,
-    startRemoteStroke,
-    addRemotePoints,
-    commitRemoteStroke,
-  } = useCanvasRenderer()
+const SpectatorCanvas = ({
+  width,
+  height,
+}: {
+  width: number
+  height: number
+}) => {
+  const { canvasRef, startRemoteStroke, addRemotePoints, commitRemoteStroke } =
+    useCanvasRenderer(width, height)
+
   useGameSocketDrawingEvents({
     onRemoteStrokeStart: startRemoteStroke,
     onRemoteStrokePoints: addRemotePoints,
@@ -18,12 +20,21 @@ export const SpectatorPanel = () => {
   })
 
   return (
-    <div className="flex flex-1 p-3">
-      <Canvas
-        containerRef={containerRef}
-        canvasRef={canvasRef}
-        canvasReady={canvasReady}
-      />
+    <div style={{ width, height }} className="shrink-0">
+      <Canvas canvasRef={canvasRef} />
+    </div>
+  )
+}
+
+export const SpectatorPanel = () => {
+  const { wrapperRef, size } = useConstrainedCanvasSize()
+
+  return (
+    <div
+      ref={wrapperRef}
+      className="flex flex-col flex-1 min-h-0 min-w-0 items-center"
+    >
+      {size && <SpectatorCanvas width={size.width} height={size.height} />}
     </div>
   )
 }

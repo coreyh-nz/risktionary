@@ -11,26 +11,25 @@ import {
 import { Canvas } from "./canvas"
 
 interface DrawingCanvasProps {
+  height: number
+  width: number
   onStrokeStart: (point: DrawingPoint, tool: DrawingTool, color: string) => void
   onStrokePoint: (point: DrawingPoint) => void
   onStrokeEnd: (stroke: DrawingStroke) => void
 }
 
 export const DrawingCanvas = ({
+  width,
+  height,
   onStrokeStart,
   onStrokePoint,
   onStrokeEnd,
 }: DrawingCanvasProps) => {
   const tool = useDrawingTool()
   const colour = useDrawingColour()
-  const {
-    canvasRef,
-    containerRef,
-    canvasReady,
-    handleStart,
-    handleMove,
-    handleEnd,
-  } = useDrawingCanvas({
+  const { canvasRef, handleStart, handleMove, handleEnd } = useDrawingCanvas({
+    width,
+    height,
     tool,
     colour,
     onStrokeStart,
@@ -40,9 +39,7 @@ export const DrawingCanvas = ({
 
   return (
     <Canvas
-      containerRef={containerRef}
       canvasRef={canvasRef}
-      canvasReady={canvasReady}
       onMouseDown={handleStart}
       onMouseMove={handleMove}
       onMouseUp={handleEnd}

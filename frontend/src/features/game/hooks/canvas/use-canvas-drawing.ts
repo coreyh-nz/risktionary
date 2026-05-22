@@ -1,12 +1,14 @@
 import { MouseEvent, TouchEvent, useCallback, useEffect, useRef } from "react"
 import {
-  DrawingTool,
   DrawingPoint,
   DrawingStroke,
+  DrawingTool,
 } from "../../types/drawing/drawing"
 import { useCanvasRenderer } from "./use-canvas-renderer"
 
 interface UseDrawingCanvasOptions {
+  width: number
+  height: number
   tool: DrawingTool
   colour: { value: string }
 
@@ -20,13 +22,15 @@ interface UseDrawingCanvasOptions {
 }
 
 export const useDrawingCanvas = ({
+  width,
+  height,
   tool,
   colour,
   onStrokeStart,
   onStrokePoint,
   onStrokeEnd,
 }: UseDrawingCanvasOptions) => {
-  const renderer = useCanvasRenderer()
+  const renderer = useCanvasRenderer(width, height)
   const { canvasRef, startLocalStroke, addLocalPoint, commitLocalStroke } =
     renderer
 

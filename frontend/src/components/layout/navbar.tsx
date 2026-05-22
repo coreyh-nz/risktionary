@@ -62,7 +62,7 @@ export const Navbar = () => {
                     buttonVariants({ variant: "ghost", size: "sm" }),
                     "relative text-muted-foreground transition-colors hover:text-foreground",
                     isActive(item.href) &&
-                      "text-foreground after:absolute after:inset-x-1 after:-bottom-4.25 after:h-px after:bg-foreground"
+                      "text-foreground after:absolute after:inset-x-1 after:-bottom-4 after:h-px after:bg-foreground"
                   )}
                 >
                   {item.label}

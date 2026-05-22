@@ -37,7 +37,9 @@ const AppShell = async ({ children }: PropsWithChildren) => {
   return (
     <AuthProvider user={user}>
       <Navbar />
-      <main className="flex flex-1">{children}</main>
+      <main className="flex-1 min-h-0 overflow-y-auto flex flex-col">
+        <div className="flex flex-col flex-1 min-h-0">{children}</div>
+      </main>
     </AuthProvider>
   )
 }
@@ -69,7 +71,7 @@ const RootLayout = ({ children }: PropsWithChildren) => {
             }}
           />
 
-          <div className="relative z-10 min-h-svh flex flex-col">
+          <div className="relative z-10 h-svh flex flex-col">
             <AppShell>{children}</AppShell>
           </div>
         </div>

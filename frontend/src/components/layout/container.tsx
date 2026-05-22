@@ -1,8 +1,8 @@
 import { cn } from "@/lib/utils"
 import { cva, type VariantProps } from "class-variance-authority"
-import { PropsWithChildren } from "react"
+import { HTMLAttributes } from "react"
 
-export const containerVariants = cva("w-full mx-auto p-6", {
+export const containerVariants = cva("w-full mx-auto p-4", {
   variants: {
     size: {
       sm: "max-w-sm",
@@ -11,7 +11,7 @@ export const containerVariants = cva("w-full mx-auto p-6", {
       xl: "max-w-2xl",
       "2xl": "max-w-3xl",
       "3xl": "max-w-4xl",
-      full: "max-w-full px-4",
+      full: "max-w-full",
     },
   },
   defaultVariants: {
@@ -20,8 +20,19 @@ export const containerVariants = cva("w-full mx-auto p-6", {
 })
 
 interface ContainerProps
-  extends PropsWithChildren, VariantProps<typeof containerVariants> {}
+  extends
+    HTMLAttributes<HTMLDivElement>,
+    VariantProps<typeof containerVariants> {}
 
-export const Container = ({ children, size = "lg" }: ContainerProps) => {
-  return <div className={cn(containerVariants({ size }))}>{children}</div>
+export const Container = ({
+  size = "lg",
+  className,
+  children,
+  ...rest
+}: ContainerProps) => {
+  return (
+    <div className={cn(containerVariants({ size }), className)} {...rest}>
+      {children}
+    </div>
+  )
 }
