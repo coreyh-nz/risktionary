@@ -31,7 +31,7 @@ class GameRoundSessionService(
     ) {
         val session = getSession(gameId)
         val roundId = createRoundId()
-        val round = GameRoundSession(id = roundId, word = word)
+        val round = GameRoundSession(id = roundId, gameId = gameId, word = word)
         session.currentRound = round
 
         gameEventPublisher.publishRoundStateChanged(gameId, round.state)

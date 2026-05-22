@@ -4,7 +4,9 @@ import nz.coreyh.risktionary.game.application.exception.GamePlayerAlreadyInSessi
 import nz.coreyh.risktionary.game.application.exception.GamePlayerNotInSessionException
 import nz.coreyh.risktionary.game.application.exception.GamePlayerStateInvalidException
 import nz.coreyh.risktionary.game.application.exception.GameStateInvalidException
+import nz.coreyh.risktionary.game.application.exception.round.GameRoundStateInvalidException
 import nz.coreyh.risktionary.game.application.session.round.GameRoundSession
+import nz.coreyh.risktionary.game.application.session.round.GameRoundState
 import nz.coreyh.risktionary.game.domain.model.GameId
 import nz.coreyh.risktionary.game.domain.model.GameState
 import nz.coreyh.risktionary.game.domain.model.GameStateType
@@ -179,6 +181,30 @@ class GameSession(
         withLock {
             requireState(GameStateType.STARTING)
             withActivity { state = GameState.InProgress }
+        }
+
+    /**
+     * Selects the player who will act as the drawer for the current round.
+     *
+     * This operation delegates to both the volunteer manager and the active
+     * [GameRoundSession], ensuring that:
+     *
+     * - the drawer is recorded at the session‑level volunteer tracker, and
+     * - the drawer is registered within the current round.
+     *
+     * @param drawerId the identifier of the player being selected as drawer.
+     * @return the updated [GameRoundSession].
+     * @throws GameStateInvalidException if no round is currently active.
+     * @throws GameRoundStateInvalidException if the round is not in the selecting drawer state.
+     * @
+     */
+    fun selectDrawer(drawerId: GamePlayerId): GameRoundSession =
+        withLock {
+            val round = currentRound ?: throw GameStateInvalidException()
+            round.requireState<GameRoundState.SelectingDrawer>()
+            volunteers.selectDrawer(drawerId)
+            round.selectDrawer(drawerId)
+            round
         }
 
     /**
