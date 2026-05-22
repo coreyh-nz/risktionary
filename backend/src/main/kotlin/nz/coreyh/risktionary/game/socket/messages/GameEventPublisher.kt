@@ -7,12 +7,14 @@ import nz.coreyh.risktionary.game.domain.model.GameId
 import nz.coreyh.risktionary.game.domain.model.GameState
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerId
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerStatus
-import nz.coreyh.risktionary.game.socket.messages.event.GameEvent
+import nz.coreyh.risktionary.game.domain.model.round.hint.WordHint
 import nz.coreyh.risktionary.game.socket.messages.outbound.PlayerJoinedEvent
 import nz.coreyh.risktionary.game.socket.messages.outbound.PlayerLeftEvent
 import nz.coreyh.risktionary.game.socket.messages.outbound.PlayerListUpdatedEvent
 import nz.coreyh.risktionary.game.socket.messages.outbound.StateChangedEvent
 import nz.coreyh.risktionary.game.socket.messages.outbound.VolunteersUpdatedEvent
+import nz.coreyh.risktionary.game.socket.messages.outbound.round.RoundAssignedDrawerEvent
+import nz.coreyh.risktionary.game.socket.messages.outbound.round.RoundAssignedGuesserEvent
 import nz.coreyh.risktionary.game.socket.messages.outbound.round.RoundStateChangedEvent
 import nz.coreyh.risktionary.game.socket.messages.view.toView
 import nz.coreyh.risktionary.game.socket.support.WebSocketDestinations
@@ -80,36 +82,67 @@ class GameEventPublisher(
         destination = WebSocketDestinations.Topic.base(gameId),
         message = RoundStateChangedEvent(roundState),
     )
+
+    fun publishAssignedDrawerEvent(
+        playerId: GamePlayerId,
+        word: String,
+    ) = messagingTemplate.sendToPlayer(
+        playerId = playerId,
+        destination = WebSocketDestinations.Queue.ROUND,
+        message = RoundAssignedDrawerEvent(word),
+    )
+
+    fun publishAssignedGuesserEvent(
+        playerId: GamePlayerId,
+        hint: WordHint,
+    ) {
+        messagingTemplate.sendToPlayer(
+            playerId = playerId,
+            destination = WebSocketDestinations.Queue.ROUND,
+            message = RoundAssignedGuesserEvent(hint),
+        )
+    }
+
+    fun publishAssignedGuesserEvent(
+        userId: UserId,
+        hint: WordHint,
+    ) {
+        messagingTemplate.sendToUser(
+            userId = userId,
+            destination = WebSocketDestinations.Queue.ROUND,
+            message = RoundAssignedGuesserEvent(hint),
+        )
+    }
 }
 
-private inline fun <reified T : GameEvent> SimpMessagingTemplate.sendToTopic(
+private inline fun <reified T : Any> SimpMessagingTemplate.sendToTopic(
     destination: String,
     message: T,
 ) {
     kLogger.debug {
-        "Publishing ${message.type} [broadcast] → $destination"
+        "Publishing ${message.javaClass.simpleName} [broadcast] → $destination"
     }
     convertAndSend(destination, message)
 }
 
-private inline fun <reified T : GameEvent> SimpMessagingTemplate.sendToPlayer(
+private inline fun <reified T : Any> SimpMessagingTemplate.sendToPlayer(
     playerId: GamePlayerId,
     destination: String,
     message: T,
 ) {
     kLogger.debug {
-        "Publishing ${message.type} [playerId=$playerId] -> $destination"
+        "Publishing ${message.javaClass.simpleName} [playerId=$playerId] -> $destination"
     }
     convertAndSendToUser(playerId.value.toString(), destination, message)
 }
 
-private inline fun <reified T : GameEvent> SimpMessagingTemplate.sendToUser(
+private inline fun <reified T : Any> SimpMessagingTemplate.sendToUser(
     userId: UserId,
     destination: String,
     message: T,
 ) {
     kLogger.debug {
-        "Publishing ${message.type} [userId=$userId] -> $destination"
+        "Publishing ${message.javaClass.simpleName} [userId=$userId] -> $destination"
     }
     convertAndSendToUser(userId.value.toString(), destination, message)
 }

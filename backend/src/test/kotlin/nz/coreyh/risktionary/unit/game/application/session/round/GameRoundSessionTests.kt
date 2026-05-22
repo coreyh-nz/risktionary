@@ -6,6 +6,7 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import nz.coreyh.risktionary.game.application.exception.round.GameRoundStateInvalidException
 import nz.coreyh.risktionary.game.application.session.round.GameRoundSession
 import nz.coreyh.risktionary.game.application.session.round.GameRoundState
+import nz.coreyh.risktionary.game.domain.model.createGameId
 import nz.coreyh.risktionary.game.domain.model.round.createRoundId
 import nz.coreyh.risktionary.support.factory.game.createTestGamePlayerId
 import nz.coreyh.risktionary.support.factory.word.createTestWord
@@ -20,6 +21,7 @@ class GameRoundSessionTests {
         session =
             GameRoundSession(
                 id = createRoundId(),
+                gameId = createGameId(),
                 word = createTestWord(),
             )
     }

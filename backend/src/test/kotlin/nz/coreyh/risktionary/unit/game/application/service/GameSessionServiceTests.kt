@@ -10,7 +10,6 @@ import io.mockk.mockk
 import io.mockk.verify
 import nz.coreyh.risktionary.game.application.exception.GameNotFoundException
 import nz.coreyh.risktionary.game.application.exception.GamePlayerDisplayNameInUseException
-import nz.coreyh.risktionary.game.application.exception.GameStateInvalidException
 import nz.coreyh.risktionary.game.application.service.GameSessionService
 import nz.coreyh.risktionary.game.application.service.GameSessionTaskService
 import nz.coreyh.risktionary.game.application.service.GameTicketService
@@ -628,12 +627,10 @@ class GameSessionServiceTests {
             val round = mockk<GameRoundSession>(relaxed = true)
             val volunteers = mockk<GameVolunteerSession>(relaxed = true)
             every { gameSessionStore.findById(gameId) } returns session
-            every { session.currentRound } returns round
+            every { session.selectDrawer(playerId) } returns round
             every { session.volunteers } returns volunteers
 
             service.handleSelectDrawer(gameId, playerId)
-
-            verify { round.selectDrawer(drawerId = playerId) }
         }
 
         @Test
@@ -643,27 +640,14 @@ class GameSessionServiceTests {
             val volunteers = mockk<GameVolunteerSession>(relaxed = true)
             val roundState = mockk<GameRoundState>()
             every { gameSessionStore.findById(gameId) } returns session
-            every { session.currentRound } returns round
+            every { session.id } returns gameId
             every { session.volunteers } returns volunteers
+            every { session.selectDrawer(playerId) } returns round
             every { round.state } returns roundState
 
             service.handleSelectDrawer(gameId, playerId)
 
             verify { gameEventPublisher.publishRoundStateChanged(gameId, roundState) }
-        }
-
-        @Test
-        fun `handle select drawer unvolunteers the selected drawer`() {
-            val session = mockk<GameSession>(relaxed = true)
-            val round = mockk<GameRoundSession>(relaxed = true)
-            val volunteers = mockk<GameVolunteerSession>(relaxed = true)
-            every { gameSessionStore.findById(gameId) } returns session
-            every { session.currentRound } returns round
-            every { session.volunteers } returns volunteers
-
-            service.handleSelectDrawer(gameId, playerId)
-
-            verify { volunteers.unvolunteer(playerId) }
         }
 
         @Test
@@ -673,8 +657,9 @@ class GameSessionServiceTests {
             val volunteers = mockk<GameVolunteerSession>(relaxed = true)
             val remainingVolunteers = listOf<GamePlayerId>()
             every { gameSessionStore.findById(gameId) } returns session
-            every { session.currentRound } returns round
+            every { session.id } returns gameId
             every { session.volunteers } returns volunteers
+            every { session.selectDrawer(playerId) } returns round
             every { volunteers.getVolunteers() } returns remainingVolunteers
 
             service.handleSelectDrawer(gameId, playerId)
@@ -687,17 +672,6 @@ class GameSessionServiceTests {
             every { gameSessionStore.findById(gameId) } returns null
 
             shouldThrow<GameNotFoundException> {
-                service.handleSelectDrawer(gameId, playerId)
-            }
-        }
-
-        @Test
-        fun `handle select drawer throws when there is no active round`() {
-            val session = mockk<GameSession>(relaxed = true)
-            every { gameSessionStore.findById(gameId) } returns session
-            every { session.currentRound } returns null
-
-            shouldThrow<GameStateInvalidException> {
                 service.handleSelectDrawer(gameId, playerId)
             }
         }

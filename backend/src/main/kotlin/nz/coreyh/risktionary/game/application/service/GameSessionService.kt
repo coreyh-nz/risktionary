@@ -2,11 +2,11 @@ package nz.coreyh.risktionary.game.application.service
 
 import nz.coreyh.risktionary.game.application.exception.GameNotFoundException
 import nz.coreyh.risktionary.game.application.exception.GamePlayerDisplayNameInUseException
-import nz.coreyh.risktionary.game.application.exception.GameStateInvalidException
+import nz.coreyh.risktionary.game.application.exception.GamePlayerNotInSessionException
+import nz.coreyh.risktionary.game.application.exception.GamePlayerStateInvalidException
 import nz.coreyh.risktionary.game.application.service.round.GameRoundSessionService
 import nz.coreyh.risktionary.game.application.session.GamePlayerSession
 import nz.coreyh.risktionary.game.application.session.GameSession
-import nz.coreyh.risktionary.game.application.session.round.GameRoundSession
 import nz.coreyh.risktionary.game.application.store.GameSessionStore
 import nz.coreyh.risktionary.game.domain.model.GameId
 import nz.coreyh.risktionary.game.domain.model.createGameId
@@ -16,6 +16,7 @@ import nz.coreyh.risktionary.game.domain.model.player.GamePlayerId
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerIdentity
 import nz.coreyh.risktionary.game.domain.model.player.GameTicket
 import nz.coreyh.risktionary.game.domain.model.player.createPlayerId
+import nz.coreyh.risktionary.game.domain.model.round.hint.toWordHint
 import nz.coreyh.risktionary.game.socket.messages.GameEventPublisher
 import nz.coreyh.risktionary.user.domain.model.UserId
 import nz.coreyh.risktionary.words.application.service.WordService
@@ -268,21 +269,20 @@ class GameSessionService(
 
     fun handleSelectDrawer(
         gameId: GameId,
-        playerId: GamePlayerId,
+        drawerId: GamePlayerId,
     ) {
         val session = getSession(gameId)
-        val round = session.currentRound.requireActiveRound()
-        round.selectDrawer(drawerId = playerId)
+        val round = session.selectDrawer(drawerId)
+        gameEventPublisher.publishRoundStateChanged(session.id, round.state)
 
-        gameEventPublisher.publishRoundStateChanged(gameId, round.state)
-
-        // unvolunteer for the next round
-        session.volunteers.unvolunteer(playerId)
-
-        gameEventPublisher.publishVolunteersUpdated(
-            gameId = gameId,
-            volunteers = session.volunteers.getVolunteers(),
-        )
+        val wordHint = round.word.value.toWordHint()
+        gameEventPublisher.publishVolunteersUpdated(gameId, session.volunteers.getVolunteers())
+        gameEventPublisher.publishAssignedDrawerEvent(drawerId, round.word.value)
+        gameEventPublisher.publishAssignedGuesserEvent(session.host.id, wordHint)
+        session
+            .getPlayers()
+            .filter { it.id != drawerId }
+            .forEach { gameEventPublisher.publishAssignedGuesserEvent(it.id, wordHint) }
     }
 
     private fun requireActivePlayer(
@@ -291,8 +291,6 @@ class GameSessionService(
     ) {
         session.getPlayer(playerId)
     }
-
-    private fun (GameRoundSession?).requireActiveRound(): GameRoundSession = this ?: throw GameStateInvalidException()
 
     private fun generateCode(): String {
         repeat(10) {

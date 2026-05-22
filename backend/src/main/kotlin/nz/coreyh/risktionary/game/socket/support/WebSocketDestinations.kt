@@ -27,5 +27,6 @@ object WebSocketDestinations {
         const val PREFIX = "/queue"
 
         const val PLAYER_LIST = "$PREFIX/player-list"
+        const val ROUND = "$PREFIX/round"
     }
 }
