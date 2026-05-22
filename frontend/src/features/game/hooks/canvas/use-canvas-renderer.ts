@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react"
 import { getStroke } from "perfect-freehand"
+import { useCallback, useLayoutEffect, useRef } from "react"
 import {
   DrawingPoint,
   DrawingStroke,
@@ -55,17 +55,13 @@ interface DrawingState {
   tool: DrawingTool
 }
 
-export const useCanvasRenderer = () => {
+export const useCanvasRenderer = (width: number, height: number) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
-  const containerRef = useRef<HTMLDivElement | null>(null)
   const rafRef = useRef<number | null>(null)
-  const dimensionsRef = useRef({ width: 0, height: 0 })
 
   const strokesRef = useRef<DrawingStroke[]>([])
   const localDrawingRef = useRef<DrawingState | null>(null)
   const remoteDrawersRef = useRef<Map<string, DrawingState>>(new Map())
-
-  const [canvasReady, setCanvasReady] = useState(false)
 
   const render = useCallback(() => {
     if (rafRef.current !== null) return
@@ -76,9 +72,7 @@ export const useCanvasRenderer = () => {
       const ctx = canvas.getContext("2d")
       if (!ctx) return
 
-      const { width, height } = dimensionsRef.current
       const dpr = window.devicePixelRatio || 1
-
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       ctx.fillStyle = "#FFFFFF"
       ctx.fillRect(0, 0, width, height)
@@ -109,42 +103,29 @@ export const useCanvasRenderer = () => {
         drawPerfectStroke(ctx, l.points, l.colour, l.tool === "ERASER")
       }
     })
-  }, [])
+  }, [height, width])
 
-  const resizeCanvas = useCallback(() => {
+  useLayoutEffect(() => {
     const canvas = canvasRef.current
-    const container = containerRef.current
-    if (!canvas || !container) return
+    if (!canvas) return
+
+    const dpr = window.devicePixelRatio || 1
+    canvas.width = width * dpr
+    canvas.height = height * dpr
+    canvas.style.width = `${width}px`
+    canvas.style.height = `${height}px`
 
     const ctx = canvas.getContext("2d", { alpha: false })
     if (!ctx) return
-
-    const rect = container.getBoundingClientRect()
-    const dpr = window.devicePixelRatio || 1
-
-    canvas.width = rect.width * dpr
-    canvas.height = rect.height * dpr
-    canvas.style.width = `${rect.width}px`
-    canvas.style.height = `${rect.height}px`
 
     ctx.scale(dpr, dpr)
     ctx.imageSmoothingEnabled = true
     ctx.imageSmoothingQuality = "high"
     ctx.fillStyle = "#FFFFFF"
-    ctx.fillRect(0, 0, rect.width, rect.height)
+    ctx.fillRect(0, 0, width, height)
 
-    dimensionsRef.current = { width: rect.width, height: rect.height }
-    setCanvasReady(true)
     render()
-  }, [render])
-
-  useEffect(() => {
-    resizeCanvas()
-    window.addEventListener("resize", resizeCanvas)
-    return () => window.removeEventListener("resize", resizeCanvas)
-  }, [resizeCanvas])
-
-  // local drawing
+  }, [width, height, render])
   const startLocalStroke = useCallback(
     (point: DrawingPoint, colour: string, tool: DrawingTool) => {
       localDrawingRef.current = { points: [point], colour, tool }
@@ -254,8 +235,6 @@ export const useCanvasRenderer = () => {
   return {
     // refs
     canvasRef,
-    containerRef,
-    canvasReady,
     strokesRef,
 
     // local stroke lifecycle

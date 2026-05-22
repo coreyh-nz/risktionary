@@ -1,8 +1,8 @@
 import { CenteredLayout } from "@/components/layout/centered-layout"
+import { DrawingScreen } from "@/features/game/components/drawing/drawing-screen"
 import { assertNever } from "@/lib/utils"
 import { useGameRoundState } from "../stores/game-store-selectors"
 import { DrawerSelectionScreen } from "./drawer-selection/screen/drawer-selection-screen"
-import { DrawingScreen } from "@/features/game/components/drawing/drawing-screen"
 
 export const GamePlayScreen = () => {
   const roundState = useGameRoundState()
