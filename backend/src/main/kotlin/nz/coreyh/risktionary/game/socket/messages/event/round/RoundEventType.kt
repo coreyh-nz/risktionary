@@ -8,4 +8,7 @@ enum class RoundEventType {
     ASSIGNED_GUESSER,
 
     CHAT_MESSAGE,
+
+    CORRECT_GUESS,
+    CORRECT_GUESSES_COUNT,
 }

@@ -17,10 +17,13 @@ import nz.coreyh.risktionary.game.socket.messages.outbound.VolunteersUpdatedEven
 import nz.coreyh.risktionary.game.socket.messages.outbound.round.ChatMessageEvent
 import nz.coreyh.risktionary.game.socket.messages.outbound.round.RoundAssignedDrawerEvent
 import nz.coreyh.risktionary.game.socket.messages.outbound.round.RoundAssignedGuesserEvent
+import nz.coreyh.risktionary.game.socket.messages.outbound.round.RoundCorrectGuessEvent
+import nz.coreyh.risktionary.game.socket.messages.outbound.round.RoundCorrectGuessesCountUpdatedEvent
 import nz.coreyh.risktionary.game.socket.messages.outbound.round.RoundStateChangedEvent
 import nz.coreyh.risktionary.game.socket.messages.view.toView
 import nz.coreyh.risktionary.game.socket.support.WebSocketDestinations
 import nz.coreyh.risktionary.user.domain.model.UserId
+import nz.coreyh.risktionary.words.domain.model.Word
 import org.springframework.messaging.simp.SimpMessagingTemplate
 import org.springframework.stereotype.Component
 
@@ -105,6 +108,17 @@ class GameEventPublisher(
         )
     }
 
+    fun publishAssignedGuesserEvent(
+        userId: UserId,
+        hint: WordHint,
+    ) {
+        messagingTemplate.sendToUser(
+            userId = userId,
+            destination = WebSocketDestinations.Queue.ROUND,
+            message = RoundAssignedGuesserEvent(hint),
+        )
+    }
+
     fun publishRoundChatMessage(
         gameId: GameId,
         message: ChatMessage,
@@ -115,14 +129,24 @@ class GameEventPublisher(
         )
     }
 
-    fun publishAssignedGuesserEvent(
-        userId: UserId,
-        hint: WordHint,
+    fun publishRoundCorrectGuess(
+        playerId: GamePlayerId,
+        word: Word,
     ) {
-        messagingTemplate.sendToUser(
-            userId = userId,
+        messagingTemplate.sendToPlayer(
+            playerId = playerId,
             destination = WebSocketDestinations.Queue.ROUND,
-            message = RoundAssignedGuesserEvent(hint),
+            message = RoundCorrectGuessEvent(word.value),
+        )
+    }
+
+    fun publishRoundCorrectGuessesCountUpdated(
+        gameId: GameId,
+        correctGuesses: Int,
+    ) {
+        messagingTemplate.sendToTopic(
+            destination = WebSocketDestinations.Topic.round(gameId),
+            message = RoundCorrectGuessesCountUpdatedEvent(correctGuesses),
         )
     }
 }

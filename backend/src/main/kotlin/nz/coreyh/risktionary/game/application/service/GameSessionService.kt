@@ -18,6 +18,7 @@ import nz.coreyh.risktionary.game.domain.model.player.GamePlayerIdentity
 import nz.coreyh.risktionary.game.domain.model.player.GameTicket
 import nz.coreyh.risktionary.game.domain.model.player.createPlayerId
 import nz.coreyh.risktionary.game.domain.model.round.chat.ChatMessage
+import nz.coreyh.risktionary.game.domain.model.round.guess.GuessResultType
 import nz.coreyh.risktionary.game.domain.model.round.hint.toWordHint
 import nz.coreyh.risktionary.game.socket.messages.GameEventPublisher
 import nz.coreyh.risktionary.user.domain.model.UserId
@@ -290,40 +291,43 @@ class GameSessionService(
     fun handleChat(
         gameId: GameId,
         playerId: GamePlayerId,
-        message: String,
+        text: String,
     ) {
         val session = getSession(gameId)
         val round = session.currentRound.requireActiveRound()
         val player = requireActivePlayer(session, playerId)
-        val word = round.word
 
-        // todo move this into game round session then return a guess result or something
-        val response =
-            when {
-                word.value.equals(message, ignoreCase = true) ||
-                    word.synonyms.any {
-                        it.equals(message, ignoreCase = true)
-                    }
-                -> {
-                    ChatMessage.System.CorrectGuess(
-                        playerId = playerId,
-                        playerDisplayName = player.identity.displayName,
+        val guessResult = round.handleGuess(playerId, text)
+        val message =
+            when (guessResult) {
+                GuessResultType.CORRECT -> {
+                    gameEventPublisher.publishRoundCorrectGuessesCountUpdated(
+                        gameId = gameId,
+                        correctGuesses = round.guesses.getCorrectGuessCount(),
                     )
+                    gameEventPublisher.publishRoundCorrectGuess(
+                        playerId = playerId,
+                        word = round.word,
+                    )
+                    ChatMessage.System.CorrectGuess(playerId, player.identity.displayName)
                 }
 
-                else -> {
+                GuessResultType.INCORRECT,
+                GuessResultType.ALREADY_GUESSED,
+                GuessResultType.DRAWER_CANNOT_GUESS,
+                -> {
                     ChatMessage.Player(
                         playerId = playerId,
                         playerDisplayName = player.identity.displayName,
-                        text = message,
+                        text = text,
                     )
                 }
             }
-        round.addMessage(response)
 
+        round.addMessage(message)
         gameEventPublisher.publishRoundChatMessage(
             gameId = gameId,
-            message = response,
+            message = message,
         )
     }
 
