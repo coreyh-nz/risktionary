@@ -7,6 +7,7 @@ import nz.coreyh.risktionary.game.application.exception.GamePlayerStateInvalidEx
 import nz.coreyh.risktionary.game.application.service.round.GameRoundSessionService
 import nz.coreyh.risktionary.game.application.session.GamePlayerSession
 import nz.coreyh.risktionary.game.application.session.GameSession
+import nz.coreyh.risktionary.game.application.session.round.requireActiveRound
 import nz.coreyh.risktionary.game.application.store.GameSessionStore
 import nz.coreyh.risktionary.game.domain.model.GameId
 import nz.coreyh.risktionary.game.domain.model.createGameId
@@ -16,6 +17,7 @@ import nz.coreyh.risktionary.game.domain.model.player.GamePlayerId
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerIdentity
 import nz.coreyh.risktionary.game.domain.model.player.GameTicket
 import nz.coreyh.risktionary.game.domain.model.player.createPlayerId
+import nz.coreyh.risktionary.game.domain.model.round.chat.ChatMessage
 import nz.coreyh.risktionary.game.domain.model.round.hint.toWordHint
 import nz.coreyh.risktionary.game.socket.messages.GameEventPublisher
 import nz.coreyh.risktionary.user.domain.model.UserId
@@ -285,12 +287,50 @@ class GameSessionService(
             .forEach { gameEventPublisher.publishAssignedGuesserEvent(it.id, wordHint) }
     }
 
+    fun handleChat(
+        gameId: GameId,
+        playerId: GamePlayerId,
+        message: String,
+    ) {
+        val session = getSession(gameId)
+        val round = session.currentRound.requireActiveRound()
+        val player = requireActivePlayer(session, playerId)
+        val word = round.word
+
+        // todo move this into game round session then return a guess result or something
+        val response =
+            when {
+                word.value.equals(message, ignoreCase = true) ||
+                    word.synonyms.any {
+                        it.equals(message, ignoreCase = true)
+                    }
+                -> {
+                    ChatMessage.System.CorrectGuess(
+                        playerId = playerId,
+                        playerDisplayName = player.identity.displayName,
+                    )
+                }
+
+                else -> {
+                    ChatMessage.Player(
+                        playerId = playerId,
+                        playerDisplayName = player.identity.displayName,
+                        text = message,
+                    )
+                }
+            }
+        round.addMessage(response)
+
+        gameEventPublisher.publishRoundChatMessage(
+            gameId = gameId,
+            message = response,
+        )
+    }
+
     private fun requireActivePlayer(
         session: GameSession,
         playerId: GamePlayerId,
-    ) {
-        session.getPlayer(playerId)
-    }
+    ) = session.getPlayer(playerId)
 
     private fun generateCode(): String {
         repeat(10) {

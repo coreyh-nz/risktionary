@@ -1,11 +1,13 @@
 package nz.coreyh.risktionary.game.application.session.round
 
+import nz.coreyh.risktionary.game.application.exception.GameStateInvalidException
 import nz.coreyh.risktionary.game.application.exception.round.GameRoundStateInvalidException
 import nz.coreyh.risktionary.game.application.session.LockableSession
 import nz.coreyh.risktionary.game.domain.model.GameId
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerId
 import nz.coreyh.risktionary.game.domain.model.round.RoundId
 import nz.coreyh.risktionary.game.domain.model.round.RoundStateType
+import nz.coreyh.risktionary.game.domain.model.round.chat.ChatMessage
 import nz.coreyh.risktionary.words.domain.model.Word
 
 class GameRoundSession(
@@ -16,6 +18,8 @@ class GameRoundSession(
     var state: GameRoundState = GameRoundState.SelectingDrawer
         get() = withLock { field }
         set(value) = withLock { field = value }
+
+    private val messages: MutableList<ChatMessage> = mutableListOf()
 
     /**
      * Transitions the round into the in-progress state with a confirmed drawer.
@@ -32,10 +36,20 @@ class GameRoundSession(
             state = GameRoundState.InProgress(drawerId = drawerId)
         }
 
+    fun getMessages(): List<ChatMessage> = withLock { messages.toList() }
+
+    fun addMessage(message: ChatMessage): Unit = withLock { messages.add(message) }
+
     /**
      * Asserts that the round is currently in the expected state and returns it.
      *
      * @throws GameRoundStateInvalidException if the current state does not match [T].
      */
     inline fun <reified T : GameRoundState> requireState(): T = state as? T ?: throw GameRoundStateInvalidException()
+}
+
+fun GameRoundSession?.requireActiveRound(): GameRoundSession {
+    val session = this ?: throw GameStateInvalidException()
+    session.requireState<GameRoundState.InProgress>()
+    return session
 }

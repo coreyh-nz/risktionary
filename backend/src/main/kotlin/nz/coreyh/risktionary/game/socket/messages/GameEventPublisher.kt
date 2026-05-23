@@ -7,12 +7,14 @@ import nz.coreyh.risktionary.game.domain.model.GameId
 import nz.coreyh.risktionary.game.domain.model.GameState
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerId
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerStatus
+import nz.coreyh.risktionary.game.domain.model.round.chat.ChatMessage
 import nz.coreyh.risktionary.game.domain.model.round.hint.WordHint
 import nz.coreyh.risktionary.game.socket.messages.outbound.PlayerJoinedEvent
 import nz.coreyh.risktionary.game.socket.messages.outbound.PlayerLeftEvent
 import nz.coreyh.risktionary.game.socket.messages.outbound.PlayerListUpdatedEvent
 import nz.coreyh.risktionary.game.socket.messages.outbound.StateChangedEvent
 import nz.coreyh.risktionary.game.socket.messages.outbound.VolunteersUpdatedEvent
+import nz.coreyh.risktionary.game.socket.messages.outbound.round.ChatMessageEvent
 import nz.coreyh.risktionary.game.socket.messages.outbound.round.RoundAssignedDrawerEvent
 import nz.coreyh.risktionary.game.socket.messages.outbound.round.RoundAssignedGuesserEvent
 import nz.coreyh.risktionary.game.socket.messages.outbound.round.RoundStateChangedEvent
@@ -100,6 +102,16 @@ class GameEventPublisher(
             playerId = playerId,
             destination = WebSocketDestinations.Queue.ROUND,
             message = RoundAssignedGuesserEvent(hint),
+        )
+    }
+
+    fun publishRoundChatMessage(
+        gameId: GameId,
+        message: ChatMessage,
+    ) {
+        messagingTemplate.sendToTopic(
+            destination = WebSocketDestinations.Topic.round(gameId),
+            message = ChatMessageEvent(message),
         )
     }
 
