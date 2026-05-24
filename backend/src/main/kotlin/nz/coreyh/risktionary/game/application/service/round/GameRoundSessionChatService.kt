@@ -47,6 +47,10 @@ class GameRoundSessionChatService(
                                 playerDisplayName = player.identity.displayName,
                             ),
                         )
+
+                        // placed in here instead of directly in guess service to prevent the "all guessed" message
+                        // being sent before the individual player correct guess message
+                        gameRoundSessionGuessService.checkRoundCompletion(session, round)
                     }
                 }
             }

@@ -12,18 +12,10 @@ enum class RoundPhaseType {
     DRAWING,
 
     /**
-     * Short grace/review period after drawing time ends.
-     * Players can submit final guesses. Often used as a buffer before moving to ranking.
+     * Drawing review phase.
+     * The correct answer shown.
      */
     DRAWING_REVIEW,
-
-    /**
-     * Guess Reveal phase (Kahoot-style).
-     * All players' guesses are revealed, correct answers are shown,
-     * and points are awarded based on accuracy and/or speed.
-     * Fun animations, leaderboards, and celebrations typically happen here.
-     */
-    GUESS_REVEAL,
 
     /**
      * Players individually rate/rank the risk across multiple attributes

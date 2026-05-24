@@ -9,12 +9,10 @@ sealed interface GameRoundPhase {
         override val type = RoundPhaseType.DRAWING
     }
 
-    data object DrawingReview : GameRoundPhase {
+    data class DrawingReview(
+        val word: String,
+    ) : GameRoundPhase {
         override val type = RoundPhaseType.DRAWING_REVIEW
-    }
-
-    data object GuessReveal : GameRoundPhase {
-        override val type = RoundPhaseType.GUESS_REVEAL
     }
 
     data object Ranking : GameRoundPhase {

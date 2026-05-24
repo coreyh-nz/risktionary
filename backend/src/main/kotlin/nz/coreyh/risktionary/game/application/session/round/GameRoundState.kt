@@ -11,6 +11,7 @@ sealed interface GameRoundState {
     }
 
     data class InProgress(
+        val phase: GameRoundPhase,
         val drawerId: GamePlayerId,
     ) : GameRoundState {
         override val type = RoundStateType.IN_PROGRESS

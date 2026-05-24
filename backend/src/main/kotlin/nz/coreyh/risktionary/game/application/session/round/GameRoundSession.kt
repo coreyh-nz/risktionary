@@ -33,7 +33,7 @@ class GameRoundSession(
     fun selectDrawer(drawerId: GamePlayerId): Unit =
         withLock {
             requireState<GameRoundState.SelectingDrawer>()
-            state = GameRoundState.InProgress(drawerId = drawerId)
+            state = GameRoundState.InProgress(drawerId = drawerId, phase = GameRoundPhase.Drawing)
         }
 
     fun getMessages(): List<ChatMessage> = withLock { messages.toList() }
@@ -42,3 +42,5 @@ class GameRoundSession(
 }
 
 inline fun <reified T : GameRoundState> GameRoundSession.requireState(): T = state as? T ?: throw GameRoundStateInvalidException()
+
+inline fun <reified T : GameRoundPhase> GameRoundState.InProgress.requirePhase(): T = phase as? T ?: throw GameRoundStateInvalidException()
