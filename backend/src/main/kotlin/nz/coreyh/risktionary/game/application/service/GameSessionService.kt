@@ -4,6 +4,7 @@ import nz.coreyh.risktionary.game.application.exception.GameNotFoundException
 import nz.coreyh.risktionary.game.application.exception.GamePlayerDisplayNameInUseException
 import nz.coreyh.risktionary.game.application.exception.GamePlayerNotInSessionException
 import nz.coreyh.risktionary.game.application.exception.GamePlayerStateInvalidException
+import nz.coreyh.risktionary.game.application.service.round.GameRoundSessionChatService
 import nz.coreyh.risktionary.game.application.service.round.GameRoundSessionService
 import nz.coreyh.risktionary.game.application.session.GamePlayerSession
 import nz.coreyh.risktionary.game.application.session.GameSession
@@ -33,6 +34,7 @@ class GameSessionService(
     private val gameTicketService: GameTicketService,
     private val wordService: WordService,
     private val gameRoundSessionService: GameRoundSessionService,
+    private val gameRoundSessionChatService: GameRoundSessionChatService,
     private val gameSessionStore: GameSessionStore,
     private val gameEventPublisher: GameEventPublisher,
     private val clock: Clock = Clock.System,
@@ -285,12 +287,20 @@ class GameSessionService(
             .forEach { gameEventPublisher.publishAssignedGuesserEvent(it.id, wordHint) }
     }
 
+    fun handleChat(
+        gameId: GameId,
+        playerId: GamePlayerId,
+        text: String,
+    ) {
+        val session = getSession(gameId)
+        val player = requireActivePlayer(session, playerId)
+        gameRoundSessionChatService.handleChat(session, player, text)
+    }
+
     private fun requireActivePlayer(
         session: GameSession,
         playerId: GamePlayerId,
-    ) {
-        session.getPlayer(playerId)
-    }
+    ) = session.getPlayer(playerId)
 
     private fun generateCode(): String {
         repeat(10) {

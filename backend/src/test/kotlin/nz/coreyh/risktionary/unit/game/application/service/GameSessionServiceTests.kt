@@ -13,6 +13,7 @@ import nz.coreyh.risktionary.game.application.exception.GamePlayerDisplayNameInU
 import nz.coreyh.risktionary.game.application.service.GameSessionService
 import nz.coreyh.risktionary.game.application.service.GameSessionTaskService
 import nz.coreyh.risktionary.game.application.service.GameTicketService
+import nz.coreyh.risktionary.game.application.service.round.GameRoundSessionChatService
 import nz.coreyh.risktionary.game.application.service.round.GameRoundSessionService
 import nz.coreyh.risktionary.game.application.session.GamePlayerSession
 import nz.coreyh.risktionary.game.application.session.GameSession
@@ -47,6 +48,7 @@ class GameSessionServiceTests {
     private lateinit var gameTicketService: GameTicketService
     private lateinit var wordService: WordService
     private lateinit var gameRoundSessionService: GameRoundSessionService
+    private lateinit var gameRoundSessionChatService: GameRoundSessionChatService
     private lateinit var gameSessionStore: GameSessionStore
     private lateinit var gameEventPublisher: GameEventPublisher
     private lateinit var clock: Clock
@@ -59,6 +61,7 @@ class GameSessionServiceTests {
         gameTicketService = mockk(relaxed = true)
         wordService = mockk(relaxed = true)
         gameRoundSessionService = mockk(relaxed = true)
+        gameRoundSessionChatService = mockk(relaxed = true)
         gameSessionStore = mockk(relaxed = true)
         gameEventPublisher = mockk(relaxed = true)
         clock = mockk(relaxed = true)
@@ -68,6 +71,7 @@ class GameSessionServiceTests {
                 gameTicketService,
                 wordService,
                 gameRoundSessionService,
+                gameRoundSessionChatService,
                 gameSessionStore,
                 gameEventPublisher,
                 clock,

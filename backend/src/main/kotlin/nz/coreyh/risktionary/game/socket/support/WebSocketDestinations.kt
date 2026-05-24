@@ -20,6 +20,8 @@ object WebSocketDestinations {
         fun players(gameId: GameId) = "$BASE/${gameId.value}/players"
 
         fun draw(gameId: GameId) = "${base(gameId)}/draw"
+
+        fun round(gameId: GameId) = "$BASE/${gameId.value}/round"
     }
 
     // Server -> Specific subscriber
