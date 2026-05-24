@@ -4,6 +4,8 @@ package nz.coreyh.risktionary.game.socket.messages.event.round
  * Defines all possible types of round socket events.
  */
 enum class RoundEventType {
+    ROUND_STATE_CHANGED,
+
     ASSIGNED_DRAWER,
     ASSIGNED_GUESSER,
 

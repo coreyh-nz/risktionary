@@ -12,7 +12,4 @@ enum class GameEventType {
     PLAYER_JOINED,
     PLAYER_LEFT,
     PLAYER_LIST_UPDATED,
-
-    // round events
-    ROUND_STATE_CHANGED,
 }

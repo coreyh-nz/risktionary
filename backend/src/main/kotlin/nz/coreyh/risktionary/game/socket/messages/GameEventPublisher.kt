@@ -84,7 +84,7 @@ class GameEventPublisher(
         gameId: GameId,
         roundState: GameRoundState,
     ) = messagingTemplate.sendToTopic(
-        destination = WebSocketDestinations.Topic.base(gameId),
+        destination = WebSocketDestinations.Topic.round(gameId),
         message = RoundStateChangedEvent(roundState),
     )
 
