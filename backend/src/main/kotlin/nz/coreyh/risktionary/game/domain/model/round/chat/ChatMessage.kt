@@ -15,6 +15,20 @@ sealed interface ChatMessage {
             override val type: ChatMessageType = ChatMessageType.SYSTEM
             override val kind: ChatMessageSystemType = ChatMessageSystemType.PLAYER_GUESSED_CORRECTLY
         }
+
+        data class DrawingEndedAllGuessed(
+            val word: String,
+        ) : System {
+            override val type: ChatMessageType = ChatMessageType.SYSTEM
+            override val kind: ChatMessageSystemType = ChatMessageSystemType.DRAWING_ENDED_ALL_GUESSED
+        }
+
+        data class DrawingEndedTimeUp(
+            val word: String,
+        ) : System {
+            override val type: ChatMessageType = ChatMessageType.SYSTEM
+            override val kind: ChatMessageSystemType = ChatMessageSystemType.DRAWING_ENDED_TIME_UP
+        }
     }
 
     data class Player(
