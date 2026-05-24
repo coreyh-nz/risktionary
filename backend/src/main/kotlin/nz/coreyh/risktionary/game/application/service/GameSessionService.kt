@@ -4,10 +4,10 @@ import nz.coreyh.risktionary.game.application.exception.GameNotFoundException
 import nz.coreyh.risktionary.game.application.exception.GamePlayerDisplayNameInUseException
 import nz.coreyh.risktionary.game.application.exception.GamePlayerNotInSessionException
 import nz.coreyh.risktionary.game.application.exception.GamePlayerStateInvalidException
+import nz.coreyh.risktionary.game.application.service.round.GameRoundSessionChatService
 import nz.coreyh.risktionary.game.application.service.round.GameRoundSessionService
 import nz.coreyh.risktionary.game.application.session.GamePlayerSession
 import nz.coreyh.risktionary.game.application.session.GameSession
-import nz.coreyh.risktionary.game.application.session.round.requireActiveRound
 import nz.coreyh.risktionary.game.application.store.GameSessionStore
 import nz.coreyh.risktionary.game.domain.model.GameId
 import nz.coreyh.risktionary.game.domain.model.createGameId
@@ -17,8 +17,6 @@ import nz.coreyh.risktionary.game.domain.model.player.GamePlayerId
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerIdentity
 import nz.coreyh.risktionary.game.domain.model.player.GameTicket
 import nz.coreyh.risktionary.game.domain.model.player.createPlayerId
-import nz.coreyh.risktionary.game.domain.model.round.chat.ChatMessage
-import nz.coreyh.risktionary.game.domain.model.round.guess.GuessResultType
 import nz.coreyh.risktionary.game.domain.model.round.hint.toWordHint
 import nz.coreyh.risktionary.game.socket.messages.GameEventPublisher
 import nz.coreyh.risktionary.user.domain.model.UserId
@@ -36,6 +34,7 @@ class GameSessionService(
     private val gameTicketService: GameTicketService,
     private val wordService: WordService,
     private val gameRoundSessionService: GameRoundSessionService,
+    private val gameRoundSessionChatService: GameRoundSessionChatService,
     private val gameSessionStore: GameSessionStore,
     private val gameEventPublisher: GameEventPublisher,
     private val clock: Clock = Clock.System,
@@ -294,41 +293,8 @@ class GameSessionService(
         text: String,
     ) {
         val session = getSession(gameId)
-        val round = session.currentRound.requireActiveRound()
         val player = requireActivePlayer(session, playerId)
-
-        val guessResult = round.handleGuess(playerId, text)
-        val message =
-            when (guessResult) {
-                GuessResultType.CORRECT -> {
-                    gameEventPublisher.publishRoundCorrectGuessesCountUpdated(
-                        gameId = gameId,
-                        correctGuesses = round.guesses.getCorrectGuessCount(),
-                    )
-                    gameEventPublisher.publishRoundCorrectGuess(
-                        playerId = playerId,
-                        word = round.word,
-                    )
-                    ChatMessage.System.CorrectGuess(playerId, player.identity.displayName)
-                }
-
-                GuessResultType.INCORRECT,
-                GuessResultType.ALREADY_GUESSED,
-                GuessResultType.DRAWER_CANNOT_GUESS,
-                -> {
-                    ChatMessage.Player(
-                        playerId = playerId,
-                        playerDisplayName = player.identity.displayName,
-                        text = text,
-                    )
-                }
-            }
-
-        round.addMessage(message)
-        gameEventPublisher.publishRoundChatMessage(
-            gameId = gameId,
-            message = message,
-        )
+        gameRoundSessionChatService.handleChat(session, player, text)
     }
 
     private fun requireActivePlayer(

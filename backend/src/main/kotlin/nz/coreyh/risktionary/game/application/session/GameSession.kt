@@ -7,6 +7,7 @@ import nz.coreyh.risktionary.game.application.exception.GameStateInvalidExceptio
 import nz.coreyh.risktionary.game.application.exception.round.GameRoundStateInvalidException
 import nz.coreyh.risktionary.game.application.session.round.GameRoundSession
 import nz.coreyh.risktionary.game.application.session.round.GameRoundState
+import nz.coreyh.risktionary.game.application.session.round.requireState
 import nz.coreyh.risktionary.game.domain.model.GameId
 import nz.coreyh.risktionary.game.domain.model.GameState
 import nz.coreyh.risktionary.game.domain.model.GameStateType
@@ -225,3 +226,5 @@ class GameSession(
      */
     private inline fun <T> withActivity(block: () -> T): T = block().also { lastActivityAt = clock.now() }
 }
+
+fun GameSession.requireActiveRound(): GameRoundSession = currentRound ?: throw GameRoundStateInvalidException()

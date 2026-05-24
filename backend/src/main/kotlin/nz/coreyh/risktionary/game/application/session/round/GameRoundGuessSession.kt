@@ -1,4 +1,4 @@
-package nz.coreyh.risktionary.game.application.service.round
+package nz.coreyh.risktionary.game.application.session.round
 
 import nz.coreyh.risktionary.game.application.session.LockableSession
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerId
