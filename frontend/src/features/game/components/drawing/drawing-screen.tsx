@@ -1,8 +1,8 @@
-import { Card, CardContent } from "@/components/ui/card"
 import {
   useGameRoundState,
   useGameSession,
 } from "../../stores/game-store-selectors"
+import { ChatPanel } from "../round/chat/chat-panel"
 import { RoundWordView } from "../round/word/round-word-view"
 import { DrawerPanel } from "./panel/drawer-panel"
 import { SpectatorPanel } from "./panel/spectator-panel"
@@ -24,9 +24,8 @@ export const DrawingScreen = () => {
         <div className="flex flex-1 min-w-0">
           {isDrawer ? <DrawerPanel /> : <SpectatorPanel />}
         </div>
-        <Card className="flex flex-col w-72 self-stretch shrink-0">
-          <CardContent className="flex flex-col flex-1">Chat</CardContent>
-        </Card>
+
+        <ChatPanel className="w-72 self-stretch shrink-0" />
       </div>
     </div>
   )

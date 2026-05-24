@@ -5,6 +5,9 @@ import { useGameStore } from "../../stores/game-store"
 import {
   RoundAssignedDrawerEvent,
   RoundAssignedGuesserEvent,
+  RoundChatMessageEvent,
+  RoundCorrectGuessesUpdatedEvent,
+  RoundCorrectGuessEvent,
   RoundEvent,
 } from "../../types/round/events"
 
@@ -16,6 +19,15 @@ const handleRoundEvent = (event: RoundEvent) => {
       break
     case "ASSIGNED_GUESSER":
       handleAssignedGuesserEvent(event)
+      break
+    case "CHAT_MESSAGE":
+      handleChatMessageEvent(event)
+      break
+    case "CORRECT_GUESS":
+      handleCorrectGuessEvent(event)
+      break
+    case "CORRECT_GUESSES_COUNT":
+      handleCorrectGuessesUpdatedEvent(event)
       break
     default:
       assertNever(type)
@@ -30,9 +42,30 @@ const handleAssignedDrawerEvent = (event: RoundAssignedDrawerEvent) => {
   useGameStore.getState().setRoundDrawer(event.word)
 }
 
-export const setupRoundSubscriptions = (client: Client) => {
+const handleChatMessageEvent = (event: RoundChatMessageEvent) => {
+  useGameStore.getState().addRoundChatMessage(event.message)
+}
+
+const handleCorrectGuessEvent = (event: RoundCorrectGuessEvent) => {
+  const role = useGameStore.getState().roundRole
+  if (role?.type === "GUESSER") {
+    useGameStore.getState().setRoundGuesserCorrectWord(event.word)
+  }
+}
+
+const handleCorrectGuessesUpdatedEvent = (
+  event: RoundCorrectGuessesUpdatedEvent
+) => {
+  useGameStore.getState().setRoundCorrectGuessesCount(event.correctGuesses)
+}
+
+export const setupRoundSubscriptions = (client: Client, gameId: string) => {
   client.subscribe(
     "/user/queue/round",
+    stompHandler<RoundEvent>(handleRoundEvent)
+  )
+  client.subscribe(
+    `/topic/game/${gameId}/round`,
     stompHandler<RoundEvent>(handleRoundEvent)
   )
 }

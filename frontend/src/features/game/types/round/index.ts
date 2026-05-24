@@ -17,7 +17,7 @@ export type RoundState =
 
 export type RoundRole =
   | { type: "DRAWER"; word: string }
-  | { type: "GUESSER"; hint: WordHint }
+  | { type: "GUESSER"; hint: WordHint; correctGuessWord?: string }
 
 export type CharacterHint =
   | { type: "HIDDEN" }

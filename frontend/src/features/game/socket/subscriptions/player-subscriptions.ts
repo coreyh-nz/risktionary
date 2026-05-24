@@ -1,4 +1,4 @@
-import { Client } from "@stomp/stompjs"
+import { useGameStore } from "@/features/game/stores/game-store"
 import {
   PlayerEvent,
   PlayerJoinedEvent,
@@ -6,7 +6,7 @@ import {
   PlayerListUpdatedEvent,
 } from "@/features/game/types/game-player-events"
 import { stompHandler } from "@/lib/stomp-utils"
-import { useGameStore } from "@/features/game/stores/game-store"
+import { Client } from "@stomp/stompjs"
 
 const handlePlayerEvent = (event: PlayerEvent) => {
   switch (event.type) {

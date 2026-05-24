@@ -15,6 +15,11 @@ export const useGameIsHost = () =>
   useGameStore((s) => s.session?.role === "host")
 export const useGameIsPlayer = () =>
   useGameStore((s) => s.session?.role === "player")
+export const useGameIsPlayerMe = (id: string) =>
+  useGameStore((s) => {
+    const session = s.session
+    return session?.role === "player" && session?.playerId === id
+  })
 
 export const useGameSetPlayers = () => useGameStore((s) => s.setPlayers)
 export const useGameAddPlayer = () => useGameStore((s) => s.addPlayer)
@@ -42,3 +47,9 @@ export const useSetVolunteers = () => useGameStore((s) => s.setVolunteers)
 
 export const useGameRoundRole = () =>
   useGameStore(useShallow((s) => s.roundRole))
+
+export const useGameRoundChatMessages = () =>
+  useGameStore(useShallow((s) => s.roundChatMessages))
+
+export const useGameRoundCorrectGuessesCount = () =>
+  useGameStore((s) => s.roundCorrectGuessesCount)

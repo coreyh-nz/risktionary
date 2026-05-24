@@ -5,6 +5,7 @@ import {
 } from "../../../stores/game-store-selectors"
 import { DrawWordView } from "./draw-word-view"
 import { GuessWordView } from "./guess-word-view"
+import { GuessedWordView } from "./guessed-word-view"
 
 export const RoundWordView = () => {
   const state = useGameRoundState()
@@ -17,7 +18,11 @@ export const RoundWordView = () => {
     case "DRAWER":
       return <DrawWordView word={role.word} />
     case "GUESSER":
-      return <GuessWordView hint={role.hint} />
+      return role.correctGuessWord ? (
+        <GuessedWordView word={role.correctGuessWord} />
+      ) : (
+        <GuessWordView hint={role.hint} />
+      )
     default:
       assertNever(roleType)
   }
