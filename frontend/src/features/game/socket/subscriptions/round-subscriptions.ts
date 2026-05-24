@@ -9,11 +9,16 @@ import {
   RoundCorrectGuessesUpdatedEvent,
   RoundCorrectGuessEvent,
   RoundEvent,
+  RoundStateChangedEvent,
 } from "../../types/round/events"
 
 const handleRoundEvent = (event: RoundEvent) => {
   const type = event.type
   switch (type) {
+    case "ROUND_STATE_CHANGED": {
+      handleRoundStateChanged(event as RoundStateChangedEvent)
+      break
+    }
     case "ASSIGNED_DRAWER":
       handleAssignedDrawerEvent(event)
       break
@@ -32,6 +37,10 @@ const handleRoundEvent = (event: RoundEvent) => {
     default:
       assertNever(type)
   }
+}
+
+const handleRoundStateChanged = (event: RoundStateChangedEvent) => {
+  useGameStore.getState().setRoundState(event.state)
 }
 
 const handleAssignedGuesserEvent = (event: RoundAssignedGuesserEvent) => {

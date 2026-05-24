@@ -12,6 +12,21 @@ export type PlayerGuessCorrectlySystemMessage = {
   playerDisplayName: string
 }
 
-export type SystemMessage = PlayerGuessCorrectlySystemMessage
+export type DrawingEndedAllGuessedSystemMessage = {
+  type: "SYSTEM"
+  kind: "DRAWING_ENDED_ALL_GUESSED"
+  word: string
+}
+
+export type DrawingEndedTimeUpSystemMessage = {
+  type: "SYSTEM"
+  kind: "DRAWING_ENDED_TIME_UP"
+  word: string
+}
+
+export type SystemMessage =
+  | PlayerGuessCorrectlySystemMessage
+  | DrawingEndedAllGuessedSystemMessage
+  | DrawingEndedTimeUpSystemMessage
 
 export type ChatMessage = PlayerMessage | SystemMessage

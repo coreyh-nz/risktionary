@@ -1,5 +1,10 @@
-import { WordHint } from "."
+import { RoundState, WordHint } from "."
 import { ChatMessage } from "./chat"
+
+export interface RoundStateChangedEvent {
+  type: "ROUND_STATE_CHANGED"
+  state: RoundState
+}
 
 export interface RoundAssignedDrawerEvent {
   type: "ASSIGNED_DRAWER"
@@ -27,6 +32,7 @@ export interface RoundCorrectGuessesUpdatedEvent {
 }
 
 export type RoundEvent =
+  | RoundStateChangedEvent
   | RoundAssignedDrawerEvent
   | RoundAssignedGuesserEvent
   | RoundChatMessageEvent

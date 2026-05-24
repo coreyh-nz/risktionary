@@ -3,7 +3,6 @@ import { stompHandler } from "@/lib/stomp-utils"
 import { Client } from "@stomp/stompjs"
 import {
   GameEvent,
-  RoundStateChangedEvent,
   StateChangedEvent,
   VolunteersUpdatedEvent,
 } from "../../types/game-events"
@@ -12,10 +11,6 @@ const handleGameEvent = (event: GameEvent) => {
   switch (event.type) {
     case "STATE_CHANGED": {
       handleStateChanged(event as StateChangedEvent)
-      break
-    }
-    case "ROUND_STATE_CHANGED": {
-      handleRoundStateChanged(event as RoundStateChangedEvent)
       break
     }
     case "VOLUNTEERS_UPDATED": {
@@ -27,10 +22,6 @@ const handleGameEvent = (event: GameEvent) => {
 
 const handleStateChanged = (event: StateChangedEvent) => {
   useGameStore.getState().setState(event.state)
-}
-
-const handleRoundStateChanged = (event: RoundStateChangedEvent) => {
-  useGameStore.getState().setRoundState(event.state)
 }
 
 const handleVolunteersUpdated = (event: VolunteersUpdatedEvent) => {

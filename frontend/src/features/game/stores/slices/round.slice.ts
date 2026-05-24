@@ -1,14 +1,16 @@
 import { StateCreator } from "zustand"
-import { RoundRole, RoundState, WordHint } from "../../types/round"
+import { RoundPhase, RoundRole, RoundState, WordHint } from "../../types/round"
 import { ChatMessage } from "../../types/round/chat"
 
 export interface RoundSlice {
   roundState: RoundState | null
+  roundPhase: RoundPhase | null
   roundRole: RoundRole | null
   roundChatMessages: ChatMessage[]
   roundCorrectGuessesCount: number
 
   setRoundState: (state: RoundState) => void
+  setRoundPhase: (phase: RoundPhase) => void
 
   setRoundDrawer: (word: string) => void
   setRoundGuesser: (hint: WordHint) => void
@@ -25,11 +27,13 @@ export const createRoundSlice: StateCreator<RoundSlice, [], [], RoundSlice> = (
   set
 ) => ({
   roundState: null,
+  roundPhase: null,
   roundRole: null,
   roundChatMessages: [],
   roundCorrectGuessesCount: 0,
 
   setRoundState: (roundState) => set({ roundState }),
+  setRoundPhase: (roundPhase) => set({ roundPhase }),
 
   setRoundDrawer: (word) => set({ roundRole: { type: "DRAWER", word } }),
   setRoundGuesser: (hint) => set({ roundRole: { type: "GUESSER", hint } }),

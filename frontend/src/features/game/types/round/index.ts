@@ -15,6 +15,15 @@ export type RoundState =
   | { type: "IN_PROGRESS"; drawerId: string; phase: RoundPhaseType }
   | { type: "COMPLETED" }
 
+export type RoundPhase =
+  | { type: "DRAWING" }
+  | { type: "DRAWING_REVIEW" }
+  | { type: "RANKING" }
+  | { type: "RANKING_REVIEW" }
+  | { type: "WORD_REVIEW" }
+  | { type: "ROUND_SCORING" }
+  | { type: "COMPLETED" }
+
 export type RoundRole =
   | { type: "DRAWER"; word: string }
   | { type: "GUESSER"; hint: WordHint; correctGuessWord?: string }
