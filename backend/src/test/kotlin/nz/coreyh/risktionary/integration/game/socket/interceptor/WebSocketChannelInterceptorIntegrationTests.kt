@@ -34,7 +34,7 @@ class WebSocketChannelInterceptorIntegrationTests(
         val ticket = gameTicketService.generateTicket(session.id, player.playerId)
 
         val client = WebSocketTestSupport.connect(port, ticket.value)
-        val expectedDestination = WebSocketDestinations.Topic.players(session.id)
+        val expectedDestination = WebSocketDestinations.Topic.base(session.id)
         client.subscribe(expectedDestination, WebSocketTestSupport.noopFrameHandler)
 
         Thread.sleep(FRAME_SETTLE_MS)
@@ -78,7 +78,7 @@ class WebSocketChannelInterceptorIntegrationTests(
 
         val disconnected = CompletableFuture<Throwable>()
         val client = WebSocketTestSupport.connect(port, ticket.value, onError = { disconnected.complete(it) })
-        client.subscribe(WebSocketDestinations.Topic.players(session2.id), WebSocketTestSupport.noopFrameHandler)
+        client.subscribe(WebSocketDestinations.Topic.base(session2.id), WebSocketTestSupport.noopFrameHandler)
 
         val error = disconnected.get(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
         error.shouldNotBeNull()

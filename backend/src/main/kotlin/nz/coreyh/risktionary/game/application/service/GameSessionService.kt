@@ -13,8 +13,10 @@ import nz.coreyh.risktionary.game.domain.model.GameId
 import nz.coreyh.risktionary.game.domain.model.createGameId
 import nz.coreyh.risktionary.game.domain.model.host.GameSessionHost
 import nz.coreyh.risktionary.game.domain.model.host.GameSessionHostStatus
+import nz.coreyh.risktionary.game.domain.model.player.GamePlayer
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerId
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerIdentity
+import nz.coreyh.risktionary.game.domain.model.player.GamePlayerStatus
 import nz.coreyh.risktionary.game.domain.model.player.GameTicket
 import nz.coreyh.risktionary.game.domain.model.player.createPlayerId
 import nz.coreyh.risktionary.game.domain.model.round.hint.toWordHint
@@ -26,7 +28,8 @@ import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Coordinates the lifecycle of active game sessions and the players within them.
+ * Coordinates the lifecycle of active game sessions and the players within
+ * them.
  */
 @Service
 class GameSessionService(
@@ -40,10 +43,10 @@ class GameSessionService(
     private val clock: Clock = Clock.System,
 ) {
     /**
-     * Creates a new in‑memory [GameSession] and registers it in the session store.
+     * Creates a new in‑memory [GameSession] and registers it in the session
+     * store.
      *
      * @param hostId The user who created the game.
-     *
      * @return The newly created session.
      */
     fun createSession(hostId: UserId): GameSession {
@@ -84,9 +87,9 @@ class GameSessionService(
     /**
      * Handles the initial HTTP join request from a client.
      *
-     * This represents the first step of the player lifecycle:
-     * the player expresses intent to join the game, but has not yet
-     * established a WebSocket connection.
+     * This represents the first step of the player lifecycle: the player
+     * expresses intent to join the game, but has not yet established a
+     * WebSocket connection.
      *
      * @return A ticket that authorizes the player to connect to the session.
      */
@@ -99,27 +102,27 @@ class GameSessionService(
         // prevent duplicate display name
         session
             .getPlayers()
-            .find { it.identity.displayName.equals(identity.displayName, ignoreCase = true) }
-            ?.let {
+            .find {
+                it.player.identity.displayName
+                    .equals(identity.displayName, ignoreCase = true)
+            }?.let {
                 throw GamePlayerDisplayNameInUseException()
             }
 
-        val playerSession =
-            GamePlayerSession(
-                createPlayerId(),
-                identity,
-            )
+        val player = GamePlayer(createPlayerId(), identity)
+        val playerSession = GamePlayerSession(player, GamePlayerStatus.PENDING)
 
         session.requestJoin(playerSession)
         return gameTicketService.generateTicket(session.id, playerSession.id)
     }
 
     /**
-     * Handles the HTTP request sent immediately before the WebSocket handshake.
+     * Handles the HTTP request sent immediately before the WebSocket
+     * handshake.
      *
-     * This represents the transition from "requested to join" to "attempting to connect".
-     * The session validates that the ticket is valid and that the player is in a state
-     * that allows connection.
+     * This represents the transition from "requested to join" to "attempting
+     * to connect". The session validates that the ticket is valid and that the
+     * player is in a state that allows connection.
      */
     fun handleConnecting(
         gameId: GameId,
@@ -130,11 +133,11 @@ class GameSessionService(
     }
 
     /**
-     * Handles the STOMP CONNECTED frame, indicating that the WebSocket connection
-     * has been fully established.
+     * Handles the STOMP CONNECTED frame, indicating that the WebSocket
+     * connection has been fully established.
      *
-     * This represents the transition into the ACTIVE state, meaning the player is now
-     * a live participant in the session.
+     * This represents the transition into the ACTIVE state, meaning the player
+     * is now a live participant in the session.
      */
     fun handleConnected(
         gameId: GameId,
@@ -149,11 +152,20 @@ class GameSessionService(
         )
     }
 
+    /**
+     * Handles the point when a player has subscribed to all necessary
+     * topics/queues and is ready to receive the full current game state.
+     *
+     * Sends a complete initial synchronisation to the player.
+     */
     fun handleReady(playerId: GamePlayerId) {
-        val session =
+        val game =
             gameSessionStore.findByPlayerId(playerId)
                 ?: throw GameNotFoundException()
-        gameEventPublisher.publishPlayerList(playerId, session.getPlayers())
+
+        gameEventPublisher.publishStateToPlayer(playerId, game)
+        gameEventPublisher.publishPlayerList(playerId = playerId, players = game.getPlayers())
+        gameEventPublisher.publishVolunteersUpdated(gameId = game.id, volunteers = game.volunteers.getVolunteers())
     }
 
     fun handleDisconnected(
@@ -198,29 +210,29 @@ class GameSessionService(
         val session = getSession(gameId)
 
         // todo - change this to use time from settings when implemented
-        val startAt = 10.seconds
+        val startIn = 10.seconds
+        val startAt = clock.now() + startIn
         session.transitionToStarting(startAt)
-
-        gameEventPublisher.publishStateChanged(
-            gameId = gameId,
-            gameState = session.state,
-        )
+        gameEventPublisher.publishState(session)
 
         // schedule task to transition to in progress
-        gameSessionTaskService.schedule(gameId, clock.now() + startAt) { transitionToInProgress(gameId) }
+        if (startIn >= 0.seconds) {
+            gameSessionTaskService.schedule(gameId, startAt) { transitionToInProgress(gameId) }
+        } else {
+            transitionToInProgress(gameId)
+        }
     }
 
     fun transitionToInProgress(gameId: GameId) {
         val session = getSession(gameId)
         session.transitionToInProgress()
-        gameEventPublisher.publishStateChanged(
-            gameId = gameId,
-            gameState = session.state,
-        )
 
         // TODO: replace this with actually getting a word
         val word = wordService.findWords().first()
-        gameRoundSessionService.createRound(gameId = gameId, word = word)
+        val round = gameRoundSessionService.createRound(game = session, word = word)
+        session.currentRound = round
+
+        gameEventPublisher.publishState(session)
     }
 
     /**
@@ -229,8 +241,10 @@ class GameSessionService(
      * @param gameId the game session.
      * @param playerId the player volunteering.
      * @throws GameNotFoundException if the session does not exist.
-     * @throws GamePlayerNotInSessionException if the player is not active in the session.
-     * @throws GamePlayerStateInvalidException if the player has already volunteered.
+     * @throws GamePlayerNotInSessionException if the player is not active in
+     *    the session.
+     * @throws GamePlayerStateInvalidException if the player has already
+     *    volunteered.
      */
     fun handleVolunteer(
         gameId: GameId,
@@ -252,8 +266,10 @@ class GameSessionService(
      * @param gameId the game session.
      * @param playerId the player withdrawing their volunteer.
      * @throws GameNotFoundException if the session does not exist.
-     * @throws GamePlayerNotInSessionException if the player is not active in the session.
-     * @throws GamePlayerStateInvalidException if the player has not volunteered.
+     * @throws GamePlayerNotInSessionException if the player is not active in
+     *    the session.
+     * @throws GamePlayerStateInvalidException if the player has not
+     *    volunteered.
      */
     fun handleUnvolunteer(
         gameId: GameId,
@@ -274,8 +290,9 @@ class GameSessionService(
         drawerId: GamePlayerId,
     ) {
         val session = getSession(gameId)
-        val round = session.selectDrawer(drawerId)
-        gameEventPublisher.publishRoundStateChanged(session.id, round.state)
+        val drawer = session.getPlayer(drawerId)
+        val round = session.selectDrawer(drawer)
+        gameEventPublisher.publishRoundState(round)
 
         val wordHint = round.word.value.toWordHint()
         gameEventPublisher.publishVolunteersUpdated(gameId, session.volunteers.getVolunteers())

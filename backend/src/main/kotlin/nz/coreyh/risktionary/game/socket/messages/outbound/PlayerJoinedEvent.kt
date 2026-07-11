@@ -9,4 +9,6 @@ import nz.coreyh.risktionary.game.socket.messages.view.GamePlayerView
  */
 data class PlayerJoinedEvent(
     val player: GamePlayerView,
-) : GameEvent(GameEventType.PLAYER_JOINED)
+) : GameEvent {
+    override val type: GameEventType = GameEventType.PLAYER_JOINED
+}

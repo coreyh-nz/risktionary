@@ -16,6 +16,7 @@ import nz.coreyh.risktionary.support.factory.game.createTestGameSession
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 
 class GameSessionTests {
@@ -240,12 +241,12 @@ class GameSessionTests {
     inner class TransitionToStarting {
         @Test
         fun `transition to starting changes state when current state is lobby`() {
-            val startIn = 10.seconds
+            val startingAt = Clock.System.now() + 10.seconds
             clock.advance(1.seconds)
 
-            session.transitionToStarting(startIn)
+            session.transitionToStarting(startingAt)
 
-            session.state shouldBe GameState.Starting(startIn)
+            session.state shouldBe GameState.Starting(startingAt)
             session.lastActivityAt shouldBe clock.now()
         }
 
@@ -253,11 +254,12 @@ class GameSessionTests {
         fun `transition to starting throws when current state is invalid`() {
             session.state = GameState.InProgress
 
+            val startingAt = Clock.System.now() + 10.seconds
             val lastActivityAt = session.lastActivityAt
             clock.advance(1.seconds)
 
             shouldThrow<GameStateInvalidException> {
-                session.transitionToStarting(10.seconds)
+                session.transitionToStarting(startingAt)
             }
 
             session.lastActivityAt shouldBe lastActivityAt
@@ -268,8 +270,8 @@ class GameSessionTests {
     inner class TransitionToInProgress {
         @Test
         fun `transition to in progress changes state when current state is starting`() {
-            val startIn = 10.seconds
-            session.state = GameState.Starting(startIn)
+            val startingAt = Clock.System.now() + 10.seconds
+            session.state = GameState.Starting(startingAt)
             clock.advance(1.seconds)
 
             session.transitionToInProgress()

@@ -5,7 +5,7 @@ package nz.coreyh.risktionary.game.socket.messages.event
  */
 enum class GameEventType {
     // game events
-    STATE_CHANGED,
+    STATE,
     VOLUNTEERS_UPDATED,
 
     // player events

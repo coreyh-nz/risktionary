@@ -19,15 +19,14 @@ import nz.coreyh.risktionary.game.application.session.GamePlayerSession
 import nz.coreyh.risktionary.game.application.session.GameSession
 import nz.coreyh.risktionary.game.application.session.GameVolunteerSession
 import nz.coreyh.risktionary.game.application.session.round.GameRoundSession
-import nz.coreyh.risktionary.game.application.session.round.GameRoundState
 import nz.coreyh.risktionary.game.application.store.GameSessionStore
-import nz.coreyh.risktionary.game.domain.model.GameState
 import nz.coreyh.risktionary.game.domain.model.host.GameSessionHostStatus
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerId
 import nz.coreyh.risktionary.game.domain.model.player.GameTicket
 import nz.coreyh.risktionary.game.socket.messages.GameEventPublisher
 import nz.coreyh.risktionary.support.annotation.MockKTest
 import nz.coreyh.risktionary.support.factory.game.createTestGameId
+import nz.coreyh.risktionary.support.factory.game.createTestGamePlayer
 import nz.coreyh.risktionary.support.factory.game.createTestGamePlayerId
 import nz.coreyh.risktionary.support.factory.game.createTestGamePlayerIdentityGuest
 import nz.coreyh.risktionary.support.factory.game.createTestGamePlayerSession
@@ -178,9 +177,10 @@ class GameSessionServiceTests {
         @Test
         fun `handle join request throws when display name is already in use`() {
             val session = mockk<GameSession>(relaxed = true)
-            val existingPlayer = createTestGamePlayerSession(identity = identity)
+            val existingPlayer = createTestGamePlayer(identity = identity)
+            val existingPlayerSession = createTestGamePlayerSession(player = existingPlayer)
             every { gameSessionStore.findByCode(code) } returns session
-            every { session.getPlayers() } returns listOf(existingPlayer)
+            every { session.getPlayers() } returns listOf(existingPlayerSession)
 
             shouldThrow<GamePlayerDisplayNameInUseException> {
                 service.handleJoinRequest(code, identity)
@@ -452,23 +452,22 @@ class GameSessionServiceTests {
         fun `transition to starting transitions session to starting state`() {
             val session = mockk<GameSession>(relaxed = true)
             val startIn = 10.seconds
+            val startsAt = clock.now() + startIn
             every { gameSessionStore.findById(gameId) } returns session
 
             service.transitionToStarting(gameId)
 
-            verify { session.transitionToStarting(startIn) }
+            verify { session.transitionToStarting(startsAt) }
         }
 
         @Test
-        fun `transition to starting publishes state changed event`() {
+        fun `transition to starting publishes state event`() {
             val session = mockk<GameSession>(relaxed = true)
-            val gameState = GameState.Lobby
             every { gameSessionStore.findById(gameId) } returns session
-            every { session.state } returns gameState
 
             service.transitionToStarting(gameId)
 
-            verify { gameEventPublisher.publishStateChanged(gameId, gameState) }
+            verify { gameEventPublisher.publishState(session) }
         }
 
         @Test
@@ -512,17 +511,29 @@ class GameSessionServiceTests {
         }
 
         @Test
-        fun `publishes state changed event`() {
+        fun `sets the current round`() {
             val session = mockk<GameSession>(relaxed = true)
-            val gameState = GameState.InProgress
+            val roundSession = mockk<GameRoundSession>(relaxed = true)
             val word = createTestWord()
             every { gameSessionStore.findById(gameId) } returns session
-            every { session.state } returns gameState
+            every { gameRoundSessionService.createRound(session, word) } returns roundSession
             every { wordService.findWords() } returns listOf(word)
 
             service.transitionToInProgress(gameId)
 
-            verify { gameEventPublisher.publishStateChanged(gameId, gameState) }
+            verify { session.currentRound = roundSession }
+        }
+
+        @Test
+        fun `publishes state event`() {
+            val session = mockk<GameSession>(relaxed = true)
+            val word = createTestWord()
+            every { gameSessionStore.findById(gameId) } returns session
+            every { wordService.findWords() } returns listOf(word)
+
+            service.transitionToInProgress(gameId)
+
+            verify { gameEventPublisher.publishState(session) }
         }
 
         @Test
@@ -623,7 +634,8 @@ class GameSessionServiceTests {
     @MockKTest
     inner class HandleSelectDrawer {
         private val gameId = createTestGameId()
-        private val playerId = createTestGamePlayerId()
+        private val player = createTestGamePlayer()
+        private val playerSession = createTestGamePlayerSession(player)
 
         @Test
         fun `handle select drawer selects the player as drawer on the active round`() {
@@ -631,10 +643,11 @@ class GameSessionServiceTests {
             val round = mockk<GameRoundSession>(relaxed = true)
             val volunteers = mockk<GameVolunteerSession>(relaxed = true)
             every { gameSessionStore.findById(gameId) } returns session
-            every { session.selectDrawer(playerId) } returns round
             every { session.volunteers } returns volunteers
+            every { session.getPlayer(player.id) } returns playerSession
+            every { session.selectDrawer(playerSession) } returns round
 
-            service.handleSelectDrawer(gameId, playerId)
+            service.handleSelectDrawer(gameId, player.id)
         }
 
         @Test
@@ -642,16 +655,14 @@ class GameSessionServiceTests {
             val session = mockk<GameSession>(relaxed = true)
             val round = mockk<GameRoundSession>(relaxed = true)
             val volunteers = mockk<GameVolunteerSession>(relaxed = true)
-            val roundState = mockk<GameRoundState>()
             every { gameSessionStore.findById(gameId) } returns session
-            every { session.id } returns gameId
             every { session.volunteers } returns volunteers
-            every { session.selectDrawer(playerId) } returns round
-            every { round.state } returns roundState
+            every { session.getPlayer(player.id) } returns playerSession
+            every { session.selectDrawer(playerSession) } returns round
 
-            service.handleSelectDrawer(gameId, playerId)
+            service.handleSelectDrawer(gameId, player.id)
 
-            verify { gameEventPublisher.publishRoundStateChanged(gameId, roundState) }
+            verify { gameEventPublisher.publishRoundState(round) }
         }
 
         @Test
@@ -661,12 +672,12 @@ class GameSessionServiceTests {
             val volunteers = mockk<GameVolunteerSession>(relaxed = true)
             val remainingVolunteers = listOf<GamePlayerId>()
             every { gameSessionStore.findById(gameId) } returns session
-            every { session.id } returns gameId
             every { session.volunteers } returns volunteers
-            every { session.selectDrawer(playerId) } returns round
+            every { session.getPlayer(player.id) } returns playerSession
+            every { session.selectDrawer(playerSession) } returns round
             every { volunteers.getVolunteers() } returns remainingVolunteers
 
-            service.handleSelectDrawer(gameId, playerId)
+            service.handleSelectDrawer(gameId, player.id)
 
             verify { gameEventPublisher.publishVolunteersUpdated(gameId, remainingVolunteers) }
         }
@@ -676,7 +687,7 @@ class GameSessionServiceTests {
             every { gameSessionStore.findById(gameId) } returns null
 
             shouldThrow<GameNotFoundException> {
-                service.handleSelectDrawer(gameId, playerId)
+                service.handleSelectDrawer(gameId, player.id)
             }
         }
     }

@@ -9,4 +9,6 @@ import nz.coreyh.risktionary.game.socket.messages.event.GameEventType
  */
 class PlayerLeftEvent(
     val playerId: GamePlayerId,
-) : GameEvent(GameEventType.PLAYER_LEFT)
+) : GameEvent {
+    override val type: GameEventType = GameEventType.PLAYER_LEFT
+}

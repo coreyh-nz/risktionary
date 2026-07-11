@@ -9,10 +9,8 @@ sealed interface GameRoundPhase {
         override val type = RoundPhaseType.DRAWING
     }
 
-    data class DrawingReview(
-        val word: String,
-    ) : GameRoundPhase {
-        override val type = RoundPhaseType.DRAWING_REVIEW
+    data object DrawingReview : GameRoundPhase {
+        override val type: RoundPhaseType = RoundPhaseType.DRAWING_REVIEW
     }
 
     data object Ranking : GameRoundPhase {
@@ -27,8 +25,8 @@ sealed interface GameRoundPhase {
         override val type = RoundPhaseType.WORD_REVIEW
     }
 
-    data object RoundScoring : GameRoundPhase {
-        override val type = RoundPhaseType.ROUND_SCORING
+    data object Scoring : GameRoundPhase {
+        override val type = RoundPhaseType.SCORING
     }
 
     data object Completed : GameRoundPhase {

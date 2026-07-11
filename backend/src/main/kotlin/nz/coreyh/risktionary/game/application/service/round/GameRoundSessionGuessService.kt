@@ -34,7 +34,7 @@ class GameRoundSessionGuessService(
         if (result == GuessResultType.CORRECT) {
             val correctCount = round.guesses.getCorrectGuessCount()
             gameEventPublisher.publishRoundCorrectGuessesCountUpdated(
-                gameId = round.gameId,
+                gameId = round.game.id,
                 correctGuesses = correctCount,
             )
             gameEventPublisher.publishRoundCorrectGuess(
@@ -53,7 +53,7 @@ class GameRoundSessionGuessService(
         val correctCount = round.guesses.getCorrectGuessCount()
         val guesserCount =
             session.getPlayers().count {
-                it.id != round.requireState<GameRoundState.InProgress>().drawerId
+                it.id != round.requireState<GameRoundState.InProgress>().drawer.id
             }
         if (correctCount >= guesserCount) {
             gameRoundSessionService.transitionToDrawingReviewAllGuessed(round)
