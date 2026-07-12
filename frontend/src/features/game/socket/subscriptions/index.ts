@@ -1,11 +1,9 @@
 import { Client } from "@stomp/stompjs"
-import { setupGameSubscriptions } from "./game-subscriptions"
-import { setupPlayerSubscriptions } from "./player-subscriptions"
-import { setupRoundSubscriptions } from "./round-subscriptions"
+import { setupGameSubscriptions } from "./game"
+import { setupRoundSubscriptions } from "./round"
 
 export const setupSubscriptions = (client: Client, gameId: string) => {
   setupGameSubscriptions(client, gameId)
-  setupPlayerSubscriptions(client, gameId)
   setupRoundSubscriptions(client, gameId)
 
   // let the server know we have subscribed to every we need to

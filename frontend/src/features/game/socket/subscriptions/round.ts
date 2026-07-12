@@ -2,6 +2,7 @@ import { stompHandler } from "@/lib/stomp-utils"
 import { assertNever } from "@/lib/utils"
 import { Client } from "@stomp/stompjs"
 import { useGameStore } from "../../stores/game-store"
+import { RoundState } from "../../types/round"
 import {
   RoundAssignedDrawerEvent,
   RoundAssignedGuesserEvent,
@@ -9,16 +10,17 @@ import {
   RoundCorrectGuessesUpdatedEvent,
   RoundCorrectGuessEvent,
   RoundEvent,
-  RoundStateChangedEvent,
+  RoundStateEvent,
+  RoundStateView,
 } from "../../types/round/events"
+import { mapRoundStateViewToRoundState } from "../view-mapper"
 
 const handleRoundEvent = (event: RoundEvent) => {
   const type = event.type
   switch (type) {
-    case "ROUND_STATE_CHANGED": {
-      handleRoundStateChanged(event as RoundStateChangedEvent)
+    case "STATE":
+      handleRoundStateEvent(event)
       break
-    }
     case "ASSIGNED_DRAWER":
       handleAssignedDrawerEvent(event)
       break
@@ -39,8 +41,8 @@ const handleRoundEvent = (event: RoundEvent) => {
   }
 }
 
-const handleRoundStateChanged = (event: RoundStateChangedEvent) => {
-  useGameStore.getState().setRoundState(event.state)
+const handleRoundStateEvent = (event: RoundStateEvent) => {
+  handleRoundState(event.state)
 }
 
 const handleAssignedGuesserEvent = (event: RoundAssignedGuesserEvent) => {
@@ -68,9 +70,14 @@ const handleCorrectGuessesUpdatedEvent = (
   useGameStore.getState().setRoundCorrectGuessesCount(event.correctGuesses)
 }
 
+export const handleRoundState = (stateView: RoundStateView) => {
+  const state: RoundState = mapRoundStateViewToRoundState(stateView)
+  useGameStore.getState().setRoundState(state)
+}
+
 export const setupRoundSubscriptions = (client: Client, gameId: string) => {
   client.subscribe(
-    "/user/queue/round",
+    "/user/queue/game/round",
     stompHandler<RoundEvent>(handleRoundEvent)
   )
   client.subscribe(

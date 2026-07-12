@@ -1,9 +1,53 @@
-import { RoundState, WordHint } from "."
+import { WordHint } from "."
+import { GameSessionPlayer } from "../game"
 import { ChatMessage } from "./chat"
 
-export interface RoundStateChangedEvent {
-  type: "ROUND_STATE_CHANGED"
-  state: RoundState
+export type RoundStateView =
+  | {
+      type: "SELECTING_DRAWER"
+    }
+  | {
+      type: "IN_PROGRESS"
+      drawer: GameSessionPlayer
+      phase: RoundPhaseStateView
+    }
+  | {
+      type: "COMPLETED"
+    }
+
+export type RoundPhaseStateView =
+  | {
+      type: "DRAWING"
+      correctGuessCount: number
+    }
+  | {
+      type: "DRAWING_REVIEW"
+      word: string
+    }
+  | {
+      type: "RANKING"
+    }
+  | {
+      type: "RANKING_REVIEW"
+    }
+  | {
+      type: "WORD_REVIEW"
+    }
+  | {
+      type: "SCORING"
+    }
+  | {
+      type: "COMPLETED"
+    }
+
+export interface RoundStateEvent {
+  type: "STATE"
+  state: RoundStateView
+}
+
+export interface RoundPhaseStateEvent {
+  type: "PHASE_STATE"
+  phase: RoundPhaseStateView
 }
 
 export interface RoundAssignedDrawerEvent {
@@ -32,7 +76,7 @@ export interface RoundCorrectGuessesUpdatedEvent {
 }
 
 export type RoundEvent =
-  | RoundStateChangedEvent
+  | RoundStateEvent
   | RoundAssignedDrawerEvent
   | RoundAssignedGuesserEvent
   | RoundChatMessageEvent

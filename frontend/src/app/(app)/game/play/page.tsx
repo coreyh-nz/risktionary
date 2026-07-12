@@ -47,8 +47,6 @@ const GameScreen = () => {
           <GamePlayScreen />
         </FullPageLayout>
       )
-    case "PAUSED":
-      return <p>PAUSED</p>
     case "COMPLETED":
       return <p>COMPLETED</p>
     default:

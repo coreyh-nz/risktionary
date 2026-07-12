@@ -1,19 +1,11 @@
-import {
-  useGameRoundState,
-  useGameSession,
-} from "../../stores/game-store-selectors"
+import { useGameIsDrawer } from "../../stores/game-store-selectors"
 import { ChatPanel } from "../round/chat/chat-panel"
 import { RoundWordView } from "../round/word/round-word-view"
 import { DrawerPanel } from "./panel/drawer-panel"
 import { SpectatorPanel } from "./panel/spectator-panel"
 
 export const DrawingScreen = () => {
-  const session = useGameSession()
-  const roundState = useGameRoundState()
-  if (roundState?.type !== "IN_PROGRESS") return
-
-  const isDrawer =
-    session?.role === "player" && session.playerId === roundState.drawerId
+  const isDrawer = useGameIsDrawer()
 
   return (
     <div className="flex flex-col flex-1 gap-3 min-h-0">

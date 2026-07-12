@@ -3,12 +3,12 @@
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { PlayerList } from "./player-list"
 import {
   useGameSession,
   useGameState,
 } from "@/features/game/stores/game-store-selectors"
 import { useGameSocket } from "../../hooks/use-game-socket"
+import { PlayerList } from "./player-list"
 import { GameStartingCountdown } from "./starting-countdown"
 
 export const GamePlayLobbyScreen = () => {
@@ -23,7 +23,10 @@ export const GamePlayLobbyScreen = () => {
   return (
     <div className="flex w-full flex-col gap-6">
       {state.type === "STARTING" && (
-        <GameStartingCountdown durationMs={state.startingIn} isHost={isHost} />
+        <GameStartingCountdown
+          durationMs={state.startingInMs}
+          isHost={isHost}
+        />
       )}
 
       <div className="flex flex-col items-center gap-2">
