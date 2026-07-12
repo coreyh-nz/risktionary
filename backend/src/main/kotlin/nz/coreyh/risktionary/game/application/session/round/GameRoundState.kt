@@ -14,10 +14,6 @@ sealed interface GameRoundState {
         val phase: GameRoundPhase,
         val drawer: GamePlayer,
     ) : GameRoundState {
-        fun draW() {
-            TODO("Not yet implemented")
-        }
-
         override val type = RoundStateType.IN_PROGRESS
     }
 
