@@ -38,7 +38,7 @@ export const useGameIsDrawer = () =>
     return (
       session?.role === "player" &&
       state?.type === "IN_PROGRESS" &&
-      session.playerId === state.drawerId
+      session.playerId === state.drawer.id
     )
   })
 

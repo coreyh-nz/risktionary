@@ -1,6 +1,6 @@
+import { GameSessionHostView } from "@/features/game/types/game"
 import { useApi } from "@/hooks/use-api"
 import { API_ROUTES } from "@/lib/api/api-routes"
-import { GameSessionHostView } from "@/features/game/types/game"
 
 type CreateGameRequest = object
 

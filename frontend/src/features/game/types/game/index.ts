@@ -1,20 +1,9 @@
-export type GameStateType =
-  | "INITIALIZING"
-  | "LOBBY"
-  | "STARTING"
-  | "IN_PROGRESS"
-  | "PAUSED"
-  | "COMPLETED"
-
-type GameStateDataMap = {
-  STARTING: { startingIn: number }
-}
-
-export type GameState = {
-  [K in GameStateType]: K extends keyof GameStateDataMap
-    ? { type: K } & GameStateDataMap[K]
-    : { type: K }
-}[GameStateType]
+export type GameState =
+  | { type: "INITIALIZING" }
+  | { type: "LOBBY" }
+  | { type: "STARTING"; startingInMs: number }
+  | { type: "IN_PROGRESS" }
+  | { type: "COMPLETED" }
 
 export interface GameSessionHostView {
   id: string

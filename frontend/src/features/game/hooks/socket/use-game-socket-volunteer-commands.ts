@@ -1,4 +1,4 @@
-import { SelectDrawerCommand } from "@/features/game/types/game-commands"
+import { SelectDrawerCommand } from "@/features/game/types/game/commands"
 import { useWebSocket } from "@/providers/web-socket-provider"
 
 export const useGameSocketVolunteerCommands = () => {
