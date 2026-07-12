@@ -22,6 +22,10 @@ class WebSocketLoggingInterceptor(
     ): Message<*> {
         val accessor = StompHeaderAccessor.wrap(message)
 
+        if (accessor.destination?.startsWith("/user/") == true) {
+            return message
+        }
+
         kLogger.trace {
             val payload =
                 when (val p = message.payload) {

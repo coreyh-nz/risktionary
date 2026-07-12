@@ -16,7 +16,6 @@ import nz.coreyh.risktionary.game.domain.model.player.GamePlayerId
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerStatus
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.time.Clock
-import kotlin.time.Duration
 import kotlin.time.Instant
 
 /**
@@ -161,13 +160,13 @@ class GameSession(
      * Valid transitions:
      * - [GameStateType.LOBBY] -> [GameStateType.STARTING]
      *
-     * @param startingIn the remaining duration before the game begins.
+     * @param startingAt the time the game will start.
      * @throws GameStateInvalidException if the current session state is invalid.
      */
-    fun transitionToStarting(startingIn: Duration): Unit =
+    fun transitionToStarting(startingAt: Instant): Unit =
         withLock {
             requireState(GameStateType.LOBBY)
-            withActivity { state = GameState.Starting(startingIn) }
+            withActivity { state = GameState.Starting(startingAt) }
         }
 
     /**
@@ -193,18 +192,18 @@ class GameSession(
      * - the drawer is recorded at the session‑level volunteer tracker, and
      * - the drawer is registered within the current round.
      *
-     * @param drawerId the identifier of the player being selected as drawer.
+     * @param drawer the player being selected as drawer.
      * @return the updated [GameRoundSession].
      * @throws GameStateInvalidException if no round is currently active.
      * @throws GameRoundStateInvalidException if the round is not in the selecting drawer state.
      * @
      */
-    fun selectDrawer(drawerId: GamePlayerId): GameRoundSession =
+    fun selectDrawer(drawer: GamePlayerSession): GameRoundSession =
         withLock {
             val round = currentRound ?: throw GameStateInvalidException()
             round.requireState<GameRoundState.SelectingDrawer>()
-            volunteers.selectDrawer(drawerId)
-            round.selectDrawer(drawerId)
+            volunteers.selectDrawer(drawer.id)
+            round.selectDrawer(drawer)
             round
         }
 

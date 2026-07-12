@@ -17,8 +17,6 @@ object WebSocketDestinations {
 
         fun base(gameId: GameId) = "$BASE/${gameId.value}"
 
-        fun players(gameId: GameId) = "$BASE/${gameId.value}/players"
-
         fun draw(gameId: GameId) = "${base(gameId)}/draw"
 
         fun round(gameId: GameId) = "$BASE/${gameId.value}/round"
@@ -28,7 +26,7 @@ object WebSocketDestinations {
     object Queue {
         const val PREFIX = "/queue"
 
-        const val PLAYER_LIST = "$PREFIX/player-list"
-        const val ROUND = "$PREFIX/round"
+        const val GAME = "$PREFIX/game"
+        const val ROUND = "$GAME/round"
     }
 }

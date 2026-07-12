@@ -6,4 +6,6 @@ import nz.coreyh.risktionary.game.socket.messages.event.GameEventType
 
 data class VolunteersUpdatedEvent(
     val volunteers: List<GamePlayerId>,
-) : GameEvent(GameEventType.VOLUNTEERS_UPDATED)
+) : GameEvent {
+    override val type: GameEventType = GameEventType.VOLUNTEERS_UPDATED
+}

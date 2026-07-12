@@ -1,6 +1,7 @@
 package nz.coreyh.risktionary.support.factory.game
 
 import nz.coreyh.risktionary.game.application.session.GamePlayerSession
+import nz.coreyh.risktionary.game.domain.model.player.GamePlayer
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerId
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerIdentity
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerStatus
@@ -18,13 +19,20 @@ fun createTestGamePlayerIdentityAuthenticated(
 
 fun createTestGamePlayerIdentityGuest(displayName: String = "Guest Test Player") = GamePlayerIdentity.Guest(displayName)
 
-fun createTestGamePlayerSession(
+fun createTestGamePlayer(
     id: GamePlayerId = createTestGamePlayerId(),
     identity: GamePlayerIdentity = createTestGamePlayerIdentityGuest(),
+): GamePlayer =
+    GamePlayer(
+        id = id,
+        identity = identity,
+    )
+
+fun createTestGamePlayerSession(
+    player: GamePlayer = createTestGamePlayer(),
     status: GamePlayerStatus = GamePlayerStatus.PENDING,
 ): GamePlayerSession =
     GamePlayerSession(
-        id = id,
-        identity = identity,
+        player = player,
         status = status,
     )

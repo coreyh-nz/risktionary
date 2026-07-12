@@ -23,7 +23,7 @@ class GameRoundSessionChatService(
     ) {
         val round = session.requireActiveRound()
         val roundState = round.requireState<GameRoundState.InProgress>()
-        val drawerId = roundState.drawerId
+        val drawerId = roundState.drawer.id
         val hasCorrectlyGuessed = round.guesses.hasGuessedCorrectly(player.id)
         val isDrawer = drawerId == player.id
 
@@ -44,7 +44,7 @@ class GameRoundSessionChatService(
                             round,
                             ChatMessage.System.CorrectGuess(
                                 playerId = player.id,
-                                playerDisplayName = player.identity.displayName,
+                                playerDisplayName = player.player.identity.displayName,
                             ),
                         )
 
@@ -65,7 +65,7 @@ class GameRoundSessionChatService(
         round,
         ChatMessage.Player(
             playerId = player.id,
-            playerDisplayName = player.identity.displayName,
+            playerDisplayName = player.player.identity.displayName,
             text = text,
         ),
     )
@@ -76,7 +76,7 @@ class GameRoundSessionChatService(
     ) {
         round.addMessage(message)
         gameEventPublisher.publishRoundChatMessage(
-            gameId = round.gameId,
+            gameId = round.game.id,
             message = message,
         )
     }

@@ -1,9 +1,9 @@
 package nz.coreyh.risktionary.game.application.session.round
 
 import nz.coreyh.risktionary.game.application.exception.round.GameRoundStateInvalidException
+import nz.coreyh.risktionary.game.application.session.GamePlayerSession
+import nz.coreyh.risktionary.game.application.session.GameSession
 import nz.coreyh.risktionary.game.application.session.LockableSession
-import nz.coreyh.risktionary.game.domain.model.GameId
-import nz.coreyh.risktionary.game.domain.model.player.GamePlayerId
 import nz.coreyh.risktionary.game.domain.model.round.RoundId
 import nz.coreyh.risktionary.game.domain.model.round.RoundStateType
 import nz.coreyh.risktionary.game.domain.model.round.chat.ChatMessage
@@ -11,7 +11,7 @@ import nz.coreyh.risktionary.words.domain.model.Word
 
 class GameRoundSession(
     val id: RoundId,
-    val gameId: GameId,
+    val game: GameSession,
     val word: Word,
 ) : LockableSession() {
     var state: GameRoundState = GameRoundState.SelectingDrawer
@@ -27,13 +27,13 @@ class GameRoundSession(
      * Valid transitions:
      * - [RoundStateType.SELECTING_DRAWER] -> [RoundStateType.IN_PROGRESS]
      *
-     * @param drawerId the player selected to draw.
+     * @param drawer the player selected to draw.
      * @throws GameRoundStateInvalidException if the round is not in the selecting drawer state.
      */
-    fun selectDrawer(drawerId: GamePlayerId): Unit =
+    fun selectDrawer(drawer: GamePlayerSession): Unit =
         withLock {
             requireState<GameRoundState.SelectingDrawer>()
-            state = GameRoundState.InProgress(drawerId = drawerId, phase = GameRoundPhase.Drawing)
+            state = GameRoundState.InProgress(phase = GameRoundPhase.Drawing, drawer.player)
         }
 
     fun getMessages(): List<ChatMessage> = withLock { messages.toList() }

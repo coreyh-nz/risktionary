@@ -24,21 +24,18 @@ class GameRoundSessionService(
     private val gameEventPublisher: GameEventPublisher,
 ) {
     fun createRound(
-        gameId: GameId,
+        game: GameSession,
         word: Word,
-    ) {
-        val session = getSession(gameId)
+    ): GameRoundSession {
         val roundId = createRoundId()
-        val round = GameRoundSession(id = roundId, gameId = gameId, word = word)
-        session.currentRound = round
-
-        gameEventPublisher.publishRoundStateChanged(gameId, round.state)
+        val round = GameRoundSession(id = roundId, game = game, word = word)
+        return round
     }
 
     fun transitionToDrawingReviewAllGuessed(round: GameRoundSession) {
         transitionToDrawingReview(round)
         gameEventPublisher.publishRoundChatMessage(
-            gameId = round.gameId,
+            gameId = round.game.id,
             message = ChatMessage.System.DrawingEndedAllGuessed(round.word.value),
         )
     }
@@ -46,7 +43,7 @@ class GameRoundSessionService(
     fun transitionToDrawingReviewTimesUp(round: GameRoundSession) {
         transitionToDrawingReview(round)
         gameEventPublisher.publishRoundChatMessage(
-            gameId = round.gameId,
+            gameId = round.game.id,
             message = ChatMessage.System.DrawingEndedTimeUp(round.word.value),
         )
     }
@@ -54,7 +51,7 @@ class GameRoundSessionService(
     private fun transitionToDrawingReview(round: GameRoundSession) {
         val state = round.requireState<GameRoundState.InProgress>()
         state.requirePhase<GameRoundPhase.Drawing>()
-        updateRoundPhase(round, GameRoundPhase.DrawingReview(word = round.word.value))
+        updateRoundPhase(round, GameRoundPhase.DrawingReview)
     }
 
     private fun updateRoundPhase(
@@ -73,7 +70,7 @@ class GameRoundSessionService(
         state: GameRoundState,
     ) {
         round.state = state
-        gameEventPublisher.publishRoundStateChanged(round.gameId, round.state)
+        gameEventPublisher.publishRoundState(round)
     }
 
     private fun getSession(gameId: GameId): GameSession = gameSessionStore.findById(gameId) ?: throw GameNotFoundException()

@@ -1,6 +1,6 @@
 package nz.coreyh.risktionary.game.application.session.round
 
-import nz.coreyh.risktionary.game.domain.model.player.GamePlayerId
+import nz.coreyh.risktionary.game.domain.model.player.GamePlayer
 import nz.coreyh.risktionary.game.domain.model.round.RoundStateType
 
 sealed interface GameRoundState {
@@ -12,8 +12,12 @@ sealed interface GameRoundState {
 
     data class InProgress(
         val phase: GameRoundPhase,
-        val drawerId: GamePlayerId,
+        val drawer: GamePlayer,
     ) : GameRoundState {
+        fun draW() {
+            TODO("Not yet implemented")
+        }
+
         override val type = RoundStateType.IN_PROGRESS
     }
 

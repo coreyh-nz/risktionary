@@ -86,7 +86,7 @@ class GameController(
                 session = session.toHostView(),
                 ticket = ticket.value,
                 playerId = ticket.playerId,
-                displayName = sessionPlayer.identity.displayName,
+                displayName = sessionPlayer.player.identity.displayName,
             )
         return ResponseEntity.ok(response)
     }

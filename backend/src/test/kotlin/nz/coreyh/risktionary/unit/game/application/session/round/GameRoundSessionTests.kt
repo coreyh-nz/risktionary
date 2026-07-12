@@ -3,60 +3,63 @@ package nz.coreyh.risktionary.unit.game.application.session.round
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import io.mockk.mockk
 import nz.coreyh.risktionary.game.application.exception.round.GameRoundStateInvalidException
+import nz.coreyh.risktionary.game.application.session.GameSession
 import nz.coreyh.risktionary.game.application.session.round.GameRoundSession
 import nz.coreyh.risktionary.game.application.session.round.GameRoundState
-import nz.coreyh.risktionary.game.domain.model.createGameId
 import nz.coreyh.risktionary.game.domain.model.round.createRoundId
-import nz.coreyh.risktionary.support.factory.game.createTestGamePlayerId
+import nz.coreyh.risktionary.support.factory.game.createTestGamePlayerSession
 import nz.coreyh.risktionary.support.factory.word.createTestWord
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 class GameRoundSessionTests {
-    private lateinit var session: GameRoundSession
+    private lateinit var gameSession: GameSession
+    private lateinit var roundSession: GameRoundSession
 
     @BeforeEach
     fun setup() {
-        session =
+        gameSession = mockk()
+        roundSession =
             GameRoundSession(
                 id = createRoundId(),
-                gameId = createGameId(),
+                game = gameSession,
                 word = createTestWord(),
             )
     }
 
     @Test
     fun `initial state is SelectingDrawer`() {
-        session.state.shouldBeInstanceOf<GameRoundState.SelectingDrawer>()
+        roundSession.state.shouldBeInstanceOf<GameRoundState.SelectingDrawer>()
     }
 
     @Test
     fun `select drawer transitions state to in progress when in selecting drawer state`() {
-        val drawerId = createTestGamePlayerId()
+        val drawer = createTestGamePlayerSession()
 
-        session.selectDrawer(drawerId)
+        roundSession.selectDrawer(drawer)
 
-        session.state.shouldBeInstanceOf<GameRoundState.InProgress>()
+        roundSession.state.shouldBeInstanceOf<GameRoundState.InProgress>()
     }
 
     @Test
     fun `select drawer sets correct drawerId when transitioning to in progress`() {
-        val drawerId = createTestGamePlayerId()
+        val drawer = createTestGamePlayerSession()
 
-        session.selectDrawer(drawerId)
+        roundSession.selectDrawer(drawer)
 
-        val state = session.state as GameRoundState.InProgress
-        state.drawerId shouldBe drawerId
+        val state = roundSession.state as GameRoundState.InProgress
+        state.drawer shouldBe drawer.player
     }
 
     @Test
     fun `select drawer throws when round is already in progress`() {
-        val drawerId = createTestGamePlayerId()
-        session.selectDrawer(drawerId)
+        val drawer = createTestGamePlayerSession()
+        roundSession.selectDrawer(drawer)
 
         shouldThrow<GameRoundStateInvalidException> {
-            session.selectDrawer(createTestGamePlayerId())
+            roundSession.selectDrawer(createTestGamePlayerSession())
         }
     }
 }
