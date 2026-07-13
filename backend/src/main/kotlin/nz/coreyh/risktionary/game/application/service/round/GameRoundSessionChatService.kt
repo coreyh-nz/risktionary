@@ -9,6 +9,7 @@ import nz.coreyh.risktionary.game.application.session.round.requireState
 import nz.coreyh.risktionary.game.domain.model.round.chat.ChatMessage
 import nz.coreyh.risktionary.game.domain.model.round.guess.GuessResultType
 import nz.coreyh.risktionary.game.socket.messages.GameEventPublisher
+import nz.coreyh.risktionary.game.socket.messages.view.toView
 import org.springframework.stereotype.Service
 
 @Service
@@ -42,10 +43,7 @@ class GameRoundSessionChatService(
                     GuessResultType.CORRECT -> {
                         sendMessage(
                             round,
-                            ChatMessage.System.CorrectGuess(
-                                playerId = player.id,
-                                playerDisplayName = player.player.identity.displayName,
-                            ),
+                            ChatMessage.System.CorrectGuess(player = player.player.toView()),
                         )
 
                         // placed in here instead of directly in guess service to prevent the "all guessed" message
@@ -57,20 +55,7 @@ class GameRoundSessionChatService(
         }
     }
 
-    private fun sendPlayerMessage(
-        round: GameRoundSession,
-        player: GamePlayerSession,
-        text: String,
-    ) = sendMessage(
-        round,
-        ChatMessage.Player(
-            playerId = player.id,
-            playerDisplayName = player.player.identity.displayName,
-            text = text,
-        ),
-    )
-
-    private fun sendMessage(
+    fun sendMessage(
         round: GameRoundSession,
         message: ChatMessage,
     ) {
@@ -80,4 +65,16 @@ class GameRoundSessionChatService(
             message = message,
         )
     }
+
+    private fun sendPlayerMessage(
+        round: GameRoundSession,
+        player: GamePlayerSession,
+        text: String,
+    ) = sendMessage(
+        round,
+        ChatMessage.Player(
+            player = player.player.toView(),
+            text = text,
+        ),
+    )
 }

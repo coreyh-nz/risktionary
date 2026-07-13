@@ -1,6 +1,6 @@
 package nz.coreyh.risktionary.game.domain.model.round.chat
 
-import nz.coreyh.risktionary.game.domain.model.player.GamePlayerId
+import nz.coreyh.risktionary.game.socket.messages.view.GamePlayerView
 
 sealed interface ChatMessage {
     val type: ChatMessageType
@@ -8,9 +8,15 @@ sealed interface ChatMessage {
     sealed interface System : ChatMessage {
         val kind: ChatMessageSystemType
 
+        data class DrawerSelected(
+            val player: GamePlayerView,
+        ) : System {
+            override val type: ChatMessageType = ChatMessageType.SYSTEM
+            override val kind: ChatMessageSystemType = ChatMessageSystemType.DRAWER_SELECTED
+        }
+
         data class CorrectGuess(
-            val playerId: GamePlayerId,
-            val playerDisplayName: String,
+            val player: GamePlayerView,
         ) : System {
             override val type: ChatMessageType = ChatMessageType.SYSTEM
             override val kind: ChatMessageSystemType = ChatMessageSystemType.PLAYER_GUESSED_CORRECTLY
@@ -32,8 +38,7 @@ sealed interface ChatMessage {
     }
 
     data class Player(
-        val playerId: GamePlayerId,
-        val playerDisplayName: String,
+        val player: GamePlayerView,
         val text: String,
     ) : ChatMessage {
         override val type: ChatMessageType = ChatMessageType.PLAYER

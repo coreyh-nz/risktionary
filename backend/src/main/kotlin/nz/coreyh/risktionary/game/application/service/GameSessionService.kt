@@ -19,8 +19,10 @@ import nz.coreyh.risktionary.game.domain.model.player.GamePlayerIdentity
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerStatus
 import nz.coreyh.risktionary.game.domain.model.player.GameTicket
 import nz.coreyh.risktionary.game.domain.model.player.createPlayerId
+import nz.coreyh.risktionary.game.domain.model.round.chat.ChatMessage
 import nz.coreyh.risktionary.game.domain.model.round.hint.toWordHint
 import nz.coreyh.risktionary.game.socket.messages.GameEventPublisher
+import nz.coreyh.risktionary.game.socket.messages.view.toView
 import nz.coreyh.risktionary.user.domain.model.UserId
 import nz.coreyh.risktionary.words.application.service.WordService
 import org.springframework.stereotype.Service
@@ -293,6 +295,10 @@ class GameSessionService(
         val drawer = session.getPlayer(drawerId)
         val round = session.selectDrawer(drawer)
         gameEventPublisher.publishRoundState(round)
+        gameRoundSessionChatService.sendMessage(
+            round = round,
+            message = ChatMessage.System.DrawerSelected(drawer.player.toView()),
+        )
 
         val wordHint = round.word.value.toWordHint()
         gameEventPublisher.publishVolunteersUpdated(gameId, session.volunteers.getVolunteers())
