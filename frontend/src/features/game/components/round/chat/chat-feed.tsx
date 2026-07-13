@@ -1,7 +1,7 @@
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useGameRoundChatMessages } from "@/features/game/stores/game-store-selectors"
 import { useEffect, useRef } from "react"
-import { ChatMessageRow } from "./chat-message-row"
+import { ChatMessageRow } from "./message/chat-message-row"
 
 export const ChatFeed = () => {
   const messages = useGameRoundChatMessages()

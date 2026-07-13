@@ -1,15 +1,21 @@
+import { GameSessionPlayer } from "@/features/game/types/game"
+
 export type PlayerMessage = {
   type: "PLAYER"
-  playerId: string
-  playerDisplayName: string
+  player: GameSessionPlayer
   text: string
+}
+
+export type DrawerSelectedSystemMessage = {
+  type: "SYSTEM"
+  kind: "DRAWER_SELECTED"
+  player: GameSessionPlayer
 }
 
 export type PlayerGuessCorrectlySystemMessage = {
   type: "SYSTEM"
   kind: "PLAYER_GUESSED_CORRECTLY"
-  playerId: string
-  playerDisplayName: string
+  player: GameSessionPlayer
 }
 
 export type DrawingEndedAllGuessedSystemMessage = {
@@ -25,6 +31,7 @@ export type DrawingEndedTimeUpSystemMessage = {
 }
 
 export type SystemMessage =
+  | DrawerSelectedSystemMessage
   | PlayerGuessCorrectlySystemMessage
   | DrawingEndedAllGuessedSystemMessage
   | DrawingEndedTimeUpSystemMessage
