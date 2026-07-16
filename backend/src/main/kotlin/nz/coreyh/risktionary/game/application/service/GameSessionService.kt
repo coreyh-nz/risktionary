@@ -9,6 +9,7 @@ import nz.coreyh.risktionary.game.application.service.round.GameRoundSessionServ
 import nz.coreyh.risktionary.game.application.session.GamePlayerSession
 import nz.coreyh.risktionary.game.application.session.GameSession
 import nz.coreyh.risktionary.game.application.store.GameSessionStore
+import nz.coreyh.risktionary.game.domain.model.GameConfiguration
 import nz.coreyh.risktionary.game.domain.model.GameId
 import nz.coreyh.risktionary.game.domain.model.createGameId
 import nz.coreyh.risktionary.game.domain.model.host.GameSessionHost
@@ -52,29 +53,29 @@ class GameSessionService(
      * @return The newly created session.
      */
     fun createSession(hostId: UserId): GameSession {
-        val gameId = createGameId()
-        val host = GameSessionHost(hostId, GameSessionHostStatus.Pending)
-        val code = generateCode()
-        val createdAt = clock.now()
-        val session =
-            GameSession(
-                id = gameId,
-                host = host,
-                code = code,
-                createdAt = createdAt,
+        // todo - make this configurable
+        val config =
+            GameConfiguration(
+                words = wordService.findWords(),
+                lobbyCountdown = 5.seconds,
+                phaseDurations = mapOf(),
+                skippingCountdownsEnabled = true,
             )
-        gameSessionStore.addSession(gameId, session)
-        return session
+        return GameSession(
+            id = createGameId(),
+            host = GameSessionHost(hostId, GameSessionHostStatus.Pending),
+            code = generateCode(),
+            config = config,
+            createdAt = clock.now(),
+        ).also {
+            gameSessionStore.addSession(it.id, it)
+        }
     }
 
     fun getSessions(): List<GameSession> = gameSessionStore.getAll()
 
     fun getSessionByCode(code: String): GameSession =
         gameSessionStore.findByCode(code)
-            ?: throw GameNotFoundException()
-
-    fun getSessionByHostId(hostId: UserId): GameSession =
-        gameSessionStore.findByHostId(hostId)
             ?: throw GameNotFoundException()
 
     fun getSession(gameId: GameId): GameSession =
@@ -210,18 +211,17 @@ class GameSessionService(
 
     fun transitionToStarting(gameId: GameId) {
         val session = getSession(gameId)
-
-        // todo - change this to use time from settings when implemented
-        val startIn = 10.seconds
+        val startIn = session.config.lobbyCountdown
         val startAt = clock.now() + startIn
         session.transitionToStarting(startAt)
         gameEventPublisher.publishState(session)
 
         // schedule task to transition to in progress
+        val block = { transitionToInProgress(gameId) }
         if (startIn >= 0.seconds) {
-            gameSessionTaskService.schedule(gameId, startAt) { transitionToInProgress(gameId) }
+            gameSessionTaskService.schedule(gameId, startAt, block)
         } else {
-            transitionToInProgress(gameId)
+            block()
         }
     }
 
