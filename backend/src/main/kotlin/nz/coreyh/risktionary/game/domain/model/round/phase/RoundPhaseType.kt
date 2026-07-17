@@ -6,6 +6,8 @@ package nz.coreyh.risktionary.game.domain.model.round.phase
  * and discussed.
  */
 enum class RoundPhaseType {
+    INITIALISING,
+
     /**
      * Active drawing phase. One player is drawing the risk, others are
      * guessing. Timer is usually running here.

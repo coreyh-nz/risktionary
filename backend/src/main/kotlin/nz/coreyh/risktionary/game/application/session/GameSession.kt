@@ -65,6 +65,8 @@ class GameSession(
 
     fun getPlayers(): List<GamePlayerSession> = withLock { players.values.toList() }
 
+    fun getActivePlayers(): List<GamePlayerSession> = getPlayers().filter { it.status === GamePlayerStatus.ACTIVE }
+
     fun getPlayer(playerId: GamePlayerId): GamePlayerSession = withLock { players[playerId] ?: throw GamePlayerNotInSessionException() }
 
     fun findPlayer(playerId: GamePlayerId): GamePlayerSession? = withLock { players[playerId] }

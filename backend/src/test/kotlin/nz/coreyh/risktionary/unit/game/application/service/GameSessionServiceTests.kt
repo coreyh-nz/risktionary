@@ -13,18 +13,24 @@ import nz.coreyh.risktionary.game.application.exception.GamePlayerDisplayNameInU
 import nz.coreyh.risktionary.game.application.service.GameSessionService
 import nz.coreyh.risktionary.game.application.service.GameSessionTaskService
 import nz.coreyh.risktionary.game.application.service.GameTicketService
+import nz.coreyh.risktionary.game.application.service.round.GameRoundSessionChatHandler
 import nz.coreyh.risktionary.game.application.service.round.GameRoundSessionChatService
 import nz.coreyh.risktionary.game.application.service.round.GameRoundSessionService
+import nz.coreyh.risktionary.game.application.service.round.phase.GameRoundPhaseOrchestrator
+import nz.coreyh.risktionary.game.application.service.round.phase.GameRoundPhaseTransitionService
 import nz.coreyh.risktionary.game.application.session.GamePlayerSession
 import nz.coreyh.risktionary.game.application.session.GameSession
 import nz.coreyh.risktionary.game.application.session.GameVolunteerSession
+import nz.coreyh.risktionary.game.application.session.round.GameRoundPhase
 import nz.coreyh.risktionary.game.application.session.round.GameRoundSession
+import nz.coreyh.risktionary.game.application.session.round.GameRoundState
 import nz.coreyh.risktionary.game.application.store.GameSessionStore
 import nz.coreyh.risktionary.game.domain.model.host.GameSessionHostStatus
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerId
 import nz.coreyh.risktionary.game.domain.model.player.GameTicket
 import nz.coreyh.risktionary.game.socket.messages.GameEventPublisher
 import nz.coreyh.risktionary.support.annotation.MockKTest
+import nz.coreyh.risktionary.support.factory.game.createTestGameConfiguration
 import nz.coreyh.risktionary.support.factory.game.createTestGameId
 import nz.coreyh.risktionary.support.factory.game.createTestGamePlayer
 import nz.coreyh.risktionary.support.factory.game.createTestGamePlayerId
@@ -39,7 +45,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import kotlin.time.Clock
-import kotlin.time.Duration.Companion.seconds
 
 @MockKTest
 class GameSessionServiceTests {
@@ -48,6 +53,9 @@ class GameSessionServiceTests {
     private lateinit var wordService: WordService
     private lateinit var gameRoundSessionService: GameRoundSessionService
     private lateinit var gameRoundSessionChatService: GameRoundSessionChatService
+    private lateinit var gameRoundPhaseTransitionService: GameRoundPhaseTransitionService
+    private lateinit var gameRoundPhaseOrchestrator: GameRoundPhaseOrchestrator
+    private lateinit var gameRoundSessionChatHandler: GameRoundSessionChatHandler
     private lateinit var gameSessionStore: GameSessionStore
     private lateinit var gameEventPublisher: GameEventPublisher
     private lateinit var clock: Clock
@@ -61,6 +69,9 @@ class GameSessionServiceTests {
         wordService = mockk(relaxed = true)
         gameRoundSessionService = mockk(relaxed = true)
         gameRoundSessionChatService = mockk(relaxed = true)
+        gameRoundPhaseTransitionService = mockk(relaxed = true)
+        gameRoundPhaseOrchestrator = mockk(relaxed = true)
+        gameRoundSessionChatHandler = mockk(relaxed = true)
         gameSessionStore = mockk(relaxed = true)
         gameEventPublisher = mockk(relaxed = true)
         clock = mockk(relaxed = true)
@@ -71,6 +82,9 @@ class GameSessionServiceTests {
                 wordService,
                 gameRoundSessionService,
                 gameRoundSessionChatService,
+                gameRoundPhaseTransitionService,
+                gameRoundPhaseOrchestrator,
+                gameRoundSessionChatHandler,
                 gameSessionStore,
                 gameEventPublisher,
                 clock,
@@ -450,14 +464,15 @@ class GameSessionServiceTests {
 
         @Test
         fun `transition to starting transitions session to starting state`() {
-            val session = mockk<GameSession>(relaxed = true)
-            val startIn = 10.seconds
-            val startsAt = clock.now() + startIn
-            every { gameSessionStore.findById(gameId) } returns session
+            val game = mockk<GameSession>(relaxed = true)
+            val gameConfig = createTestGameConfiguration()
+            val startsAt = clock.now() + gameConfig.lobbyCountdown
+            every { gameSessionStore.findById(gameId) } returns game
+            every { game.config } returns gameConfig
 
             service.transitionToStarting(gameId)
 
-            verify { session.transitionToStarting(startsAt) }
+            verify { game.transitionToStarting(startsAt) }
         }
 
         @Test
@@ -472,15 +487,17 @@ class GameSessionServiceTests {
 
         @Test
         fun `transition to starting schedules transition to in progress`() {
-            val session = mockk<GameSession>(relaxed = true)
+            val game = mockk<GameSession>(relaxed = true)
+            val gameConfig = createTestGameConfiguration()
             val now = Clock.System.now()
-            val startIn = 10.seconds
-            every { gameSessionStore.findById(gameId) } returns session
+            val startsAt = now + gameConfig.lobbyCountdown
+            every { gameSessionStore.findById(gameId) } returns game
+            every { game.config } returns gameConfig
             every { clock.now() } returns now
 
             service.transitionToStarting(gameId)
 
-            verify { gameSessionTaskService.schedule(gameId, now + startIn, any()) }
+            verify { gameSessionTaskService.schedule(gameId, startsAt, any()) }
         }
 
         @Test
@@ -642,10 +659,15 @@ class GameSessionServiceTests {
             val session = mockk<GameSession>(relaxed = true)
             val round = mockk<GameRoundSession>(relaxed = true)
             val volunteers = mockk<GameVolunteerSession>(relaxed = true)
+            val currentRoundPhase = GameRoundPhase.Initialising
+            val nextRoundPhase = GameRoundPhase.Drawing(endingAt = null)
+            val currentRoundState = GameRoundState.InProgress(phase = currentRoundPhase, playerSession.player)
             every { gameSessionStore.findById(gameId) } returns session
             every { session.volunteers } returns volunteers
             every { session.getPlayer(player.id) } returns playerSession
             every { session.selectDrawer(playerSession) } returns round
+            every { round.state } returns currentRoundState
+            every { gameRoundPhaseTransitionService.next(round, currentRoundState.phase) } returns nextRoundPhase
 
             service.handleSelectDrawer(gameId, player.id)
         }
@@ -655,10 +677,15 @@ class GameSessionServiceTests {
             val session = mockk<GameSession>(relaxed = true)
             val round = mockk<GameRoundSession>(relaxed = true)
             val volunteers = mockk<GameVolunteerSession>(relaxed = true)
+            val currentRoundPhase = GameRoundPhase.Initialising
+            val nextRoundPhase = GameRoundPhase.Drawing(endingAt = null)
+            val currentRoundState = GameRoundState.InProgress(phase = currentRoundPhase, playerSession.player)
             every { gameSessionStore.findById(gameId) } returns session
             every { session.volunteers } returns volunteers
             every { session.getPlayer(player.id) } returns playerSession
             every { session.selectDrawer(playerSession) } returns round
+            every { round.state } returns currentRoundState
+            every { gameRoundPhaseTransitionService.next(round, currentRoundState.phase) } returns nextRoundPhase
 
             service.handleSelectDrawer(gameId, player.id)
 
@@ -671,11 +698,16 @@ class GameSessionServiceTests {
             val round = mockk<GameRoundSession>(relaxed = true)
             val volunteers = mockk<GameVolunteerSession>(relaxed = true)
             val remainingVolunteers = listOf<GamePlayerId>()
+            val currentRoundPhase = GameRoundPhase.Initialising
+            val nextRoundPhase = GameRoundPhase.Drawing(endingAt = null)
+            val currentRoundState = GameRoundState.InProgress(phase = currentRoundPhase, playerSession.player)
             every { gameSessionStore.findById(gameId) } returns session
             every { session.volunteers } returns volunteers
             every { session.getPlayer(player.id) } returns playerSession
             every { session.selectDrawer(playerSession) } returns round
+            every { round.state } returns currentRoundState
             every { volunteers.getVolunteers() } returns remainingVolunteers
+            every { gameRoundPhaseTransitionService.next(round, currentRoundState.phase) } returns nextRoundPhase
 
             service.handleSelectDrawer(gameId, player.id)
 

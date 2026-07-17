@@ -6,7 +6,6 @@ import nz.coreyh.risktionary.game.socket.messages.inbound.drawing.DrawingCommand
 import nz.coreyh.risktionary.game.socket.messages.inbound.drawing.DrawingStrokeEndCommand
 import nz.coreyh.risktionary.game.socket.messages.inbound.drawing.DrawingStrokePointsCommand
 import nz.coreyh.risktionary.game.socket.messages.inbound.drawing.DrawingStrokeStartCommand
-import nz.coreyh.risktionary.game.socket.messages.inbound.round.ChatMessageCommand
 import nz.coreyh.risktionary.game.socket.messages.inbound.round.SelectDrawerCommand
 import nz.coreyh.risktionary.game.socket.messages.outbound.drawing.DrawingCanvasClearEvent
 import nz.coreyh.risktionary.game.socket.messages.outbound.drawing.DrawingStrokeEndEvent
@@ -106,19 +105,5 @@ class GameSocketController(
         if (principal !is GameSocketPrincipal.Host) return
 
         gameSessionService.handleSelectDrawer(principal.gameId, command.drawerId)
-    }
-
-    @MessageMapping("/game/chat")
-    fun onChatMessage(
-        principal: GameSocketPrincipal,
-        command: ChatMessageCommand,
-    ) {
-        if (principal !is GameSocketPrincipal.Player) return
-
-        gameSessionService.handleChat(
-            gameId = principal.gameId,
-            playerId = principal.id,
-            text = command.text,
-        )
     }
 }

@@ -16,7 +16,7 @@ class GameRoundSession(
 ) : LockableSession() {
     var state: GameRoundState = GameRoundState.SelectingDrawer
         get() = withLock { field }
-        set(value) = withLock { field = value }
+        private set(value) = withLock { field = value }
 
     val guesses: GameRoundGuessSession = GameRoundGuessSession()
     private val messages: MutableList<ChatMessage> = mutableListOf()
@@ -33,14 +33,27 @@ class GameRoundSession(
     fun selectDrawer(drawer: GamePlayerSession): Unit =
         withLock {
             requireState<GameRoundState.SelectingDrawer>()
-            state = GameRoundState.InProgress(phase = GameRoundPhase.Drawing, drawer.player)
+            state = GameRoundState.InProgress(phase = GameRoundPhase.Initialising, drawer.player)
         }
 
-    fun getMessages(): List<ChatMessage> = withLock { messages.toList() }
+    /**
+     * Updates the phase of the current in-progress round.
+     *
+     * @throws GameRoundStateInvalidException if the round is not in progress.
+     */
+    fun updatePhase(phase: GameRoundPhase): Unit =
+        withLock {
+            val current = requireState<GameRoundState.InProgress>()
+            state = current.copy(phase = phase)
+        }
+
+    fun complete() =
+        withLock {
+            requireState<GameRoundState.InProgress>()
+            state = GameRoundState.Completed
+        }
 
     fun addMessage(message: ChatMessage): Unit = withLock { messages.add(message) }
 }
 
 inline fun <reified T : GameRoundState> GameRoundSession.requireState(): T = state as? T ?: throw GameRoundStateInvalidException()
-
-inline fun <reified T : GameRoundPhase> GameRoundState.InProgress.requirePhase(): T = phase as? T ?: throw GameRoundStateInvalidException()

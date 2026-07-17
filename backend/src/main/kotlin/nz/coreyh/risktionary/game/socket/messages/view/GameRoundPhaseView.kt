@@ -1,5 +1,6 @@
 package nz.coreyh.risktionary.game.socket.messages.view
 
+import nz.coreyh.risktionary.game.application.exception.GameStateInvalidException
 import nz.coreyh.risktionary.game.application.session.round.GameRoundPhase
 import nz.coreyh.risktionary.game.application.session.round.GameRoundSession
 import nz.coreyh.risktionary.game.application.session.round.GameRoundState
@@ -43,12 +44,21 @@ sealed interface GameRoundPhaseView {
 fun GameRoundSession.toPhaseStateView(): GameRoundPhaseView {
     val state = requireState<GameRoundState.InProgress>()
     return when (state.phase) {
-        GameRoundPhase.Drawing -> GameRoundPhaseView.Drawing
-        GameRoundPhase.DrawingReview -> GameRoundPhaseView.DrawingReview(word.value)
-        GameRoundPhase.Ranking -> GameRoundPhaseView.Ranking
-        GameRoundPhase.RankingReview -> GameRoundPhaseView.RankingReview
-        GameRoundPhase.Scoring -> GameRoundPhaseView.Scoring
-        GameRoundPhase.WordReview -> GameRoundPhaseView.WordReview
-        GameRoundPhase.Completed -> GameRoundPhaseView.Completed
+        // client should never be sent this state
+        is GameRoundPhase.Initialising -> throw GameStateInvalidException()
+
+        is GameRoundPhase.Drawing -> GameRoundPhaseView.Drawing
+
+        is GameRoundPhase.DrawingReview -> GameRoundPhaseView.DrawingReview(word.value)
+
+        is GameRoundPhase.Ranking -> GameRoundPhaseView.Ranking
+
+        is GameRoundPhase.RankingReview -> GameRoundPhaseView.RankingReview
+
+        is GameRoundPhase.Scoring -> GameRoundPhaseView.Scoring
+
+        is GameRoundPhase.WordReview -> GameRoundPhaseView.WordReview
+
+        is GameRoundPhase.Completed -> GameRoundPhaseView.Completed
     }
 }
