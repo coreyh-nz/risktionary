@@ -29,6 +29,8 @@ class GameRoundGuessSession : LockableSession() {
         }
     }
 
+    fun hasAllGuessedCorrectly(playerIds: Collection<GamePlayerId>): Boolean = correctGuesserIds.containsAll(playerIds)
+
     fun hasGuessedCorrectly(playerId: GamePlayerId): Boolean = correctGuesserIds.contains(playerId)
 
     fun getCorrectGuessCount() = guesses.size

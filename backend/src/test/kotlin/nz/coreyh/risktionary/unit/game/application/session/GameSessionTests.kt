@@ -7,6 +7,7 @@ import nz.coreyh.risktionary.game.application.exception.GamePlayerNotInSessionEx
 import nz.coreyh.risktionary.game.application.exception.GamePlayerStateInvalidException
 import nz.coreyh.risktionary.game.application.session.GameSession
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerStatus
+import nz.coreyh.risktionary.support.factory.game.createTestGameConfiguration
 import nz.coreyh.risktionary.support.factory.game.createTestGameId
 import nz.coreyh.risktionary.support.factory.game.createTestGamePlayerId
 import nz.coreyh.risktionary.support.factory.game.createTestGamePlayerSession
@@ -29,6 +30,7 @@ class GameSessionTests {
                 id = gameId,
                 host = createTestGameSessionHostConnected(hostId),
                 code = code,
+                config = createTestGameConfiguration(),
                 createdAt = Clock.System.now(),
             )
     }

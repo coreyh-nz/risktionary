@@ -8,6 +8,7 @@ import nz.coreyh.risktionary.game.application.exception.round.GameRoundStateInva
 import nz.coreyh.risktionary.game.application.session.round.GameRoundSession
 import nz.coreyh.risktionary.game.application.session.round.GameRoundState
 import nz.coreyh.risktionary.game.application.session.round.requireState
+import nz.coreyh.risktionary.game.domain.model.GameConfiguration
 import nz.coreyh.risktionary.game.domain.model.GameId
 import nz.coreyh.risktionary.game.domain.model.GameState
 import nz.coreyh.risktionary.game.domain.model.GameStateType
@@ -37,11 +38,13 @@ class GameSession(
     val id: GameId,
     val host: GameSessionHost,
     val code: String,
+    val config: GameConfiguration,
     val createdAt: Instant,
     private val clock: Clock = Clock.System,
 ) : LockableSession() {
     private val players: MutableMap<GamePlayerId, GamePlayerSession> = mutableMapOf()
     val volunteers: GameVolunteerSession = GameVolunteerSession()
+    val words: GameWordsSession = GameWordsSession(words = config.words)
 
     /** The current lifecycle state of the game session. */
     var state: GameState = GameState.Lobby
@@ -57,7 +60,12 @@ class GameSession(
         get() = withLock { field }
         set(value) = withLock { field = value }
 
+    /** 1-indexed current round number. 0 before the first round starts. */
+    val roundNumber: Int get() = words.index + 1
+
     fun getPlayers(): List<GamePlayerSession> = withLock { players.values.toList() }
+
+    fun getActivePlayers(): List<GamePlayerSession> = getPlayers().filter { it.status === GamePlayerStatus.ACTIVE }
 
     fun getPlayer(playerId: GamePlayerId): GamePlayerSession = withLock { players[playerId] ?: throw GamePlayerNotInSessionException() }
 

@@ -4,11 +4,17 @@ import nz.coreyh.risktionary.game.application.exception.GameNotFoundException
 import nz.coreyh.risktionary.game.application.exception.GamePlayerDisplayNameInUseException
 import nz.coreyh.risktionary.game.application.exception.GamePlayerNotInSessionException
 import nz.coreyh.risktionary.game.application.exception.GamePlayerStateInvalidException
+import nz.coreyh.risktionary.game.application.exception.GameStateInvalidException
+import nz.coreyh.risktionary.game.application.service.round.GameRoundSessionChatHandler
 import nz.coreyh.risktionary.game.application.service.round.GameRoundSessionChatService
 import nz.coreyh.risktionary.game.application.service.round.GameRoundSessionService
+import nz.coreyh.risktionary.game.application.service.round.phase.GameRoundPhaseOrchestrator
+import nz.coreyh.risktionary.game.application.service.round.phase.GameRoundPhaseTransitionService
 import nz.coreyh.risktionary.game.application.session.GamePlayerSession
 import nz.coreyh.risktionary.game.application.session.GameSession
+import nz.coreyh.risktionary.game.application.session.round.GameRoundState
 import nz.coreyh.risktionary.game.application.store.GameSessionStore
+import nz.coreyh.risktionary.game.domain.model.GameConfiguration
 import nz.coreyh.risktionary.game.domain.model.GameId
 import nz.coreyh.risktionary.game.domain.model.createGameId
 import nz.coreyh.risktionary.game.domain.model.host.GameSessionHost
@@ -20,7 +26,7 @@ import nz.coreyh.risktionary.game.domain.model.player.GamePlayerStatus
 import nz.coreyh.risktionary.game.domain.model.player.GameTicket
 import nz.coreyh.risktionary.game.domain.model.player.createPlayerId
 import nz.coreyh.risktionary.game.domain.model.round.chat.ChatMessage
-import nz.coreyh.risktionary.game.domain.model.round.hint.toWordHint
+import nz.coreyh.risktionary.game.domain.model.round.phase.RoundPhaseType
 import nz.coreyh.risktionary.game.socket.messages.GameEventPublisher
 import nz.coreyh.risktionary.game.socket.messages.view.toView
 import nz.coreyh.risktionary.user.domain.model.UserId
@@ -40,6 +46,9 @@ class GameSessionService(
     private val wordService: WordService,
     private val gameRoundSessionService: GameRoundSessionService,
     private val gameRoundSessionChatService: GameRoundSessionChatService,
+    private val gameRoundPhaseTransitionService: GameRoundPhaseTransitionService,
+    private val gameRoundPhaseOrchestrator: GameRoundPhaseOrchestrator,
+    private val gameRoundSessionChatHandler: GameRoundSessionChatHandler,
     private val gameSessionStore: GameSessionStore,
     private val gameEventPublisher: GameEventPublisher,
     private val clock: Clock = Clock.System,
@@ -52,29 +61,32 @@ class GameSessionService(
      * @return The newly created session.
      */
     fun createSession(hostId: UserId): GameSession {
-        val gameId = createGameId()
-        val host = GameSessionHost(hostId, GameSessionHostStatus.Pending)
-        val code = generateCode()
-        val createdAt = clock.now()
-        val session =
-            GameSession(
-                id = gameId,
-                host = host,
-                code = code,
-                createdAt = createdAt,
+        // todo - make this configurable
+        val config =
+            GameConfiguration(
+                words = wordService.findWords(),
+                lobbyCountdown = 5.seconds,
+                phaseDurations =
+                    mapOf(
+                        RoundPhaseType.DRAWING_REVIEW to 30.seconds,
+                    ),
+                skippingCountdownsEnabled = true,
             )
-        gameSessionStore.addSession(gameId, session)
-        return session
+        return GameSession(
+            id = createGameId(),
+            host = GameSessionHost(hostId, GameSessionHostStatus.Pending),
+            code = generateCode(),
+            config = config,
+            createdAt = clock.now(),
+        ).also {
+            gameSessionStore.addSession(it.id, it)
+        }
     }
 
     fun getSessions(): List<GameSession> = gameSessionStore.getAll()
 
     fun getSessionByCode(code: String): GameSession =
         gameSessionStore.findByCode(code)
-            ?: throw GameNotFoundException()
-
-    fun getSessionByHostId(hostId: UserId): GameSession =
-        gameSessionStore.findByHostId(hostId)
             ?: throw GameNotFoundException()
 
     fun getSession(gameId: GameId): GameSession =
@@ -210,18 +222,17 @@ class GameSessionService(
 
     fun transitionToStarting(gameId: GameId) {
         val session = getSession(gameId)
-
-        // todo - change this to use time from settings when implemented
-        val startIn = 10.seconds
+        val startIn = session.config.lobbyCountdown
         val startAt = clock.now() + startIn
         session.transitionToStarting(startAt)
         gameEventPublisher.publishState(session)
 
         // schedule task to transition to in progress
+        val block = { transitionToInProgress(gameId) }
         if (startIn >= 0.seconds) {
-            gameSessionTaskService.schedule(gameId, startAt) { transitionToInProgress(gameId) }
+            gameSessionTaskService.schedule(gameId, startAt, block)
         } else {
-            transitionToInProgress(gameId)
+            block()
         }
     }
 
@@ -294,20 +305,19 @@ class GameSessionService(
         val session = getSession(gameId)
         val drawer = session.getPlayer(drawerId)
         val round = session.selectDrawer(drawer)
+
+        // transition to the new first phase
+        val phase = gameRoundPhaseTransitionService.next(round, (round.state as GameRoundState.InProgress).phase)
+        phase ?: run { throw GameStateInvalidException() }
+        round.updatePhase(phase)
+        gameRoundPhaseOrchestrator.enterInitialPhase(round, phase)
+
         gameEventPublisher.publishRoundState(round)
+        gameEventPublisher.publishVolunteersUpdated(gameId, session.volunteers.getVolunteers())
         gameRoundSessionChatService.sendMessage(
             round = round,
             message = ChatMessage.System.DrawerSelected(drawer.player.toView()),
         )
-
-        val wordHint = round.word.value.toWordHint()
-        gameEventPublisher.publishVolunteersUpdated(gameId, session.volunteers.getVolunteers())
-        gameEventPublisher.publishAssignedDrawerEvent(drawerId, round.word.value)
-        gameEventPublisher.publishAssignedGuesserEvent(session.host.id, wordHint)
-        session
-            .getPlayers()
-            .filter { it.id != drawerId }
-            .forEach { gameEventPublisher.publishAssignedGuesserEvent(it.id, wordHint) }
     }
 
     fun handleChat(
@@ -317,7 +327,7 @@ class GameSessionService(
     ) {
         val session = getSession(gameId)
         val player = requireActivePlayer(session, playerId)
-        gameRoundSessionChatService.handleChat(session, player, text)
+        gameRoundSessionChatHandler.handleChat(session, player, text)
     }
 
     private fun requireActivePlayer(
