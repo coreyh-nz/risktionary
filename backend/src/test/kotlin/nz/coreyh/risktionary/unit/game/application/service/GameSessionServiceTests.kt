@@ -13,11 +13,12 @@ import nz.coreyh.risktionary.game.application.exception.GamePlayerDisplayNameInU
 import nz.coreyh.risktionary.game.application.service.GameSessionService
 import nz.coreyh.risktionary.game.application.service.GameSessionTaskService
 import nz.coreyh.risktionary.game.application.service.GameTicketService
+import nz.coreyh.risktionary.game.application.service.round.GameRoundActionCoordinator
 import nz.coreyh.risktionary.game.application.service.round.GameRoundSessionChatHandler
-import nz.coreyh.risktionary.game.application.service.round.GameRoundSessionChatService
 import nz.coreyh.risktionary.game.application.service.round.GameRoundSessionService
 import nz.coreyh.risktionary.game.application.service.round.phase.GameRoundPhaseOrchestrator
 import nz.coreyh.risktionary.game.application.service.round.phase.GameRoundPhaseTransitionService
+import nz.coreyh.risktionary.game.application.service.round.phase.rating.GameRoundPhaseRiskRatingActionHandler
 import nz.coreyh.risktionary.game.application.session.GamePlayerSession
 import nz.coreyh.risktionary.game.application.session.GameSession
 import nz.coreyh.risktionary.game.application.session.GameVolunteerSession
@@ -53,10 +54,11 @@ class GameSessionServiceTests {
     private lateinit var gameTicketService: GameTicketService
     private lateinit var wordService: WordService
     private lateinit var gameRoundSessionService: GameRoundSessionService
-    private lateinit var gameRoundSessionChatService: GameRoundSessionChatService
     private lateinit var gameRoundPhaseTransitionService: GameRoundPhaseTransitionService
     private lateinit var gameRoundPhaseOrchestrator: GameRoundPhaseOrchestrator
+    private lateinit var gameRoundActionCoordinator: GameRoundActionCoordinator
     private lateinit var gameRoundSessionChatHandler: GameRoundSessionChatHandler
+    private lateinit var gameRoundPhaseRiskRatingActionHandler: GameRoundPhaseRiskRatingActionHandler
     private lateinit var gameSessionStore: GameSessionStore
     private lateinit var gameEventPublisher: GameEventPublisher
     private lateinit var clock: Clock
@@ -69,10 +71,11 @@ class GameSessionServiceTests {
         gameTicketService = mockk(relaxed = true)
         wordService = mockk(relaxed = true)
         gameRoundSessionService = mockk(relaxed = true)
-        gameRoundSessionChatService = mockk(relaxed = true)
         gameRoundPhaseTransitionService = mockk(relaxed = true)
         gameRoundPhaseOrchestrator = mockk(relaxed = true)
+        gameRoundActionCoordinator = mockk(relaxed = true)
         gameRoundSessionChatHandler = mockk(relaxed = true)
+        gameRoundPhaseRiskRatingActionHandler = mockk(relaxed = true)
         gameSessionStore = mockk(relaxed = true)
         gameEventPublisher = mockk(relaxed = true)
         clock = mockk(relaxed = true)
@@ -82,10 +85,11 @@ class GameSessionServiceTests {
                 gameTicketService,
                 wordService,
                 gameRoundSessionService,
-                gameRoundSessionChatService,
                 gameRoundPhaseTransitionService,
                 gameRoundPhaseOrchestrator,
+                gameRoundActionCoordinator,
                 gameRoundSessionChatHandler,
+                gameRoundPhaseRiskRatingActionHandler,
                 gameSessionStore,
                 gameEventPublisher,
                 clock,

@@ -7,6 +7,7 @@ import nz.coreyh.risktionary.game.application.session.round.GameRoundSession
 import nz.coreyh.risktionary.game.domain.model.GameId
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerId
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerStatus
+import nz.coreyh.risktionary.game.domain.model.risk.RiskRatingCount
 import nz.coreyh.risktionary.game.domain.model.round.chat.ChatMessage
 import nz.coreyh.risktionary.game.domain.model.round.hint.WordHint
 import nz.coreyh.risktionary.game.socket.messages.outbound.GameStateEvent
@@ -20,6 +21,7 @@ import nz.coreyh.risktionary.game.socket.messages.outbound.round.RoundAssignedGu
 import nz.coreyh.risktionary.game.socket.messages.outbound.round.RoundCorrectGuessEvent
 import nz.coreyh.risktionary.game.socket.messages.outbound.round.RoundCorrectGuessesCountUpdatedEvent
 import nz.coreyh.risktionary.game.socket.messages.outbound.round.RoundPhaseStateEvent
+import nz.coreyh.risktionary.game.socket.messages.outbound.round.RoundRiskRatingsUpdatedEvent
 import nz.coreyh.risktionary.game.socket.messages.outbound.round.RoundStateEvent
 import nz.coreyh.risktionary.game.socket.messages.view.toPhaseStateView
 import nz.coreyh.risktionary.game.socket.messages.view.toStateView
@@ -168,6 +170,24 @@ class GameEventPublisher(
             message = RoundCorrectGuessesCountUpdatedEvent(correctGuesses),
         )
     }
+
+    fun publishRiskRatingsUpdatedToPlayer(
+        playerId: GamePlayerId,
+        counts: List<RiskRatingCount>,
+    ) = messagingTemplate.sendToPlayer(
+        playerId = playerId,
+        destination = WebSocketDestinations.Queue.ROUND,
+        message = RoundRiskRatingsUpdatedEvent(counts),
+    )
+
+    fun publishRiskRatingsUpdatedToHost(
+        userId: UserId,
+        counts: List<RiskRatingCount>,
+    ) = messagingTemplate.sendToUser(
+        userId = userId,
+        destination = WebSocketDestinations.Queue.ROUND,
+        message = RoundRiskRatingsUpdatedEvent(counts),
+    )
 }
 
 private inline fun <reified T : Any> SimpMessagingTemplate.sendToTopic(

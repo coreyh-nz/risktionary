@@ -5,13 +5,15 @@ import nz.coreyh.risktionary.game.application.exception.GamePlayerDisplayNameInU
 import nz.coreyh.risktionary.game.application.exception.GamePlayerNotInSessionException
 import nz.coreyh.risktionary.game.application.exception.GamePlayerStateInvalidException
 import nz.coreyh.risktionary.game.application.exception.GameStateInvalidException
+import nz.coreyh.risktionary.game.application.service.round.GameRoundActionCoordinator
 import nz.coreyh.risktionary.game.application.service.round.GameRoundSessionChatHandler
-import nz.coreyh.risktionary.game.application.service.round.GameRoundSessionChatService
 import nz.coreyh.risktionary.game.application.service.round.GameRoundSessionService
 import nz.coreyh.risktionary.game.application.service.round.phase.GameRoundPhaseOrchestrator
 import nz.coreyh.risktionary.game.application.service.round.phase.GameRoundPhaseTransitionService
+import nz.coreyh.risktionary.game.application.service.round.phase.rating.GameRoundPhaseRiskRatingActionHandler
 import nz.coreyh.risktionary.game.application.session.GamePlayerSession
 import nz.coreyh.risktionary.game.application.session.GameSession
+import nz.coreyh.risktionary.game.application.session.requireActiveRound
 import nz.coreyh.risktionary.game.application.session.round.GameRoundState
 import nz.coreyh.risktionary.game.application.store.GameSessionStore
 import nz.coreyh.risktionary.game.domain.model.GameConfiguration
@@ -26,6 +28,7 @@ import nz.coreyh.risktionary.game.domain.model.player.GamePlayerIdentity
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerStatus
 import nz.coreyh.risktionary.game.domain.model.player.GameTicket
 import nz.coreyh.risktionary.game.domain.model.player.createPlayerId
+import nz.coreyh.risktionary.game.domain.model.risk.RiskRating
 import nz.coreyh.risktionary.game.domain.model.round.phase.RoundPhaseType
 import nz.coreyh.risktionary.game.socket.messages.GameEventPublisher
 import nz.coreyh.risktionary.user.domain.model.UserId
@@ -44,10 +47,11 @@ class GameSessionService(
     private val gameTicketService: GameTicketService,
     private val wordService: WordService,
     private val gameRoundSessionService: GameRoundSessionService,
-    private val gameRoundSessionChatService: GameRoundSessionChatService,
     private val gameRoundPhaseTransitionService: GameRoundPhaseTransitionService,
     private val gameRoundPhaseOrchestrator: GameRoundPhaseOrchestrator,
+    private val gameRoundActionCoordinator: GameRoundActionCoordinator,
     private val gameRoundSessionChatHandler: GameRoundSessionChatHandler,
+    private val gameRoundPhaseRiskRatingActionHandler: GameRoundPhaseRiskRatingActionHandler,
     private val gameSessionStore: GameSessionStore,
     private val gameEventPublisher: GameEventPublisher,
     private val clock: Clock = Clock.System,
@@ -322,6 +326,17 @@ class GameSessionService(
         val session = getSession(gameId)
         val player = requireActivePlayer(session, playerId)
         gameRoundSessionChatHandler.handleChat(session, player, text)
+    }
+
+    fun handleRiskRating(
+        gameId: GameId,
+        playerId: GamePlayerId,
+        rating: RiskRating,
+    ) {
+        val session = getSession(gameId)
+        val round = session.requireActiveRound()
+        val player = session.getPlayer(playerId)
+        gameRoundActionCoordinator.submit(round, gameRoundPhaseRiskRatingActionHandler, player, rating)
     }
 
     private fun requireActivePlayer(
