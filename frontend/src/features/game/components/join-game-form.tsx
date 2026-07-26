@@ -1,21 +1,21 @@
 "use client"
 
-import {
-  JoinGameFormValues,
-  useJoinGameForm,
-} from "@/features/game/hooks/use-join-game-form"
 import { FormInput } from "@/components/common/form"
 import { Button } from "@/components/ui/button"
 import { FieldGroup, FieldSet } from "@/components/ui/field"
-import { useJoinGame } from "@/features/game/hooks/use-join-game"
-import { ErrorCode } from "@/lib/api/errors"
-import { ROUTES } from "@/lib/routes"
-import { useRouter } from "next/navigation"
+import { useJoinGame } from "@/features/game/hooks/lobby/use-join-game"
+import {
+  JoinGameFormValues,
+  useJoinGameForm,
+} from "@/features/game/hooks/lobby/use-join-game-form"
 import {
   useGameReset,
   useGameSetPlayer,
   useGameSetState,
 } from "@/features/game/stores/game-store-selectors"
+import { ErrorCode } from "@/lib/api/errors"
+import { ROUTES } from "@/lib/routes"
+import { useRouter } from "next/navigation"
 
 export const JoinGameForm = () => {
   const form = useJoinGameForm()

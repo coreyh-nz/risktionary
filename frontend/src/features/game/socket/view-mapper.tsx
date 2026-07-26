@@ -1,7 +1,10 @@
 import { GameState } from "../types/game"
 import { GameStateView } from "../types/game/events"
-import { RoundPhase, RoundState } from "../types/round"
-import { RoundPhaseStateView, RoundStateView } from "../types/round/events"
+import {
+  RoundPhaseStateView,
+  RoundStateView,
+} from "../types/round/phase/events"
+import { RoundPhase, RoundState } from "../types/round/phase/round"
 
 export const mapGameStateViewToGameState = (
   stateView: GameStateView

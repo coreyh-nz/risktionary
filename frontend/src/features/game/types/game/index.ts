@@ -5,6 +5,8 @@ export type GameState =
   | { type: "IN_PROGRESS" }
   | { type: "COMPLETED" }
 
+export type GameStateType = GameState["type"]
+
 export interface GameSessionHostView {
   id: string
   code: string

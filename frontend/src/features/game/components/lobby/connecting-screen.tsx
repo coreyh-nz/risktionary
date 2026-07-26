@@ -5,7 +5,7 @@ interface ConnectingScreenProps {
 const ConnectingScreen = ({ attempts }: ConnectingScreenProps) => {
   return (
     <div className="flex flex-col items-center gap-6">
-      {/* Pulsing dots */}
+      {/* pulsing dots */}
       <div className="flex items-center gap-2">
         {[0, 1, 2].map((i) => (
           <span
@@ -26,6 +26,7 @@ const ConnectingScreen = ({ attempts }: ConnectingScreenProps) => {
         </p>
       </div>
 
+      {/* animation for pulsing dots */}
       <style>
         {`
           @keyframes bounce {

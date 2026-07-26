@@ -2,7 +2,6 @@ import { stompHandler } from "@/lib/stomp-utils"
 import { assertNever } from "@/lib/utils"
 import { Client } from "@stomp/stompjs"
 import { useGameStore } from "../../stores/game-store"
-import { RoundState } from "../../types/round"
 import {
   RoundAssignedDrawerEvent,
   RoundAssignedGuesserEvent,
@@ -12,7 +11,8 @@ import {
   RoundEvent,
   RoundStateEvent,
   RoundStateView,
-} from "../../types/round/events"
+} from "../../types/round/phase/events"
+import { RoundState } from "../../types/round/phase/round"
 import { mapRoundStateViewToRoundState } from "../view-mapper"
 
 const handleRoundEvent = (event: RoundEvent) => {

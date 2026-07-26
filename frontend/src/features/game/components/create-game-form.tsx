@@ -1,17 +1,17 @@
 "use client"
 
 import { Button, buttonVariants } from "@/components/ui/button"
-import Link from "next/link"
-import { ROUTES } from "@/lib/routes"
-import { useCreateGame } from "@/features/game/hooks/use-create-game"
-import { toast } from "sonner"
 import { Spinner } from "@/components/ui/spinner"
-import { useRouter } from "next/navigation"
+import { useCreateGame } from "@/features/game/hooks/lobby/use-create-game"
 import {
   useGameReset,
   useGameSetHost,
   useGameSetState,
 } from "@/features/game/stores/game-store-selectors"
+import { ROUTES } from "@/lib/routes"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 export const CreateGameForm = () => {
   const { createGame, isLoading } = useCreateGame()

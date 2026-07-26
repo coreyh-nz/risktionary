@@ -1,9 +1,9 @@
-import { MouseEvent, TouchEvent, useCallback, useEffect, useRef } from "react"
 import {
   DrawingPoint,
   DrawingStroke,
   DrawingTool,
-} from "../../types/drawing/drawing"
+} from "@/features/game/types/round/phase/drawing/drawing"
+import { MouseEvent, TouchEvent, useCallback, useEffect, useRef } from "react"
 import { useCanvasRenderer } from "./use-canvas-renderer"
 
 interface UseDrawingCanvasOptions {

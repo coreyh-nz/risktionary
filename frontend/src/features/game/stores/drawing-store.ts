@@ -1,7 +1,10 @@
+import {
+  DrawingColour,
+  DrawingTool,
+} from "@/features/game/types/round/phase/drawing/drawing"
 import { create } from "zustand"
-import { DrawingColour, DrawingTool } from "../types/drawing/drawing"
-import { PALETTE_COLOURS } from "../lib/colors"
 import { useShallow } from "zustand/shallow"
+import { PALETTE_COLOURS } from "../lib/colors"
 
 interface DrawingStore {
   tool: DrawingTool
