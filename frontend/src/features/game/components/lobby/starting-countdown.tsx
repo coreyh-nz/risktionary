@@ -1,9 +1,9 @@
 "use client"
 
+import { CountdownDigit } from "@/features/game/components/shared/countdown/countdown-digit"
+import { CountdownRing } from "@/features/game/components/shared/countdown/countdown-ring"
+import { useCountdown } from "@/features/game/hooks/shared/countdown/use-countdown"
 import { useState } from "react"
-import { useCountdown } from "@/features/game/hooks/use-countdown"
-import { CountdownRing } from "@/features/game/components/countdown/countdown-ring"
-import { CountdownDigit } from "@/features/game/components/countdown/countdown-digit"
 
 interface GameStartingCountdownProps {
   durationMs: number

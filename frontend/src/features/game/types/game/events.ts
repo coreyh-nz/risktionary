@@ -1,5 +1,5 @@
 import { GameSessionPlayer } from "."
-import { RoundStateView } from "../round/events"
+import { RoundStateView } from "../round/phase/events"
 
 export type GameStateView =
   | {

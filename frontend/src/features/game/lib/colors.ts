@@ -1,4 +1,4 @@
-import { DrawingColour } from "../types/drawing/drawing"
+import { DrawingColour } from "@/features/game/types/round/phase/drawing/drawing"
 
 const colourDefinitions = {
   BLACK: {

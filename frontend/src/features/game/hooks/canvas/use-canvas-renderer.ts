@@ -1,10 +1,10 @@
-import { getStroke } from "perfect-freehand"
-import { useCallback, useLayoutEffect, useRef } from "react"
 import {
   DrawingPoint,
   DrawingStroke,
   DrawingTool,
-} from "../../types/drawing/drawing"
+} from "@/features/game/types/round/phase/drawing/drawing"
+import { getStroke } from "perfect-freehand"
+import { useCallback, useLayoutEffect, useRef } from "react"
 
 const BRUSH_SIZE = 12
 const ERASER_MULTIPLIER = 2.8

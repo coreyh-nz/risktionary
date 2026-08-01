@@ -1,6 +1,11 @@
+import { ChatMessage } from "@/features/game/types/round/phase/drawing/chat"
 import { StateCreator } from "zustand"
-import { RoundPhase, RoundRole, RoundState, WordHint } from "../../types/round"
-import { ChatMessage } from "../../types/round/chat"
+import {
+  RoundPhase,
+  RoundRole,
+  RoundState,
+  WordHint,
+} from "../../types/round/phase/round"
 
 export interface RoundSlice {
   roundState: RoundState | null
