@@ -93,7 +93,7 @@ class GameRoundPhaseOrchestrator(
         val state = round.requireState<GameRoundState.InProgress>()
         handlerMap[phase::class]?.onEnter(round, state, phase)
 
-        val endingAt = phase.endingAt ?: return
+        val endingAt = phase.timeWindow?.endingAt ?: return
         gameSessionTaskService.schedule(round.game.id, endingAt) {
             val currentState = round.state
             if (currentState is GameRoundState.InProgress && currentState.phase.type == phase.type) {

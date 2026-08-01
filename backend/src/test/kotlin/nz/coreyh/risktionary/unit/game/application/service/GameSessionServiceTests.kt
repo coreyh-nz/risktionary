@@ -660,7 +660,7 @@ class GameSessionServiceTests {
             val round = mockk<GameRoundSession>(relaxed = true)
             val volunteers = mockk<GameVolunteerSession>(relaxed = true)
             val currentRoundPhase = GameRoundPhase.Initialising
-            val nextRoundPhase = GameRoundPhase.Drawing(endingAt = null)
+            val nextRoundPhase = GameRoundPhase.Drawing(timeWindow = null)
             val currentRoundState = GameRoundState.InProgress(phase = currentRoundPhase, playerSession.player)
             every { gameSessionStore.findById(gameId) } returns session
             every { session.volunteers } returns volunteers
@@ -678,7 +678,7 @@ class GameSessionServiceTests {
             val round = mockk<GameRoundSession>(relaxed = true)
             val volunteers = mockk<GameVolunteerSession>(relaxed = true)
             val currentRoundPhase = GameRoundPhase.Initialising
-            val nextRoundPhase = GameRoundPhase.Drawing(endingAt = null)
+            val nextRoundPhase = GameRoundPhase.Drawing(timeWindow = null)
             val currentRoundState = GameRoundState.InProgress(phase = currentRoundPhase, playerSession.player)
             every { gameSessionStore.findById(gameId) } returns session
             every { session.volunteers } returns volunteers
@@ -699,7 +699,7 @@ class GameSessionServiceTests {
             val volunteers = mockk<GameVolunteerSession>(relaxed = true)
             val remainingVolunteers = listOf<GamePlayerId>()
             val currentRoundPhase = GameRoundPhase.Initialising
-            val nextRoundPhase = GameRoundPhase.Drawing(endingAt = null)
+            val nextRoundPhase = GameRoundPhase.Drawing(timeWindow = null)
             val currentRoundState = GameRoundState.InProgress(phase = currentRoundPhase, playerSession.player)
             every { gameSessionStore.findById(gameId) } returns session
             every { session.volunteers } returns volunteers
