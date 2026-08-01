@@ -1,6 +1,6 @@
+import { ChatMessage } from "@/features/game/types/round/phase/drawing/chat"
 import { WordHint } from "@/features/game/types/round/phase/round"
 import { GameSessionPlayer } from "../../game"
-import { ChatMessage } from "@/features/game/types/round/phase/drawing/chat"
 
 export type RoundStateView =
   | {
@@ -77,6 +77,7 @@ export interface RoundCorrectGuessesUpdatedEvent {
 
 export type RoundEvent =
   | RoundStateEvent
+  | RoundPhaseStateEvent
   | RoundAssignedDrawerEvent
   | RoundAssignedGuesserEvent
   | RoundChatMessageEvent

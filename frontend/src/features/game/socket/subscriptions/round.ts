@@ -9,17 +9,24 @@ import {
   RoundCorrectGuessesUpdatedEvent,
   RoundCorrectGuessEvent,
   RoundEvent,
+  RoundPhaseStateEvent,
   RoundStateEvent,
   RoundStateView,
 } from "../../types/round/phase/events"
 import { RoundState } from "../../types/round/phase/round"
-import { mapRoundStateViewToRoundState } from "../view-mapper"
+import {
+  mapRoundPhaseStateViewToRoundPhaseState,
+  mapRoundStateViewToRoundState,
+} from "../view-mapper"
 
 const handleRoundEvent = (event: RoundEvent) => {
   const type = event.type
   switch (type) {
     case "STATE":
       handleRoundStateEvent(event)
+      break
+    case "PHASE_STATE":
+      handleRoundPhaseStateEvent(event)
       break
     case "ASSIGNED_DRAWER":
       handleAssignedDrawerEvent(event)
@@ -43,6 +50,22 @@ const handleRoundEvent = (event: RoundEvent) => {
 
 const handleRoundStateEvent = (event: RoundStateEvent) => {
   handleRoundState(event.state)
+}
+
+const handleRoundPhaseStateEvent = (event: RoundPhaseStateEvent) => {
+  const state = useGameStore.getState().roundState
+  if (state?.type !== "IN_PROGRESS") {
+    console.error(
+      "Expected round to be in progress upon receiving phase update event"
+    )
+    return
+  }
+
+  const updatedState: RoundState = {
+    ...state,
+    phase: mapRoundPhaseStateViewToRoundPhaseState(event.phase),
+  }
+  useGameStore.getState().setRoundState(updatedState)
 }
 
 const handleAssignedGuesserEvent = (event: RoundAssignedGuesserEvent) => {
