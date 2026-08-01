@@ -30,6 +30,7 @@ import nz.coreyh.risktionary.game.domain.model.player.GamePlayerId
 import nz.coreyh.risktionary.game.domain.model.player.GameTicket
 import nz.coreyh.risktionary.game.socket.messages.GameEventPublisher
 import nz.coreyh.risktionary.support.annotation.MockKTest
+import nz.coreyh.risktionary.support.extensions.timeWindowFromNow
 import nz.coreyh.risktionary.support.factory.game.createTestGameConfiguration
 import nz.coreyh.risktionary.support.factory.game.createTestGameId
 import nz.coreyh.risktionary.support.factory.game.createTestGamePlayer
@@ -466,7 +467,7 @@ class GameSessionServiceTests {
         fun `transition to starting transitions session to starting state`() {
             val game = mockk<GameSession>(relaxed = true)
             val gameConfig = createTestGameConfiguration()
-            val startsAt = clock.now() + gameConfig.lobbyCountdown
+            val startsAt = gameConfig.lobbyCountdown.timeWindowFromNow(clock)
             every { gameSessionStore.findById(gameId) } returns game
             every { game.config } returns gameConfig
 

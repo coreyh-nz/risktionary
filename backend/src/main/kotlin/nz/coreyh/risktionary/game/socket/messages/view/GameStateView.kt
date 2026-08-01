@@ -13,7 +13,7 @@ sealed interface GameStateView {
     }
 
     data class Starting(
-        val startingInMs: Long,
+        val timer: TimerView,
     ) : GameStateView {
         override val type: GameStateType = GameStateType.STARTING
     }
@@ -36,12 +36,7 @@ fun GameSession.toStateView(clock: Clock = Clock.System): GameStateView =
         }
 
         is GameState.Starting -> {
-            GameStateView.Starting(
-                startingInMs =
-                    (state.startingAt - clock.now())
-                        .inWholeMilliseconds
-                        .coerceAtLeast(0),
-            )
+            GameStateView.Starting(timer = state.timeWindow.toTimerView(clock))
         }
 
         is GameState.InProgress -> {
