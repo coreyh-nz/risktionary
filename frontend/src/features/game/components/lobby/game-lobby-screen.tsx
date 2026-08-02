@@ -25,10 +25,7 @@ export const GamePlayLobbyScreen = () => {
     <CenteredLayout size="3xl">
       <div className="flex w-full flex-col gap-6">
         {state.type === "STARTING" && (
-          <GameStartingCountdown
-            durationMs={state.startingInMs}
-            isHost={isHost}
-          />
+          <GameStartingCountdown countdown={state.countdown} isHost={isHost} />
         )}
 
         <div className="flex flex-col items-center gap-2">
