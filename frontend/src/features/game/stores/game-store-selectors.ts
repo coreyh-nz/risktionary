@@ -28,17 +28,16 @@ export const useGameRemovePlayer = () => useGameStore((s) => s.removePlayer)
 
 export const useGameReset = () => useGameStore((s) => s.reset)
 
-export const useGameRoundState = () =>
-  useGameStore(useShallow((s) => s.roundState))
-export const useGameRoundSetState = () => useGameStore((s) => s.setRoundState)
 export const useGameIsDrawer = () =>
   useGameStore((s) => {
     const session = s.session
-    const state = s.roundState
+    const round = s.round
+    if (!session || !round) throw new Error()
+
     return (
-      session?.role === "player" &&
-      state?.type === "IN_PROGRESS" &&
-      session.playerId === state.drawer.id
+      session.role === "player" &&
+      round.state.type === "IN_PROGRESS" &&
+      session.playerId === round.state.drawer.id
     )
   })
 

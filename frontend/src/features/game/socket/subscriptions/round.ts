@@ -11,7 +11,6 @@ import {
   RoundEvent,
   RoundPhaseStateEvent,
   RoundStateEvent,
-  RoundStateView,
 } from "../../types/round/phase/events"
 import { RoundState } from "../../types/round/phase/round"
 import {
@@ -49,23 +48,35 @@ const handleRoundEvent = (event: RoundEvent) => {
 }
 
 const handleRoundStateEvent = (event: RoundStateEvent) => {
-  handleRoundState(event.state)
+  const round = useGameStore.getState().round
+  if (!round) throw new Error()
+
+  const state: RoundState = mapRoundStateViewToRoundState(event.state)
+  useGameStore.getState().setRound({
+    ...round,
+    state,
+  })
 }
 
 const handleRoundPhaseStateEvent = (event: RoundPhaseStateEvent) => {
-  const state = useGameStore.getState().roundState
-  if (state?.type !== "IN_PROGRESS") {
+  const round = useGameStore.getState().round
+  if (!round) throw new Error()
+
+  const state = round.state
+  if (state.type !== "IN_PROGRESS") {
     console.error(
       "Expected round to be in progress upon receiving phase update event"
     )
     return
   }
 
-  const updatedState: RoundState = {
-    ...state,
-    phase: mapRoundPhaseStateViewToRoundPhaseState(event.phase),
-  }
-  useGameStore.getState().setRoundState(updatedState)
+  useGameStore.getState().setRound({
+    ...round,
+    state: {
+      ...state,
+      phase: mapRoundPhaseStateViewToRoundPhaseState(event.phase),
+    },
+  })
 }
 
 const handleAssignedGuesserEvent = (event: RoundAssignedGuesserEvent) => {
@@ -91,11 +102,6 @@ const handleCorrectGuessesUpdatedEvent = (
   event: RoundCorrectGuessesUpdatedEvent
 ) => {
   useGameStore.getState().setRoundCorrectGuessesCount(event.correctGuesses)
-}
-
-export const handleRoundState = (stateView: RoundStateView) => {
-  const state: RoundState = mapRoundStateViewToRoundState(stateView)
-  useGameStore.getState().setRoundState(state)
 }
 
 export const setupRoundSubscriptions = (client: Client, gameId: string) => {

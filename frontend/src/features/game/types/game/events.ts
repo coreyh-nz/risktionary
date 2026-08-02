@@ -1,5 +1,5 @@
 import { GameSessionPlayer } from "."
-import { RoundStateView } from "../round/phase/events"
+import { RoundView } from "../round/phase/events"
 
 export type GameStateView =
   | {
@@ -11,7 +11,7 @@ export type GameStateView =
     }
   | {
       type: "IN_PROGRESS"
-      round: RoundStateView
+      round: RoundView
     }
   | {
       type: "COMPLETED"

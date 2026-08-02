@@ -1,3 +1,4 @@
+import { mapTimerViewToCountdown } from "@/mappers/time"
 import { GameState } from "../types/game"
 import { GameStateView } from "../types/game/events"
 import {
@@ -21,5 +22,10 @@ export const mapRoundStateViewToRoundState = (
 export const mapRoundPhaseStateViewToRoundPhaseState = (
   stateView: RoundPhaseStateView
 ): RoundPhase => {
-  return stateView
+  return {
+    ...stateView,
+    countdown: stateView.timer
+      ? mapTimerViewToCountdown(stateView.timer)
+      : undefined,
+  }
 }
