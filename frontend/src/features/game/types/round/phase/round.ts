@@ -1,4 +1,10 @@
+import { CountdownState } from "@/types/time"
 import { GameSessionPlayer } from "../../game"
+
+export type Round = {
+  number: number
+  state: RoundState
+}
 
 export type RoundState =
   | { type: "SELECTING_DRAWER" }
@@ -14,26 +20,33 @@ export type RoundStateType = RoundState["type"]
 export type RoundPhase =
   | {
       type: "DRAWING"
+      countdown?: CountdownState
       correctGuessCount: number
     }
   | {
       type: "DRAWING_REVIEW"
+      countdown?: CountdownState
       word: string
     }
   | {
       type: "RANKING"
+      countdown?: CountdownState
     }
   | {
       type: "RANKING_REVIEW"
+      countdown?: CountdownState
     }
   | {
       type: "WORD_REVIEW"
+      countdown?: CountdownState
     }
   | {
       type: "SCORING"
+      countdown?: CountdownState
     }
   | {
       type: "COMPLETED"
+      countdown?: CountdownState
     }
 
 export type RoundPhaseType = RoundPhase["type"]

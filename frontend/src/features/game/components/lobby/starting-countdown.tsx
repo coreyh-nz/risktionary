@@ -2,25 +2,25 @@
 
 import { CountdownDigit } from "@/features/game/components/shared/countdown/countdown-digit"
 import { CountdownRing } from "@/features/game/components/shared/countdown/countdown-ring"
-import { useCountdown } from "@/features/game/hooks/shared/countdown/use-countdown"
-import { useState } from "react"
+import { CountdownState } from "@/types/time"
+import { useCountdown } from "../../hooks/shared/countdown/use-countdown"
 
 interface GameStartingCountdownProps {
-  durationMs: number
+  countdown: CountdownState
   isHost?: boolean
 }
 
 export const GameStartingCountdown = ({
-  durationMs,
+  countdown,
   isHost = false,
 }: GameStartingCountdownProps) => {
-  const secondsLeft = useCountdown(durationMs)
-  const [total] = useState(() => Math.max(1, Math.ceil(durationMs / 1000)))
+  const { secondsLeft, totalSeconds } = useCountdown(countdown)
+  if (secondsLeft === undefined || totalSeconds === undefined) return
 
   return isHost ? (
-    <HostCountdown secondsLeft={secondsLeft} total={total} />
+    <HostCountdown secondsLeft={secondsLeft} total={totalSeconds} />
   ) : (
-    <PlayerCountdown secondsLeft={secondsLeft} total={total} />
+    <PlayerCountdown secondsLeft={secondsLeft} total={totalSeconds} />
   )
 }
 

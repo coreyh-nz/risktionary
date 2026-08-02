@@ -1,10 +1,11 @@
-import { useGameRoundState } from "@/features/game/stores/game-store-selectors"
+import { RoundNotActiveError } from "../../errors/round"
+import { useGameRound } from "../../stores/selectors/round.selectors"
 import { ROUND_COMPONENTS } from "./round-registry"
 
 export const CurrentRound = () => {
-  const roundState = useGameRoundState()
-  if (!roundState) return null
+  const round = useGameRound()
+  if (!round) throw new RoundNotActiveError()
 
-  const RoundComponent = ROUND_COMPONENTS[roundState.type]
+  const RoundComponent = ROUND_COMPONENTS[round.state.type]
   return <RoundComponent />
 }

@@ -10,8 +10,10 @@ import {
   PlayerListUpdatedEvent,
   VolunteersUpdatedEvent,
 } from "../../types/game/events"
-import { mapGameStateViewToGameState } from "../view-mapper"
-import { handleRoundState } from "./round"
+import {
+  mapGameStateViewToGameState,
+  mapRoundViewToRound,
+} from "../view-mapper"
 
 const handleGameEvent = (event: GameEvent) => {
   const type = event.type
@@ -45,9 +47,9 @@ const handleState = ({ state }: GameStateEvent) => {
   const gameState = mapGameStateViewToGameState(state)
   useGameStore.getState().setState(gameState)
 
-  // round state is stored seperately to game state (should it be?)
+  // round state is stored separately to game state
   if (state.type === "IN_PROGRESS") {
-    handleRoundState(state.round)
+    useGameStore.getState().setRound(mapRoundViewToRound(state.round))
   }
 }
 
