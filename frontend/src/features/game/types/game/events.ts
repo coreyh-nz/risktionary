@@ -1,3 +1,4 @@
+import { TimerView } from "@/types/time"
 import { GameSessionPlayer } from "."
 import { RoundView } from "../round/phase/events"
 
@@ -7,7 +8,7 @@ export type GameStateView =
     }
   | {
       type: "STARTING"
-      startingInMs: number
+      timer: TimerView
     }
   | {
       type: "IN_PROGRESS"

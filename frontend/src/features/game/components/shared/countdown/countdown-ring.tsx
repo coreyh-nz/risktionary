@@ -49,7 +49,7 @@ export const CountdownRing = ({
         fill="none"
         stroke="currentColor"
         strokeWidth={strokeWidth}
-        className={cn("text-muted/20", trackClassName)}
+        className={cn("text-muted", trackClassName)}
       />
       {/* Progress */}
       <circle

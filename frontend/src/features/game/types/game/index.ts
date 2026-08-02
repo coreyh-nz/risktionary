@@ -1,7 +1,9 @@
+import { CountdownState } from "@/types/time"
+
 export type GameState =
   | { type: "INITIALIZING" }
   | { type: "LOBBY" }
-  | { type: "STARTING"; startingInMs: number }
+  | { type: "STARTING"; countdown: CountdownState }
   | { type: "IN_PROGRESS" }
   | { type: "COMPLETED" }
 
