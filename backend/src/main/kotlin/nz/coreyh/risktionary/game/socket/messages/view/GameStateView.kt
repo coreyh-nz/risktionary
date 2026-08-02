@@ -13,13 +13,13 @@ sealed interface GameStateView {
     }
 
     data class Starting(
-        val startingInMs: Long,
+        val timer: TimerView,
     ) : GameStateView {
         override val type: GameStateType = GameStateType.STARTING
     }
 
     data class InProgress(
-        val round: GameRoundStateView,
+        val round: GameRoundView,
     ) : GameStateView {
         override val type: GameStateType = GameStateType.IN_PROGRESS
     }
@@ -29,23 +29,18 @@ sealed interface GameStateView {
     }
 }
 
-fun GameSession.toStateView(): GameStateView =
+fun GameSession.toStateView(clock: Clock = Clock.System): GameStateView =
     when (val state = this.state) {
         is GameState.Lobby -> {
             GameStateView.Lobby
         }
 
         is GameState.Starting -> {
-            GameStateView.Starting(
-                startingInMs =
-                    (state.startingAt - Clock.System.now())
-                        .inWholeMilliseconds
-                        .coerceAtLeast(0),
-            )
+            GameStateView.Starting(timer = state.timeWindow.toTimerView(clock))
         }
 
         is GameState.InProgress -> {
-            GameStateView.InProgress(this.currentRound!!.toStateView())
+            GameStateView.InProgress(round = currentRound!!.toView())
         }
 
         is GameState.Completed -> {

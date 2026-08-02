@@ -3,6 +3,7 @@ package nz.coreyh.risktionary.game.application.service.round.phase
 import nz.coreyh.risktionary.game.application.session.round.GameRoundPhase
 import nz.coreyh.risktionary.game.application.session.round.GameRoundSession
 import nz.coreyh.risktionary.game.domain.model.GameConfiguration
+import nz.coreyh.risktionary.game.domain.model.TimeWindow
 import nz.coreyh.risktionary.game.domain.model.round.phase.RoundPhaseType
 import org.springframework.stereotype.Service
 import kotlin.time.Clock
@@ -26,44 +27,42 @@ class GameRoundPhaseTransitionService(
         return when (current) {
             is GameRoundPhase.Initialising -> {
                 GameRoundPhase.Drawing(
-                    endingAt = config.endingAtTimeFor(RoundPhaseType.DRAWING),
+                    timeWindow = phaseTiming(RoundPhaseType.DRAWING, config, clock),
                 )
             }
 
             is GameRoundPhase.Drawing -> {
                 GameRoundPhase.DrawingReview(
-                    endingAt = config.endingAtTimeFor(RoundPhaseType.DRAWING_REVIEW),
+                    timeWindow = phaseTiming(RoundPhaseType.DRAWING_REVIEW, config, clock),
                 )
             }
 
             is GameRoundPhase.DrawingReview -> {
                 GameRoundPhase.Ranking(
-                    endingAt = config.endingAtTimeFor(RoundPhaseType.RANKING),
+                    timeWindow = phaseTiming(RoundPhaseType.RANKING, config, clock),
                 )
             }
 
             is GameRoundPhase.Ranking -> {
                 GameRoundPhase.RankingReview(
-                    endingAt = config.endingAtTimeFor(RoundPhaseType.RANKING_REVIEW),
+                    timeWindow = phaseTiming(RoundPhaseType.RANKING_REVIEW, config, clock),
                 )
             }
 
             is GameRoundPhase.RankingReview -> {
                 GameRoundPhase.WordReview(
-                    endingAt = config.endingAtTimeFor(RoundPhaseType.WORD_REVIEW),
+                    timeWindow = phaseTiming(RoundPhaseType.WORD_REVIEW, config, clock),
                 )
             }
 
             is GameRoundPhase.WordReview -> {
                 GameRoundPhase.Scoring(
-                    endingAt = config.endingAtTimeFor(RoundPhaseType.SCORING),
+                    timeWindow = phaseTiming(RoundPhaseType.SCORING, config, clock),
                 )
             }
 
             is GameRoundPhase.Scoring -> {
-                GameRoundPhase.Completed(
-                    endingAt = config.endingAtTimeFor(RoundPhaseType.COMPLETED),
-                )
+                GameRoundPhase.Completed
             }
 
             is GameRoundPhase.Completed -> {
@@ -72,5 +71,14 @@ class GameRoundPhaseTransitionService(
         }
     }
 
-    private fun GameConfiguration.endingAtTimeFor(phase: RoundPhaseType) = phaseDurations[phase]?.let { clock.now() + it }
+    private fun phaseTiming(
+        phase: RoundPhaseType,
+        config: GameConfiguration,
+        clock: Clock,
+    ) = config.phaseDurations[phase]?.let {
+        TimeWindow(
+            startedAt = clock.now(),
+            duration = it,
+        )
+    }
 }

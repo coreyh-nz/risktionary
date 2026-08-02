@@ -6,59 +6,93 @@ import nz.coreyh.risktionary.game.application.session.round.GameRoundSession
 import nz.coreyh.risktionary.game.application.session.round.GameRoundState
 import nz.coreyh.risktionary.game.application.session.round.requireState
 import nz.coreyh.risktionary.game.domain.model.round.phase.RoundPhaseType
+import kotlin.time.Clock
 
 sealed interface GameRoundPhaseView {
     val type: RoundPhaseType
+    val timer: TimerView?
 
-    data object Drawing : GameRoundPhaseView {
+    data class Drawing(
+        override val timer: TimerView?,
+    ) : GameRoundPhaseView {
         override val type = RoundPhaseType.DRAWING
     }
 
     data class DrawingReview(
+        override val timer: TimerView?,
         val word: String,
     ) : GameRoundPhaseView {
         override val type = RoundPhaseType.DRAWING_REVIEW
     }
 
-    data object Ranking : GameRoundPhaseView {
+    data class Ranking(
+        override val timer: TimerView?,
+    ) : GameRoundPhaseView {
         override val type = RoundPhaseType.RANKING
     }
 
-    data object RankingReview : GameRoundPhaseView {
+    data class RankingReview(
+        override val timer: TimerView?,
+    ) : GameRoundPhaseView {
         override val type = RoundPhaseType.RANKING_REVIEW
     }
 
-    data object WordReview : GameRoundPhaseView {
+    data class WordReview(
+        override val timer: TimerView?,
+    ) : GameRoundPhaseView {
         override val type = RoundPhaseType.WORD_REVIEW
     }
 
-    data object Scoring : GameRoundPhaseView {
+    data class Scoring(
+        override val timer: TimerView?,
+    ) : GameRoundPhaseView {
         override val type = RoundPhaseType.SCORING
     }
 
     data object Completed : GameRoundPhaseView {
         override val type = RoundPhaseType.COMPLETED
+        override val timer: TimerView? = null
     }
 }
 
-fun GameRoundSession.toPhaseStateView(): GameRoundPhaseView {
+fun GameRoundSession.toPhaseStateView(clock: Clock = Clock.System): GameRoundPhaseView {
     val state = requireState<GameRoundState.InProgress>()
+    val timer = state.phase.timeWindow?.toTimerView(clock)
     return when (state.phase) {
         // client should never be sent this state
-        is GameRoundPhase.Initialising -> throw GameStateInvalidException()
+        is GameRoundPhase.Initialising -> {
+            throw GameStateInvalidException()
+        }
 
-        is GameRoundPhase.Drawing -> GameRoundPhaseView.Drawing
+        is GameRoundPhase.Drawing -> {
+            GameRoundPhaseView.Drawing(timer = timer)
+        }
 
-        is GameRoundPhase.DrawingReview -> GameRoundPhaseView.DrawingReview(word.value)
+        is GameRoundPhase.DrawingReview -> {
+            GameRoundPhaseView.DrawingReview(
+                timer = timer,
+                word = word.value,
+            )
+        }
 
-        is GameRoundPhase.Ranking -> GameRoundPhaseView.Ranking
+        is GameRoundPhase.Ranking -> {
+            GameRoundPhaseView.Ranking(timer = timer)
+        }
 
-        is GameRoundPhase.RankingReview -> GameRoundPhaseView.RankingReview
+        is GameRoundPhase.RankingReview -> {
+            GameRoundPhaseView.RankingReview(timer = timer)
+        }
 
-        is GameRoundPhase.Scoring -> GameRoundPhaseView.Scoring
+        is GameRoundPhase.Scoring -> {
+            GameRoundPhaseView.Scoring(timer = timer)
+        }
 
-        is GameRoundPhase.WordReview -> GameRoundPhaseView.WordReview
+        is GameRoundPhase.WordReview -> {
+            GameRoundPhaseView.WordReview(timer = timer)
+        }
 
-        is GameRoundPhase.Completed -> GameRoundPhaseView.Completed
+        is GameRoundPhase.Completed -> {
+            GameRoundPhaseView.Completed
+        }
     }
 }

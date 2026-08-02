@@ -16,6 +16,7 @@ import nz.coreyh.risktionary.game.application.session.round.GameRoundState
 import nz.coreyh.risktionary.game.application.store.GameSessionStore
 import nz.coreyh.risktionary.game.domain.model.GameConfiguration
 import nz.coreyh.risktionary.game.domain.model.GameId
+import nz.coreyh.risktionary.game.domain.model.TimeWindow
 import nz.coreyh.risktionary.game.domain.model.createGameId
 import nz.coreyh.risktionary.game.domain.model.host.GameSessionHost
 import nz.coreyh.risktionary.game.domain.model.host.GameSessionHostStatus
@@ -220,15 +221,14 @@ class GameSessionService(
 
     fun transitionToStarting(gameId: GameId) {
         val session = getSession(gameId)
-        val startIn = session.config.lobbyCountdown
-        val startAt = clock.now() + startIn
-        session.transitionToStarting(startAt)
+        val timeWindow = TimeWindow(startedAt = clock.now(), duration = session.config.lobbyCountdown)
+        session.transitionToStarting(timeWindow)
         gameEventPublisher.publishState(session)
 
         // schedule task to transition to in progress
         val block = { transitionToInProgress(gameId) }
-        if (startIn >= 0.seconds) {
-            gameSessionTaskService.schedule(gameId, startAt, block)
+        if (timeWindow.duration >= 0.seconds) {
+            gameSessionTaskService.schedule(gameId, timeWindow.endingAt, block)
         } else {
             block()
         }

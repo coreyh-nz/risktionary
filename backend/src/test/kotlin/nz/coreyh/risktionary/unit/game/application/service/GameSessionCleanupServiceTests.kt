@@ -8,6 +8,7 @@ import nz.coreyh.risktionary.game.application.service.GameSessionCleanupService
 import nz.coreyh.risktionary.game.application.service.GameSessionService
 import nz.coreyh.risktionary.game.config.GameSessionCleanupProperties
 import nz.coreyh.risktionary.support.annotation.MockKTest
+import nz.coreyh.risktionary.support.extensions.timeWindow
 import nz.coreyh.risktionary.support.factory.game.createTestGameSession
 import nz.coreyh.risktionary.support.factory.game.createTestGameSessionHostConnected
 import nz.coreyh.risktionary.support.factory.game.createTestGameSessionHostDisconnected
@@ -140,7 +141,7 @@ class GameSessionCleanupServiceTests {
                 host = createTestGameSessionHostConnected(connectedAt = now - 30.minutes),
                 createdAt = now - 30.minutes,
                 clock = sessionClock,
-            ).also { it.transitionToStarting(now + 10.seconds) }
+            ).also { it.transitionToStarting(10.seconds.timeWindow(startedAt = now)) }
 
         every { gameSessionService.getSessions() } returns listOf(session)
         justRun { gameSessionService.removeSession(session.id) }
@@ -164,7 +165,7 @@ class GameSessionCleanupServiceTests {
                 host = createTestGameSessionHostConnected(connectedAt = now - 30.minutes),
                 createdAt = now - 30.minutes,
                 clock = sessionClock,
-            ).also { it.transitionToStarting(now + 10.seconds) }
+            ).also { it.transitionToStarting(10.seconds.timeWindow(startedAt = now)) }
         every { gameSessionService.getSessions() } returns listOf(session)
 
         gameSessionCleanupService.cleanupStaleSessions()

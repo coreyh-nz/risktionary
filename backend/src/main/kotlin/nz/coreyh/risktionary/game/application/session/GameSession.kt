@@ -12,6 +12,7 @@ import nz.coreyh.risktionary.game.domain.model.GameConfiguration
 import nz.coreyh.risktionary.game.domain.model.GameId
 import nz.coreyh.risktionary.game.domain.model.GameState
 import nz.coreyh.risktionary.game.domain.model.GameStateType
+import nz.coreyh.risktionary.game.domain.model.TimeWindow
 import nz.coreyh.risktionary.game.domain.model.host.GameSessionHost
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerId
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerStatus
@@ -168,13 +169,13 @@ class GameSession(
      * Valid transitions:
      * - [GameStateType.LOBBY] -> [GameStateType.STARTING]
      *
-     * @param startingAt the time the game will start.
+     * @param timeWindow the time the game will start.
      * @throws GameStateInvalidException if the current session state is invalid.
      */
-    fun transitionToStarting(startingAt: Instant): Unit =
+    fun transitionToStarting(timeWindow: TimeWindow): Unit =
         withLock {
             requireState(GameStateType.LOBBY)
-            withActivity { state = GameState.Starting(startingAt) }
+            withActivity { state = GameState.Starting(timeWindow) }
         }
 
     /**
