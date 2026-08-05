@@ -1,23 +1,11 @@
-import {
-  createPlayersSlice,
-  PlayersSlice,
-} from "@/features/game/stores/slices/players.slice"
-import {
-  createSessionSlice,
-  SessionSlice,
-} from "@/features/game/stores/slices/session.slice"
-import {
-  createGamePhaseSlice,
-  GameStateSlice,
-} from "@/features/game/stores/slices/state.slice"
+import { createPlayersSlice, PlayersSlice, } from "@/features/game/stores/slices/players.slice"
+import { createSessionSlice, SessionSlice, } from "@/features/game/stores/slices/session.slice"
+import { createGamePhaseSlice, GameStateSlice, } from "@/features/game/stores/slices/state.slice"
 import { config } from "@/lib/config"
 import { create, StateCreator } from "zustand"
 import { createJSONStorage, persist } from "zustand/middleware"
 import { createRoundSlice, RoundSlice } from "./slices/round.slice"
-import {
-  createVolunteersSlice,
-  VolunteersSlice,
-} from "./slices/volunteers.slice"
+import { createVolunteersSlice, VolunteersSlice, } from "./slices/volunteers.slice"
 
 type GameStore = SessionSlice &
   GameStateSlice &
@@ -50,7 +38,10 @@ export const useGameStore = config.persistGameSession
   ? create<GameStore>()(
       persist(storeDefinition, {
         name: "game-session-dev",
-        storage: createJSONStorage(() => localStorage),
+        storage: createJSONStorage(() => sessionStorage),
+        partialize: (state) => ({
+          session: state.session,
+        }),
       })
     )
   : create<GameStore>()(storeDefinition)
