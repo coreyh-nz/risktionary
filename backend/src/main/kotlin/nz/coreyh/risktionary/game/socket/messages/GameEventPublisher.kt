@@ -67,11 +67,35 @@ class GameEventPublisher(
             ),
     )
 
+    fun publishPlayerListToHost(
+        userId: UserId,
+        players: List<GamePlayerSession>,
+    ) = messagingTemplate.sendToUser(
+        userId = userId,
+        destination = WebSocketDestinations.Queue.GAME,
+        message =
+            PlayerListUpdatedEvent(
+                players =
+                    players
+                        .filter { it.status == GamePlayerStatus.ACTIVE }
+                        .map { it.player.toView() },
+            ),
+    )
+
     fun publishVolunteersUpdated(
         gameId: GameId,
         volunteers: List<GamePlayerId>,
     ) = messagingTemplate.sendToTopic(
         destination = WebSocketDestinations.Topic.base(gameId),
+        message = VolunteersUpdatedEvent(volunteers),
+    )
+
+    fun publishVolunteersUpdatedToHost(
+        userId: UserId,
+        volunteers: List<GamePlayerId>,
+    ) = messagingTemplate.sendToUser(
+        userId = userId,
+        destination = WebSocketDestinations.Queue.GAME,
         message = VolunteersUpdatedEvent(volunteers),
     )
 
@@ -88,6 +112,17 @@ class GameEventPublisher(
     ) {
         messagingTemplate.sendToPlayer(
             playerId = playerId,
+            destination = WebSocketDestinations.Queue.GAME,
+            message = GameStateEvent(game.toStateView()),
+        )
+    }
+
+    fun publishStateToHost(
+        userId: UserId,
+        game: GameSession,
+    ) {
+        messagingTemplate.sendToUser(
+            userId = userId,
             destination = WebSocketDestinations.Queue.GAME,
             message = GameStateEvent(game.toStateView()),
         )

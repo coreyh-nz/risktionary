@@ -24,10 +24,10 @@ class GameSocketController(
 ) {
     @MessageMapping("/player/ready")
     fun onReady(principal: GameSocketPrincipal) {
-        if (principal !is GameSocketPrincipal.Player) return
-
-        val playerId = principal.id
-        gameSessionService.handleReady(playerId)
+        when (principal) {
+            is GameSocketPrincipal.Player -> gameSessionService.handleReady(principal.id)
+            is GameSocketPrincipal.Host -> gameSessionService.handleHostReady(principal.id)
+        }
     }
 
     @MessageMapping("/game/start")

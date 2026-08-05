@@ -181,6 +181,22 @@ class GameSessionService(
         gameEventPublisher.publishVolunteersUpdated(gameId = game.id, volunteers = game.volunteers.getVolunteers())
     }
 
+    /**
+     * Handles the point when a host has subscribed to all necessary
+     * topics/queues and is ready to receive the full current game state.
+     *
+     * Sends a complete initial synchronisation to the player.
+     */
+    fun handleHostReady(userId: UserId) {
+        val game =
+            gameSessionStore.findByHostId(userId)
+                ?: throw GameNotFoundException()
+
+        gameEventPublisher.publishStateToHost(userId, game)
+        gameEventPublisher.publishPlayerListToHost(userId = userId, players = game.getPlayers())
+        gameEventPublisher.publishVolunteersUpdatedToHost(userId = userId, volunteers = game.volunteers.getVolunteers())
+    }
+
     fun handleDisconnected(
         gameId: GameId,
         playerId: GamePlayerId,
@@ -207,6 +223,7 @@ class GameSessionService(
         if (session.host.id != hostId) throw GameNotFoundException()
 
         session.host.connect(clock.now())
+        gameEventPublisher.publishStateToHost(hostId, session)
     }
 
     fun handleHostDisconnected(
