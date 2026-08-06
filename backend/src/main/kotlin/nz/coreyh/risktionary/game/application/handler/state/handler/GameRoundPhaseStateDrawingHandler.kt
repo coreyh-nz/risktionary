@@ -1,7 +1,7 @@
-package nz.coreyh.risktionary.game.application.service.round.phase.drawing
+package nz.coreyh.risktionary.game.application.handler.state.handler
 
+import nz.coreyh.risktionary.game.application.handler.state.GameRoundPhaseStateHandler
 import nz.coreyh.risktionary.game.application.service.round.GameRoundSessionChatService
-import nz.coreyh.risktionary.game.application.service.round.phase.GameRoundPhaseHandler
 import nz.coreyh.risktionary.game.application.session.round.GameRoundPhase
 import nz.coreyh.risktionary.game.application.session.round.GameRoundSession
 import nz.coreyh.risktionary.game.application.session.round.GameRoundState
@@ -15,10 +15,10 @@ import org.springframework.stereotype.Service
  * Handles entry/exit for the [GameRoundPhase.Drawing] phase.
  */
 @Service
-class GameRoundPhaseDrawingHandler(
+class GameRoundPhaseStateDrawingHandler(
     private val gameRoundSessionChatService: GameRoundSessionChatService,
     private val gameEventPublisher: GameEventPublisher,
-) : GameRoundPhaseHandler<GameRoundPhase.Drawing> {
+) : GameRoundPhaseStateHandler<GameRoundPhase.Drawing> {
     override val phaseClass = GameRoundPhase.Drawing::class
 
     override fun onEnter(

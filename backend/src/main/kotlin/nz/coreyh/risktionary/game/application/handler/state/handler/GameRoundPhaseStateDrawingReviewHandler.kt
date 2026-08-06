@@ -1,6 +1,6 @@
-package nz.coreyh.risktionary.game.application.service.round.phase.drawing
+package nz.coreyh.risktionary.game.application.handler.state.handler
 
-import nz.coreyh.risktionary.game.application.service.round.phase.GameRoundPhaseHandler
+import nz.coreyh.risktionary.game.application.handler.state.GameRoundPhaseStateHandler
 import nz.coreyh.risktionary.game.application.session.round.GameRoundPhase
 import nz.coreyh.risktionary.game.application.session.round.GameRoundSession
 import nz.coreyh.risktionary.game.application.session.round.GameRoundState
@@ -15,9 +15,9 @@ import org.springframework.stereotype.Service
  * schedules an automatic advance once the timer expires.
  */
 @Service
-class GameRoundPhaseDrawingReviewHandler(
+class GameRoundPhaseStateDrawingReviewHandler(
     private val gameEventPublisher: GameEventPublisher,
-) : GameRoundPhaseHandler<GameRoundPhase.DrawingReview> {
+) : GameRoundPhaseStateHandler<GameRoundPhase.DrawingReview> {
     override val phaseClass = GameRoundPhase.DrawingReview::class
 
     override fun onEnter(

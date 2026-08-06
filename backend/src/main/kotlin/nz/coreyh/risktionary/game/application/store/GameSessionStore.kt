@@ -3,7 +3,6 @@ package nz.coreyh.risktionary.game.application.store
 import nz.coreyh.risktionary.game.application.session.GameSession
 import nz.coreyh.risktionary.game.domain.model.GameId
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerId
-import nz.coreyh.risktionary.user.domain.model.UserId
 import org.springframework.stereotype.Component
 import java.util.concurrent.ConcurrentHashMap
 
@@ -11,15 +10,12 @@ import java.util.concurrent.ConcurrentHashMap
 class GameSessionStore {
     private val sessions = ConcurrentHashMap<GameId, GameSession>()
     private val codeIndex: ConcurrentHashMap<String, GameId> = ConcurrentHashMap()
-    private val playerIndex: ConcurrentHashMap<GamePlayerId, GameId> = ConcurrentHashMap()
 
     fun getAll() = sessions.values.toList()
 
     fun findById(gameId: GameId): GameSession? = sessions[gameId]
 
     fun findByCode(code: String): GameSession? = codeIndex[code]?.let { sessions[it] }
-
-    fun findByHostId(userId: UserId): GameSession? = sessions.values.find { it.host.id == userId }
 
     fun findByPlayerId(playerId: GamePlayerId): GameSession? = sessions.values.find { it.findPlayer(playerId) != null }
 

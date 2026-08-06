@@ -1,7 +1,5 @@
-package nz.coreyh.risktionary.game.application.service.round.phase
+package nz.coreyh.risktionary.game.application.session.round
 
-import nz.coreyh.risktionary.game.application.session.round.GameRoundPhase
-import nz.coreyh.risktionary.game.application.session.round.GameRoundSession
 import nz.coreyh.risktionary.game.domain.model.GameConfiguration
 import nz.coreyh.risktionary.game.domain.model.TimeWindow
 import nz.coreyh.risktionary.game.domain.model.round.phase.RoundPhaseType
@@ -12,7 +10,7 @@ import kotlin.time.Clock
  * Determines what phase follows the current one for a given round.
  */
 @Service
-class GameRoundPhaseTransitionService(
+class GameRoundPhaseStateTransitionService(
     private val clock: Clock = Clock.System,
 ) {
     /**
