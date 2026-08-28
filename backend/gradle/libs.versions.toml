@@ -2,6 +2,8 @@
 kotlin = "2.3.20"
 spring-boot = "4.0.4"
 spring-dependency-management = "1.1.7"
+spring-ai = "2.0.0"
+kotlinx-coroutines = "1.11.0"
 exposed = "1.1.1"
 h2 = "2.4.240"
 postgresql = "42.7.11"
@@ -28,6 +30,11 @@ spring-boot-starter-oauth2-client = { module = "org.springframework.boot:spring-
 springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc-openapi" }
 
 spring-boot-starter-websocket = { module = "org.springframework.boot:spring-boot-starter-websocket" }
+
+spring-ai-bom = { module = "org.springframework.ai:spring-ai-bom", version.ref = "spring-ai" }
+spring-ai-starter-model-openai = { module = "org.springframework.ai:spring-ai-starter-model-openai" }
+
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 
 kotlin-logging-jvm = { module = "io.github.oshai:kotlin-logging-jvm", version.ref = "kotlin-logging" }
 

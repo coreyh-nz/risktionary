@@ -26,6 +26,20 @@ spring:
             user-info-uri: https://graph.microsoft.com/oidc/userinfo
             user-name-attribute: sub
 
+  # prevent auto configurations running
+  ai:
+    model:
+      chat: openai
+      embedding: none
+      image: none
+      audio:
+        transcription: none
+        speech: none
+      moderation: none
+    openai:
+      api-key: ${OPENAI_API_KEY}
+      base-url: ${OPENAI_BASE_URL}
+
 springdoc:
   show-oauth2-endpoints: true
   default-consumes-media-type: application/json
