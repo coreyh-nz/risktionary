@@ -1,6 +1,6 @@
-package nz.coreyh.risktionary.game.application.service.round.phase
+package nz.coreyh.risktionary.game.application.handler.action
 
-import nz.coreyh.risktionary.game.application.service.round.GameRoundActionCoordinator
+import nz.coreyh.risktionary.game.application.handler.state.orchestrator.GameRoundPhaseStateOrchestrator
 import nz.coreyh.risktionary.game.application.session.GamePlayerSession
 import nz.coreyh.risktionary.game.application.session.GameSession
 import nz.coreyh.risktionary.game.application.session.round.GameRoundPhase
@@ -8,14 +8,14 @@ import nz.coreyh.risktionary.game.application.session.round.GameRoundSession
 import kotlin.reflect.KClass
 
 /**
- * Handles a player-submitted action during a specific [GameRoundPhase].
+ * Reacts to a round entering or leaving a specific [GameRoundPhase].
  *
- * Implementations are phase-specific and are invoked via
- * [GameRoundActionCoordinator], which resolves the correct handler
- * and checks for phase completion after each submitted action.
+ * Implementations are invoked by [GameRoundPhaseStateOrchestrator]
+ * whenever a round enters or exits the corresponding phase, based on [phaseClass].
  */
-interface GameRoundPhaseActionHandler<P : GameRoundPhase, A, R> {
+interface GameRoundPhaseActionHandler<P : GameRoundPhase, A : Any, R> {
     val phaseClass: KClass<P>
+    val actionClass: KClass<A>
 
     /**
      * Processes [action] submitted by [player] during [phase].

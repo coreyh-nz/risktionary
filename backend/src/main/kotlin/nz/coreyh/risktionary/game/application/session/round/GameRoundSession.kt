@@ -19,6 +19,7 @@ class GameRoundSession(
         private set(value) = withLock { field = value }
 
     val guesses: GameRoundGuessSession = GameRoundGuessSession()
+    val riskRatings: GameRoundRiskRatingSession = GameRoundRiskRatingSession()
     private val messages: MutableList<ChatMessage> = mutableListOf()
 
     /**

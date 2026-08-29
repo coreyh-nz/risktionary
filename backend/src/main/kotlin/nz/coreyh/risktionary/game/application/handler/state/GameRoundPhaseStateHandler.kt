@@ -1,5 +1,6 @@
-package nz.coreyh.risktionary.game.application.service.round.phase
+package nz.coreyh.risktionary.game.application.handler.state
 
+import nz.coreyh.risktionary.game.application.handler.state.orchestrator.GameRoundPhaseStateOrchestrator
 import nz.coreyh.risktionary.game.application.session.round.GameRoundPhase
 import nz.coreyh.risktionary.game.application.session.round.GameRoundSession
 import nz.coreyh.risktionary.game.application.session.round.GameRoundState
@@ -8,11 +9,11 @@ import kotlin.reflect.KClass
 /**
  * Reacts to a round entering or leaving a specific [GameRoundPhase].
  *
- * Implementations are phase-specific and are invoked by
- * [GameRoundPhaseOrchestrator] whenever a round enters or exits the
- * corresponding phase.
+ * Implementations are invoked by [GameRoundPhaseStateOrchestrator]
+ * whenever a round enters or exits the
+ * corresponding phase, based on [phaseClass].
  */
-interface GameRoundPhaseHandler<P : GameRoundPhase> {
+interface GameRoundPhaseStateHandler<P : GameRoundPhase> {
     val phaseClass: KClass<P>
 
     /**

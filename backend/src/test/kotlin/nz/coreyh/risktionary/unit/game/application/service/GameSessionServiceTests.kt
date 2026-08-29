@@ -10,27 +10,24 @@ import io.mockk.mockk
 import io.mockk.verify
 import nz.coreyh.risktionary.game.application.exception.GameNotFoundException
 import nz.coreyh.risktionary.game.application.exception.GamePlayerDisplayNameInUseException
+import nz.coreyh.risktionary.game.application.handler.state.orchestrator.GameRoundPhaseStateOrchestrator
+import nz.coreyh.risktionary.game.application.handler.state.orchestrator.GameStateOrchestrator
 import nz.coreyh.risktionary.game.application.service.GameSessionService
 import nz.coreyh.risktionary.game.application.service.GameSessionTaskService
 import nz.coreyh.risktionary.game.application.service.GameTicketService
-import nz.coreyh.risktionary.game.application.service.round.GameRoundSessionChatHandler
-import nz.coreyh.risktionary.game.application.service.round.GameRoundSessionChatService
 import nz.coreyh.risktionary.game.application.service.round.GameRoundSessionService
-import nz.coreyh.risktionary.game.application.service.round.phase.GameRoundPhaseOrchestrator
-import nz.coreyh.risktionary.game.application.service.round.phase.GameRoundPhaseTransitionService
 import nz.coreyh.risktionary.game.application.session.GamePlayerSession
 import nz.coreyh.risktionary.game.application.session.GameSession
 import nz.coreyh.risktionary.game.application.session.GameVolunteerSession
-import nz.coreyh.risktionary.game.application.session.round.GameRoundPhase
-import nz.coreyh.risktionary.game.application.session.round.GameRoundSession
-import nz.coreyh.risktionary.game.application.session.round.GameRoundState
+import nz.coreyh.risktionary.game.application.session.GameWordsSession
+import nz.coreyh.risktionary.game.application.session.round.GameRoundPhaseStateTransitionService
 import nz.coreyh.risktionary.game.application.store.GameSessionStore
+import nz.coreyh.risktionary.game.domain.model.TimeWindow
 import nz.coreyh.risktionary.game.domain.model.host.GameSessionHostStatus
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerId
 import nz.coreyh.risktionary.game.domain.model.player.GameTicket
 import nz.coreyh.risktionary.game.socket.messages.GameEventPublisher
 import nz.coreyh.risktionary.support.annotation.MockKTest
-import nz.coreyh.risktionary.support.extensions.timeWindowFromNow
 import nz.coreyh.risktionary.support.factory.game.createTestGameConfiguration
 import nz.coreyh.risktionary.support.factory.game.createTestGameId
 import nz.coreyh.risktionary.support.factory.game.createTestGamePlayer
@@ -53,10 +50,9 @@ class GameSessionServiceTests {
     private lateinit var gameTicketService: GameTicketService
     private lateinit var wordService: WordService
     private lateinit var gameRoundSessionService: GameRoundSessionService
-    private lateinit var gameRoundSessionChatService: GameRoundSessionChatService
-    private lateinit var gameRoundPhaseTransitionService: GameRoundPhaseTransitionService
-    private lateinit var gameRoundPhaseOrchestrator: GameRoundPhaseOrchestrator
-    private lateinit var gameRoundSessionChatHandler: GameRoundSessionChatHandler
+    private lateinit var gameRoundPhaseStateTransitionService: GameRoundPhaseStateTransitionService
+    private lateinit var gameRoundPhaseStateOrchestrator: GameRoundPhaseStateOrchestrator
+    private lateinit var gameStateOrchestrator: GameStateOrchestrator
     private lateinit var gameSessionStore: GameSessionStore
     private lateinit var gameEventPublisher: GameEventPublisher
     private lateinit var clock: Clock
@@ -69,26 +65,24 @@ class GameSessionServiceTests {
         gameTicketService = mockk(relaxed = true)
         wordService = mockk(relaxed = true)
         gameRoundSessionService = mockk(relaxed = true)
-        gameRoundSessionChatService = mockk(relaxed = true)
-        gameRoundPhaseTransitionService = mockk(relaxed = true)
-        gameRoundPhaseOrchestrator = mockk(relaxed = true)
-        gameRoundSessionChatHandler = mockk(relaxed = true)
+        gameRoundPhaseStateTransitionService = mockk(relaxed = true)
+        gameRoundPhaseStateOrchestrator = mockk(relaxed = true)
+        gameStateOrchestrator = mockk(relaxed = true)
         gameSessionStore = mockk(relaxed = true)
         gameEventPublisher = mockk(relaxed = true)
         clock = mockk(relaxed = true)
         service =
             GameSessionService(
-                gameSessionTaskService,
-                gameTicketService,
-                wordService,
-                gameRoundSessionService,
-                gameRoundSessionChatService,
-                gameRoundPhaseTransitionService,
-                gameRoundPhaseOrchestrator,
-                gameRoundSessionChatHandler,
-                gameSessionStore,
-                gameEventPublisher,
-                clock,
+                gameSessionTaskService = gameSessionTaskService,
+                gameTicketService = gameTicketService,
+                wordService = wordService,
+                gameRoundSessionService = gameRoundSessionService,
+                gameRoundPhaseStateTransitionService = gameRoundPhaseStateTransitionService,
+                gameRoundPhaseStateOrchestrator = gameRoundPhaseStateOrchestrator,
+                gameStateOrchestrator = gameStateOrchestrator,
+                gameSessionStore = gameSessionStore,
+                gameEventPublisher = gameEventPublisher,
+                clock = clock,
             )
     }
 
@@ -464,263 +458,29 @@ class GameSessionServiceTests {
         private val gameId = createTestGameId()
 
         @Test
-        fun `transition to starting transitions session to starting state`() {
-            val game = mockk<GameSession>(relaxed = true)
-            val gameConfig = createTestGameConfiguration()
-            val startsAt = gameConfig.lobbyCountdown.timeWindowFromNow(clock)
-            every { gameSessionStore.findById(gameId) } returns game
-            every { game.config } returns gameConfig
-
-            service.transitionToStarting(gameId)
-
-            verify { game.transitionToStarting(startsAt) }
-        }
-
-        @Test
-        fun `transition to starting publishes state event`() {
+        fun `transition to starting delegates to game state orchestrator with lobby countdown time window`() {
             val session = mockk<GameSession>(relaxed = true)
-            every { gameSessionStore.findById(gameId) } returns session
-
-            service.transitionToStarting(gameId)
-
-            verify { gameEventPublisher.publishState(session) }
-        }
-
-        @Test
-        fun `transition to starting schedules transition to in progress`() {
-            val game = mockk<GameSession>(relaxed = true)
+            val wordsSession = mockk<GameWordsSession>()
             val gameConfig = createTestGameConfiguration()
-            val now = Clock.System.now()
-            val startsAt = now + gameConfig.lobbyCountdown
-            every { gameSessionStore.findById(gameId) } returns game
-            every { game.config } returns gameConfig
-            every { clock.now() } returns now
+            val timeWindow = TimeWindow(startedAt = clock.now(), duration = gameConfig.lobbyCountdown)
+            every { gameSessionStore.findById(gameId) } returns session
+            every { session.config } returns gameConfig
+            every { session.words } returns wordsSession
+            every { wordsSession.nextWord() } returns createTestWord()
 
             service.transitionToStarting(gameId)
 
-            verify { gameSessionTaskService.schedule(gameId, startsAt, any()) }
+            verify { gameStateOrchestrator.transitionToStarting(session, timeWindow) }
         }
 
         @Test
         fun `transition to starting throws when session does not exist`() {
             every { gameSessionStore.findById(gameId) } returns null
 
-            shouldThrow<GameNotFoundException> {
-                service.transitionToStarting(gameId)
-            }
-        }
-    }
+            shouldThrow<GameNotFoundException> { service.transitionToStarting(gameId) }
 
-    @Nested
-    @MockKTest
-    inner class TransitionToInProgress {
-        private val gameId = createTestGameId()
-
-        @Test
-        fun `transitions session to in progress state`() {
-            val session = mockk<GameSession>(relaxed = true)
-            val word = createTestWord()
-            every { gameSessionStore.findById(gameId) } returns session
-            every { wordService.findWords() } returns listOf(word)
-
-            service.transitionToInProgress(gameId)
-
-            verify { session.transitionToInProgress() }
-        }
-
-        @Test
-        fun `sets the current round`() {
-            val session = mockk<GameSession>(relaxed = true)
-            val roundSession = mockk<GameRoundSession>(relaxed = true)
-            val word = createTestWord()
-            every { gameSessionStore.findById(gameId) } returns session
-            every { gameRoundSessionService.createRound(session, word) } returns roundSession
-            every { wordService.findWords() } returns listOf(word)
-
-            service.transitionToInProgress(gameId)
-
-            verify { session.currentRound = roundSession }
-        }
-
-        @Test
-        fun `publishes state event`() {
-            val session = mockk<GameSession>(relaxed = true)
-            val word = createTestWord()
-            every { gameSessionStore.findById(gameId) } returns session
-            every { wordService.findWords() } returns listOf(word)
-
-            service.transitionToInProgress(gameId)
-
-            verify { gameEventPublisher.publishState(session) }
-        }
-
-        @Test
-        fun `throws when session does not exist`() {
-            every { gameSessionStore.findById(gameId) } returns null
-
-            shouldThrow<GameNotFoundException> {
-                service.transitionToInProgress(gameId)
-            }
-        }
-    }
-
-    @Nested
-    @MockKTest
-    inner class HandleVolunteer {
-        private val gameId = createTestGameId()
-        private val playerId = createTestGamePlayerId()
-
-        @Test
-        fun `handle volunteer registers player as volunteer`() {
-            val session = mockk<GameSession>(relaxed = true)
-            val volunteers = mockk<GameVolunteerSession>(relaxed = true)
-            every { gameSessionStore.findById(gameId) } returns session
-            every { session.volunteers } returns volunteers
-
-            service.handleVolunteer(gameId, playerId)
-
-            verify { volunteers.volunteer(playerId) }
-        }
-
-        @Test
-        fun `handle volunteer publishes updated volunteers list`() {
-            val session = mockk<GameSession>(relaxed = true)
-            val volunteers = mockk<GameVolunteerSession>(relaxed = true)
-            val volunteerList = listOf(playerId)
-            every { gameSessionStore.findById(gameId) } returns session
-            every { session.volunteers } returns volunteers
-            every { volunteers.getVolunteers() } returns volunteerList
-
-            service.handleVolunteer(gameId, playerId)
-
-            verify { gameEventPublisher.publishVolunteersUpdated(gameId, volunteerList) }
-        }
-
-        @Test
-        fun `handle volunteer throws when session does not exist`() {
-            every { gameSessionStore.findById(gameId) } returns null
-
-            shouldThrow<GameNotFoundException> {
-                service.handleVolunteer(gameId, playerId)
-            }
-        }
-    }
-
-    @Nested
-    @MockKTest
-    inner class HandleUnvolunteer {
-        private val gameId = createTestGameId()
-        private val playerId = createTestGamePlayerId()
-
-        @Test
-        fun `handle unvolunteer removes player volunteer nomination`() {
-            val session = mockk<GameSession>(relaxed = true)
-            val volunteers = mockk<GameVolunteerSession>(relaxed = true)
-            every { gameSessionStore.findById(gameId) } returns session
-            every { session.volunteers } returns volunteers
-
-            service.handleUnvolunteer(gameId, playerId)
-
-            verify { volunteers.unvolunteer(playerId) }
-        }
-
-        @Test
-        fun `handle unvolunteer publishes updated volunteers list`() {
-            val session = mockk<GameSession>(relaxed = true)
-            val volunteers = mockk<GameVolunteerSession>(relaxed = true)
-            val volunteerList = listOf<GamePlayerId>()
-            every { gameSessionStore.findById(gameId) } returns session
-            every { session.volunteers } returns volunteers
-            every { volunteers.getVolunteers() } returns volunteerList
-
-            service.handleUnvolunteer(gameId, playerId)
-
-            verify { gameEventPublisher.publishVolunteersUpdated(gameId, volunteerList) }
-        }
-
-        @Test
-        fun `handle unvolunteer throws when session does not exist`() {
-            every { gameSessionStore.findById(gameId) } returns null
-
-            shouldThrow<GameNotFoundException> {
-                service.handleUnvolunteer(gameId, playerId)
-            }
-        }
-    }
-
-    @Nested
-    @MockKTest
-    inner class HandleSelectDrawer {
-        private val gameId = createTestGameId()
-        private val player = createTestGamePlayer()
-        private val playerSession = createTestGamePlayerSession(player)
-
-        @Test
-        fun `handle select drawer selects the player as drawer on the active round`() {
-            val session = mockk<GameSession>(relaxed = true)
-            val round = mockk<GameRoundSession>(relaxed = true)
-            val volunteers = mockk<GameVolunteerSession>(relaxed = true)
-            val currentRoundPhase = GameRoundPhase.Initialising
-            val nextRoundPhase = GameRoundPhase.Drawing(timeWindow = null)
-            val currentRoundState = GameRoundState.InProgress(phase = currentRoundPhase, playerSession.player)
-            every { gameSessionStore.findById(gameId) } returns session
-            every { session.volunteers } returns volunteers
-            every { session.getPlayer(player.id) } returns playerSession
-            every { session.selectDrawer(playerSession) } returns round
-            every { round.state } returns currentRoundState
-            every { gameRoundPhaseTransitionService.next(round, currentRoundState.phase) } returns nextRoundPhase
-
-            service.handleSelectDrawer(gameId, player.id)
-        }
-
-        @Test
-        fun `handle select drawer publishes round state changed event`() {
-            val session = mockk<GameSession>(relaxed = true)
-            val round = mockk<GameRoundSession>(relaxed = true)
-            val volunteers = mockk<GameVolunteerSession>(relaxed = true)
-            val currentRoundPhase = GameRoundPhase.Initialising
-            val nextRoundPhase = GameRoundPhase.Drawing(timeWindow = null)
-            val currentRoundState = GameRoundState.InProgress(phase = currentRoundPhase, playerSession.player)
-            every { gameSessionStore.findById(gameId) } returns session
-            every { session.volunteers } returns volunteers
-            every { session.getPlayer(player.id) } returns playerSession
-            every { session.selectDrawer(playerSession) } returns round
-            every { round.state } returns currentRoundState
-            every { gameRoundPhaseTransitionService.next(round, currentRoundState.phase) } returns nextRoundPhase
-
-            service.handleSelectDrawer(gameId, player.id)
-
-            verify { gameEventPublisher.publishRoundState(round) }
-        }
-
-        @Test
-        fun `handle select drawer publishes updated volunteers list after unvolunteering drawer`() {
-            val session = mockk<GameSession>(relaxed = true)
-            val round = mockk<GameRoundSession>(relaxed = true)
-            val volunteers = mockk<GameVolunteerSession>(relaxed = true)
-            val remainingVolunteers = listOf<GamePlayerId>()
-            val currentRoundPhase = GameRoundPhase.Initialising
-            val nextRoundPhase = GameRoundPhase.Drawing(timeWindow = null)
-            val currentRoundState = GameRoundState.InProgress(phase = currentRoundPhase, playerSession.player)
-            every { gameSessionStore.findById(gameId) } returns session
-            every { session.volunteers } returns volunteers
-            every { session.getPlayer(player.id) } returns playerSession
-            every { session.selectDrawer(playerSession) } returns round
-            every { round.state } returns currentRoundState
-            every { volunteers.getVolunteers() } returns remainingVolunteers
-            every { gameRoundPhaseTransitionService.next(round, currentRoundState.phase) } returns nextRoundPhase
-
-            service.handleSelectDrawer(gameId, player.id)
-
-            verify { gameEventPublisher.publishVolunteersUpdated(gameId, remainingVolunteers) }
-        }
-
-        @Test
-        fun `handle select drawer throws when session does not exist`() {
-            every { gameSessionStore.findById(gameId) } returns null
-
-            shouldThrow<GameNotFoundException> {
-                service.handleSelectDrawer(gameId, player.id)
+            verify(exactly = 0) {
+                gameStateOrchestrator.transitionToStarting(any(), any())
             }
         }
     }

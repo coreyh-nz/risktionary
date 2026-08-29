@@ -33,5 +33,5 @@ class GameRoundGuessSession : LockableSession() {
 
     fun hasGuessedCorrectly(playerId: GamePlayerId): Boolean = correctGuesserIds.contains(playerId)
 
-    fun getCorrectGuessCount() = guesses.size
+    fun getCorrectGuessCount() = correctGuesserIds.size
 }

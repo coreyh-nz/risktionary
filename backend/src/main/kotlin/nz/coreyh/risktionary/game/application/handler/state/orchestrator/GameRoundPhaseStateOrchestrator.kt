@@ -1,8 +1,10 @@
-package nz.coreyh.risktionary.game.application.service.round.phase
+package nz.coreyh.risktionary.game.application.handler.state.orchestrator
 
+import nz.coreyh.risktionary.game.application.handler.state.GameRoundPhaseStateHandler
 import nz.coreyh.risktionary.game.application.service.GameSessionTaskService
 import nz.coreyh.risktionary.game.application.service.round.GameRoundSessionService
 import nz.coreyh.risktionary.game.application.session.round.GameRoundPhase
+import nz.coreyh.risktionary.game.application.session.round.GameRoundPhaseStateTransitionService
 import nz.coreyh.risktionary.game.application.session.round.GameRoundSession
 import nz.coreyh.risktionary.game.application.session.round.GameRoundState
 import nz.coreyh.risktionary.game.application.session.round.requireState
@@ -15,20 +17,20 @@ import kotlin.reflect.KClass
  *
  * This is the single place that mutates a round's current phase - storing
  * the new phase, publishing the appropriate event, notifying the relevant
- * [GameRoundPhaseHandler], and scheduling an automatic advance if the
+ * [GameRoundPhaseStateHandler], and scheduling an automatic advance if the
  * phase has a configured duration.
  */
 @Service
-class GameRoundPhaseOrchestrator(
-    handlers: List<GameRoundPhaseHandler<*>>,
+class GameRoundPhaseStateOrchestrator(
+    handlers: List<GameRoundPhaseStateHandler<*>>,
     private val gameRoundSessionService: GameRoundSessionService,
     private val gameSessionTaskService: GameSessionTaskService,
-    private val gameRoundPhaseTransitionService: GameRoundPhaseTransitionService,
+    private val gameRoundPhaseStateTransitionService: GameRoundPhaseStateTransitionService,
     private val gameEventPublisher: GameEventPublisher,
 ) {
     @Suppress("UNCHECKED_CAST")
-    private val handlerMap: Map<KClass<out GameRoundPhase>, GameRoundPhaseHandler<GameRoundPhase>> =
-        handlers.associateBy { it.phaseClass } as Map<KClass<out GameRoundPhase>, GameRoundPhaseHandler<GameRoundPhase>>
+    private val handlerMap: Map<KClass<out GameRoundPhase>, GameRoundPhaseStateHandler<GameRoundPhase>> =
+        handlers.associateBy { it.phaseClass } as Map<KClass<out GameRoundPhase>, GameRoundPhaseStateHandler<GameRoundPhase>>
 
     /**
      * Enters [phase] as the round's first phase, with no previous phase to
@@ -61,7 +63,7 @@ class GameRoundPhaseOrchestrator(
      */
     fun advanceOrComplete(round: GameRoundSession) {
         val phase = round.requireState<GameRoundState.InProgress>().phase
-        val next = gameRoundPhaseTransitionService.next(round, phase)
+        val next = gameRoundPhaseStateTransitionService.next(round, phase)
         if (next != null) {
             transitionTo(round, next)
         } else {
