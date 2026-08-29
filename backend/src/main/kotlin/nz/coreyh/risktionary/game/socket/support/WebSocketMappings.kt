@@ -4,6 +4,7 @@ object WebSocketMappings {
     private const val BASE = "/game"
 
     const val CHAT = "$BASE/chat"
+    const val SKIP_PHASE = "$BASE/skip-phase"
     const val RISK_RATING = "$BASE/risk-rating"
     const val VOLUNTEER = "$BASE/volunteer"
     const val UNVOLUNTEER = "$BASE/unvolunteer"
