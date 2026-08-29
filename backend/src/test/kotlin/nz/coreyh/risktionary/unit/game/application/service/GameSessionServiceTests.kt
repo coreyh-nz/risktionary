@@ -10,7 +10,6 @@ import io.mockk.mockk
 import io.mockk.verify
 import nz.coreyh.risktionary.game.application.exception.GameNotFoundException
 import nz.coreyh.risktionary.game.application.exception.GamePlayerDisplayNameInUseException
-import nz.coreyh.risktionary.game.application.handler.state.orchestrator.GameRoundPhaseStateOrchestrator
 import nz.coreyh.risktionary.game.application.handler.state.orchestrator.GameStateOrchestrator
 import nz.coreyh.risktionary.game.application.service.GameSessionService
 import nz.coreyh.risktionary.game.application.service.GameSessionTaskService
@@ -20,7 +19,6 @@ import nz.coreyh.risktionary.game.application.session.GamePlayerSession
 import nz.coreyh.risktionary.game.application.session.GameSession
 import nz.coreyh.risktionary.game.application.session.GameVolunteerSession
 import nz.coreyh.risktionary.game.application.session.GameWordsSession
-import nz.coreyh.risktionary.game.application.session.round.GameRoundPhaseStateTransitionService
 import nz.coreyh.risktionary.game.application.store.GameSessionStore
 import nz.coreyh.risktionary.game.domain.model.TimeWindow
 import nz.coreyh.risktionary.game.domain.model.host.GameSessionHostStatus
@@ -50,8 +48,6 @@ class GameSessionServiceTests {
     private lateinit var gameTicketService: GameTicketService
     private lateinit var wordService: WordService
     private lateinit var gameRoundSessionService: GameRoundSessionService
-    private lateinit var gameRoundPhaseStateTransitionService: GameRoundPhaseStateTransitionService
-    private lateinit var gameRoundPhaseStateOrchestrator: GameRoundPhaseStateOrchestrator
     private lateinit var gameStateOrchestrator: GameStateOrchestrator
     private lateinit var gameSessionStore: GameSessionStore
     private lateinit var gameEventPublisher: GameEventPublisher
@@ -65,8 +61,6 @@ class GameSessionServiceTests {
         gameTicketService = mockk(relaxed = true)
         wordService = mockk(relaxed = true)
         gameRoundSessionService = mockk(relaxed = true)
-        gameRoundPhaseStateTransitionService = mockk(relaxed = true)
-        gameRoundPhaseStateOrchestrator = mockk(relaxed = true)
         gameStateOrchestrator = mockk(relaxed = true)
         gameSessionStore = mockk(relaxed = true)
         gameEventPublisher = mockk(relaxed = true)
@@ -77,8 +71,6 @@ class GameSessionServiceTests {
                 gameTicketService = gameTicketService,
                 wordService = wordService,
                 gameRoundSessionService = gameRoundSessionService,
-                gameRoundPhaseStateTransitionService = gameRoundPhaseStateTransitionService,
-                gameRoundPhaseStateOrchestrator = gameRoundPhaseStateOrchestrator,
                 gameStateOrchestrator = gameStateOrchestrator,
                 gameSessionStore = gameSessionStore,
                 gameEventPublisher = gameEventPublisher,

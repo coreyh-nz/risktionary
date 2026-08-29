@@ -3,6 +3,7 @@ package nz.coreyh.risktionary.game.application.store
 import nz.coreyh.risktionary.game.application.session.GameSession
 import nz.coreyh.risktionary.game.domain.model.GameId
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerId
+import nz.coreyh.risktionary.user.domain.model.UserId
 import org.springframework.stereotype.Component
 import java.util.concurrent.ConcurrentHashMap
 
@@ -18,6 +19,8 @@ class GameSessionStore {
     fun findByCode(code: String): GameSession? = codeIndex[code]?.let { sessions[it] }
 
     fun findByPlayerId(playerId: GamePlayerId): GameSession? = sessions.values.find { it.findPlayer(playerId) != null }
+
+    fun findByHostId(hostId: UserId): GameSession? = sessions.values.find { it.host.id == hostId }
 
     fun addSession(
         gameId: GameId,

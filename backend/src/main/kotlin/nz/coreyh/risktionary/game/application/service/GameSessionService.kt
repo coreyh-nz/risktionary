@@ -2,12 +2,10 @@ package nz.coreyh.risktionary.game.application.service
 
 import nz.coreyh.risktionary.game.application.exception.GameNotFoundException
 import nz.coreyh.risktionary.game.application.exception.GamePlayerDisplayNameInUseException
-import nz.coreyh.risktionary.game.application.handler.state.orchestrator.GameRoundPhaseStateOrchestrator
 import nz.coreyh.risktionary.game.application.handler.state.orchestrator.GameStateOrchestrator
 import nz.coreyh.risktionary.game.application.service.round.GameRoundSessionService
 import nz.coreyh.risktionary.game.application.session.GamePlayerSession
 import nz.coreyh.risktionary.game.application.session.GameSession
-import nz.coreyh.risktionary.game.application.session.round.GameRoundPhaseStateTransitionService
 import nz.coreyh.risktionary.game.application.store.GameSessionStore
 import nz.coreyh.risktionary.game.domain.model.GameConfiguration
 import nz.coreyh.risktionary.game.domain.model.GameId
@@ -39,8 +37,6 @@ class GameSessionService(
     private val gameTicketService: GameTicketService,
     private val wordService: WordService,
     private val gameRoundSessionService: GameRoundSessionService,
-    private val gameRoundPhaseStateTransitionService: GameRoundPhaseStateTransitionService,
-    private val gameRoundPhaseStateOrchestrator: GameRoundPhaseStateOrchestrator,
     private val gameStateOrchestrator: GameStateOrchestrator,
     private val gameSessionStore: GameSessionStore,
     private val gameEventPublisher: GameEventPublisher,
