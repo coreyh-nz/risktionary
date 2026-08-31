@@ -2,7 +2,7 @@ package nz.coreyh.risktionary.game.application.handler.state.orchestrator
 
 import nz.coreyh.risktionary.game.application.handler.state.GameRoundPhaseStateHandler
 import nz.coreyh.risktionary.game.application.service.GameSessionTaskService
-import nz.coreyh.risktionary.game.application.service.round.GameRoundSessionService
+import nz.coreyh.risktionary.game.application.service.round.GameRoundSessionLifecycleService
 import nz.coreyh.risktionary.game.application.session.round.GameRoundPhase
 import nz.coreyh.risktionary.game.application.session.round.GameRoundPhaseStateTransitionService
 import nz.coreyh.risktionary.game.application.session.round.GameRoundSession
@@ -23,9 +23,9 @@ import kotlin.reflect.KClass
 @Service
 class GameRoundPhaseStateOrchestrator(
     handlers: List<GameRoundPhaseStateHandler<*>>,
-    private val gameRoundSessionService: GameRoundSessionService,
-    private val gameSessionTaskService: GameSessionTaskService,
+    private val gameRoundSessionLifecycleService: GameRoundSessionLifecycleService,
     private val gameRoundPhaseStateTransitionService: GameRoundPhaseStateTransitionService,
+    private val gameSessionTaskService: GameSessionTaskService,
     private val gameEventPublisher: GameEventPublisher,
 ) {
     @Suppress("UNCHECKED_CAST")
@@ -53,7 +53,9 @@ class GameRoundPhaseStateOrchestrator(
         next: GameRoundPhase,
     ) {
         val previous = round.requireState<GameRoundState.InProgress>().phase
+
         handlerMap[previous::class]?.onExit(round, previous)
+
         enter(round, next, publishAsRoundState = false)
     }
 
@@ -64,10 +66,10 @@ class GameRoundPhaseStateOrchestrator(
     fun advanceOrComplete(round: GameRoundSession) {
         val phase = round.requireState<GameRoundState.InProgress>().phase
         val next = gameRoundPhaseStateTransitionService.next(round, phase)
-        if (next != null) {
-            transitionTo(round, next)
-        } else {
-            gameRoundSessionService.completeRound(round)
+        transitionTo(round, next)
+
+        if (next == GameRoundPhase.Completed) {
+            gameRoundSessionLifecycleService.completeRound(round)
         }
     }
 

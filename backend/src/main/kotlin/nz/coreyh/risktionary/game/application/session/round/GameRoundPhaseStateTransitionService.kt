@@ -1,5 +1,6 @@
 package nz.coreyh.risktionary.game.application.session.round
 
+import nz.coreyh.risktionary.game.application.exception.GameStateInvalidException
 import nz.coreyh.risktionary.game.domain.model.GameConfiguration
 import nz.coreyh.risktionary.game.domain.model.TimeWindow
 import nz.coreyh.risktionary.game.domain.model.round.phase.RoundPhaseType
@@ -20,7 +21,7 @@ class GameRoundPhaseStateTransitionService(
     fun next(
         round: GameRoundSession,
         current: GameRoundPhase,
-    ): GameRoundPhase? {
+    ): GameRoundPhase {
         val config = round.game.config
         return when (current) {
             is GameRoundPhase.Initialising -> {
@@ -64,7 +65,7 @@ class GameRoundPhaseStateTransitionService(
             }
 
             is GameRoundPhase.Completed -> {
-                null
+                throw GameStateInvalidException()
             }
         }
     }

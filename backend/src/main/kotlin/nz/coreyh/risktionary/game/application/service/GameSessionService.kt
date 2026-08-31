@@ -6,6 +6,7 @@ import nz.coreyh.risktionary.game.application.handler.state.orchestrator.GameSta
 import nz.coreyh.risktionary.game.application.service.round.GameRoundSessionService
 import nz.coreyh.risktionary.game.application.session.GamePlayerSession
 import nz.coreyh.risktionary.game.application.session.GameSession
+import nz.coreyh.risktionary.game.application.session.round.GameRoundSession
 import nz.coreyh.risktionary.game.application.store.GameSessionStore
 import nz.coreyh.risktionary.game.domain.model.GameConfiguration
 import nz.coreyh.risktionary.game.domain.model.GameId
@@ -19,7 +20,6 @@ import nz.coreyh.risktionary.game.domain.model.player.GamePlayerIdentity
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerStatus
 import nz.coreyh.risktionary.game.domain.model.player.GameTicket
 import nz.coreyh.risktionary.game.domain.model.player.createPlayerId
-import nz.coreyh.risktionary.game.domain.model.round.phase.RoundPhaseType
 import nz.coreyh.risktionary.game.socket.messages.GameEventPublisher
 import nz.coreyh.risktionary.user.domain.model.UserId
 import nz.coreyh.risktionary.words.application.service.WordService
@@ -55,10 +55,7 @@ class GameSessionService(
             GameConfiguration(
                 words = wordService.findWords(),
                 lobbyCountdown = 5.seconds,
-                phaseDurations =
-                    mapOf(
-                        RoundPhaseType.DRAWING_REVIEW to 30.seconds,
-                    ),
+                phaseDurations = mapOf(),
                 skippingCountdownsEnabled = true,
             )
         return GameSession(
@@ -229,14 +226,15 @@ class GameSessionService(
     fun transitionToStarting(gameId: GameId) {
         val session = getSession(gameId)
         val timeWindow = TimeWindow(startedAt = clock.now(), duration = session.config.lobbyCountdown)
-        createRound(session)
+        createNextRound(session)
         gameStateOrchestrator.transitionToStarting(session, timeWindow)
     }
 
-    fun createRound(game: GameSession) {
+    fun createNextRound(game: GameSession): GameRoundSession {
         val word = game.words.nextWord()
         val round = gameRoundSessionService.createRound(game = game, word = word)
         game.currentRound = round
+        return round
     }
 
     private fun generateCode(): String {

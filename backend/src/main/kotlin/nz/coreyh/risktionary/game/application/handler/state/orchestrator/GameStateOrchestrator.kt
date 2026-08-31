@@ -24,6 +24,8 @@ class GameStateOrchestrator(
 
     fun transitionToInProgress(session: GameSession) = transition(session) { session.transitionToInProgress() }
 
+    fun transitionToCompleted(session: GameSession) = transition(session) { session.transitionToCompleted() }
+
     private fun transition(
         session: GameSession,
         mutate: () -> Unit,

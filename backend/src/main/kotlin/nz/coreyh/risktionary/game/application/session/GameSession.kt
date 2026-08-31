@@ -193,6 +193,20 @@ class GameSession(
         }
 
     /**
+     * Transitions the session into the complete state.
+     *
+     * Valid transitions:
+     * - [GameStateType.IN_PROGRESS] -> [GameStateType.COMPLETED]
+     *
+     * @throws GameStateInvalidException if the current session state is invalid.
+     */
+    fun transitionToCompleted(): Unit =
+        withLock {
+            requireState(GameStateType.IN_PROGRESS)
+            withActivity { state = GameState.Completed }
+        }
+
+    /**
      * Selects the player who will act as the drawer for the current round.
      *
      * This operation delegates to both the volunteer manager and the active
