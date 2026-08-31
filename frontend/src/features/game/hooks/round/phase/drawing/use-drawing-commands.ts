@@ -1,3 +1,4 @@
+import { STROKE_FLUSH_INTERVAL_MS } from "@/features/game/config/drawing"
 import {
   DrawingPoint,
   DrawingTool,
@@ -9,9 +10,6 @@ import {
 } from "@/features/game/types/round/phase/drawing/drawing-commands"
 import { useWebSocket } from "@/providers/web-socket-provider"
 import { useCallback, useEffect, useRef } from "react"
-
-const FLUSH_FPS = 30
-const FLUSH_INTERVAL_MS = 1000 / FLUSH_FPS
 
 export const useDrawingCommands = () => {
   const { send } = useWebSocket()
@@ -35,7 +33,7 @@ export const useDrawingCommands = () => {
 
   const startFlushLoop = useCallback(() => {
     if (flushInterval.current !== null) return
-    flushInterval.current = setInterval(flushQueue, FLUSH_INTERVAL_MS)
+    flushInterval.current = setInterval(flushQueue, STROKE_FLUSH_INTERVAL_MS)
   }, [flushQueue])
 
   const stopFlushLoop = useCallback(() => {
