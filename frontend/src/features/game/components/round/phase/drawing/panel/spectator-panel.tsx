@@ -10,15 +10,8 @@ const SpectatorCanvas = ({
   width: number
   height: number
 }) => {
-  const { canvasRef, startRemoteStroke, addRemotePoints, commitRemoteStroke } =
-    useCanvasRenderer(width, height)
-
-  useDrawingEvents({
-    onRemoteStrokeStart: startRemoteStroke,
-    onRemoteStrokePoints: addRemotePoints,
-    onRemoteStrokeEnd: commitRemoteStroke,
-  })
-
+  const { canvasRef } = useCanvasRenderer(width, height)
+  useDrawingEvents()
   return (
     <div style={{ width, height }} className="shrink-0">
       <Canvas canvasRef={canvasRef} />
