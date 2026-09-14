@@ -63,7 +63,5 @@
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3"
   },
-  "allowScripts": {
-    "unrs-resolver@1.12.2": true
-  }
+  "allowScripts": true
 }
