@@ -4,7 +4,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { cn } from "@/lib/utils"
+import { cn } from "cn"
+
 import { PALETTE_COLOURS_LIST } from "../../../../../lib/colors"
 import {
   useDrawingColour,

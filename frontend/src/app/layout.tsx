@@ -1,5 +1,6 @@
 import { Toaster } from "@/components/ui/sonner"
-import { cn } from "@/lib/utils"
+import { cn } from "cn"
+
 import { Geist_Mono, Outfit } from "next/font/google"
 import { PropsWithChildren } from "react"
 import "./globals.css"

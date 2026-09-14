@@ -1,11 +1,10 @@
 "use client"
 
-import * as React from "react"
-import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
-
-import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
+import { cn } from "cn"
 import { XIcon } from "lucide-react"
+import * as React from "react"
 
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />
@@ -70,8 +69,7 @@ function DialogContent({
               />
             }
           >
-            <XIcon
-            />
+            <XIcon />
             <span className="sr-only">Close</span>
           </DialogPrimitive.Close>
         )}
@@ -121,10 +119,7 @@ function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn(
-        "text-base leading-none font-medium",
-        className
-      )}
+      className={cn("text-base leading-none font-medium", className)}
       {...props}
     />
   )

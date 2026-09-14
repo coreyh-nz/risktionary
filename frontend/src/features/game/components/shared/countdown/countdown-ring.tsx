@@ -1,6 +1,6 @@
 "use client"
 
-import { cn } from "@/lib/utils"
+import { cn } from "cn"
 
 const dimensions = {
   sm: { radius: 20, strokeWidth: 3, boxSize: 46 },

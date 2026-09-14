@@ -7,7 +7,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { cn } from "@/lib/utils"
+import { cn } from "cn"
+
 import { Eraser, Pencil } from "lucide-react"
 import {
   useDrawingSetTool,

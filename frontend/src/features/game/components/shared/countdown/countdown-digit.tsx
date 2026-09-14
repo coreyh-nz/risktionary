@@ -1,7 +1,7 @@
 "use client"
-import { useEffect, useRef } from "react"
 import { cva, type VariantProps } from "class-variance-authority"
-import { cn } from "@/lib/utils"
+import { cn } from "cn"
+import { useEffect, useRef } from "react"
 
 const digitVariants = cva(
   "leading-none font-black text-foreground tabular-nums",

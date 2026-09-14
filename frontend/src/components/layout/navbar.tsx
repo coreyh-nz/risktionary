@@ -12,7 +12,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useLogout } from "@/features/auth/hooks/use-logout"
 import { ROUTES } from "@/lib/routes"
-import { cn } from "@/lib/utils"
+import { cn } from "cn"
+
 import { useAuth } from "@/providers/auth-provider"
 import { LogOut } from "lucide-react"
 import Link from "next/link"
