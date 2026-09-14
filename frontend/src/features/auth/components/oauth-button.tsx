@@ -1,5 +1,6 @@
+import { cn } from "cn"
 import { PropsWithChildren, useState } from "react"
-import { cn } from "@/lib/utils"
+
 import { buttonVariants } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 

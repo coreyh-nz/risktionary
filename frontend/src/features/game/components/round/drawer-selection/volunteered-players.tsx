@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/card"
 import { useVolunteerCommands } from "@/features/game/hooks/round/phase/drawer-selection/use-volunteer-commands"
 import { GameSessionPlayer } from "@/features/game/types/game"
-import clsx from "clsx"
+import { cn } from "cn"
 import { useEffect, useState } from "react"
 import {
   useGamePlayers,
@@ -38,7 +38,7 @@ const VolunteerList = ({
             <PlayerChip
               player={volunteer}
               isMe={false} // only the host can select and player chip will never be the host
-              className={clsx(
+              className={cn(
                 selected
                   ? "border-primary bg-primary/10 hover:border-primary hover:bg-primary/10" // override default player chip hover styles
                   : "hover:border-primary/40 hover:bg-accent/40"
@@ -52,7 +52,7 @@ const VolunteerList = ({
             isMe={
               session?.role === "player" && volunteer.id === session.playerId
             }
-            className={clsx(selected && "border-primary bg-primary/10")}
+            className={cn(selected && "border-primary bg-primary/10")}
           />
         )
       })}

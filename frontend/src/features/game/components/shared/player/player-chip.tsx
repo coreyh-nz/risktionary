@@ -1,6 +1,7 @@
 import { UserAvatar } from "@/components/common/user-avatar"
 import { GameSessionPlayer } from "@/features/game/types/game"
-import { cn } from "@/lib/utils"
+import { cn } from "cn"
+
 import { HTMLAttributes } from "react"
 
 interface PlayerChipProps extends HTMLAttributes<HTMLDivElement> {

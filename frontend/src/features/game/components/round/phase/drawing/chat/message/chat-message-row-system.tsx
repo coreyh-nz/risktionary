@@ -1,7 +1,8 @@
 import { useGameIsPlayerMe } from "@/features/game/stores/game-store-selectors"
 import { SystemMessage } from "@/features/game/types/round/phase/drawing/chat"
-import { assertNever, cn } from "@/lib/utils"
+import { assertNever } from "@/lib/utils"
 import { cva, type VariantProps } from "class-variance-authority"
+import { cn } from "cn"
 import { CheckCircle2, Clock, type LucideIcon, Trophy } from "lucide-react"
 
 const systemMessageRowVariants = cva("flex items-center gap-2 rounded-md", {

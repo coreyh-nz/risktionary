@@ -1,8 +1,9 @@
-import { TriangleAlert } from "lucide-react"
 import { cva, type VariantProps } from "class-variance-authority"
-import { cn } from "@/lib/utils"
-import Link from "next/link"
+import { cn } from "cn"
+import { TriangleAlert } from "lucide-react"
+
 import { ROUTES } from "@/lib/routes"
+import Link from "next/link"
 
 const logoVariants = cva("flex items-center font-black tracking-tight", {
   variants: {

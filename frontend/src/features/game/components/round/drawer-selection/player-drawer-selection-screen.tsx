@@ -2,7 +2,8 @@
 
 import { PageSection } from "@/components/layout/page-section"
 import { useVolunteerCommands } from "@/features/game/hooks/round/phase/drawer-selection/use-volunteer-commands"
-import { cn } from "@/lib/utils"
+import { cn } from "cn"
+
 import { Hand } from "lucide-react"
 import {
   useGameSession,
