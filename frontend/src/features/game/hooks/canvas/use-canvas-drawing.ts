@@ -68,7 +68,12 @@ export const useDrawingCanvas = ({
         clientY = (e as MouseEvent).clientY
       }
 
-      return { x: clientX - rect.left, y: clientY - rect.top }
+      if (rect.width === 0 || rect.height === 0) return null
+
+      return {
+        x: (clientX - rect.left) / rect.width,
+        y: (clientY - rect.top) / rect.height,
+      }
     },
     [canvasRef]
   )
