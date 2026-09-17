@@ -13,12 +13,14 @@ const drawStroke = (
   ctx: CanvasRenderingContext2D,
   points: DrawingPoint[],
   colour: string,
-  isEraser: boolean
+  isEraser: boolean,
+  width: number,
+  height: number
 ) => {
   if (points.length === 0) return
 
   const stroke = getStroke(
-    points.map((p) => [p.x, p.y]),
+    points.map((p) => [p.x * width, p.y * height]),
     {
       ...STROKE_OPTIONS,
       size: isEraser ? BRUSH_SIZE * ERASER_SIZE_MULTIPLIER : BRUSH_SIZE,
@@ -62,13 +64,20 @@ export const useCanvasRenderer = (width: number, height: number) => {
 
       // committed strokes
       for (const s of strokes) {
-        drawStroke(ctx, s.points, s.colour, s.tool === "ERASER")
+        drawStroke(ctx, s.points, s.colour, s.tool === "ERASER", width, height)
       }
 
       // remote in-progress strokes
       for (const state of remoteDrawers.values()) {
         if (state.points.length > 0)
-          drawStroke(ctx, state.points, state.colour, state.tool === "ERASER")
+          drawStroke(
+            ctx,
+            state.points,
+            state.colour,
+            state.tool === "ERASER",
+            width,
+            height
+          )
       }
 
       // local in-progress stroke
@@ -77,7 +86,9 @@ export const useCanvasRenderer = (width: number, height: number) => {
           ctx,
           localDrawing.points,
           localDrawing.colour,
-          localDrawing.tool === "ERASER"
+          localDrawing.tool === "ERASER",
+          width,
+          height
         )
       }
     })
