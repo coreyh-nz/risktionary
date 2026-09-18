@@ -5,9 +5,8 @@ WORKDIR /app
 
 COPY build.gradle.kts settings.gradle.kts ./
 COPY gradle ./gradle
-RUN gradle dependencies --no-daemon
-
 COPY src ./src
+
 RUN gradle bootJar --no-daemon
 
 # Stage 2: Run
