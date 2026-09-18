@@ -26,6 +26,7 @@ import nz.coreyh.risktionary.game.domain.model.player.GamePlayerId
 import nz.coreyh.risktionary.game.domain.model.player.GameTicket
 import nz.coreyh.risktionary.game.socket.messages.GameEventPublisher
 import nz.coreyh.risktionary.support.annotation.MockKTest
+import nz.coreyh.risktionary.support.factory.game.createTestCreateGameCommand
 import nz.coreyh.risktionary.support.factory.game.createTestGameConfiguration
 import nz.coreyh.risktionary.support.factory.game.createTestGameId
 import nz.coreyh.risktionary.support.factory.game.createTestGamePlayer
@@ -36,7 +37,6 @@ import nz.coreyh.risktionary.support.factory.game.createTestGameSessionHostConne
 import nz.coreyh.risktionary.support.factory.game.createTestGameSessionHostPending
 import nz.coreyh.risktionary.support.factory.user.createTestUserId
 import nz.coreyh.risktionary.support.factory.word.createTestWord
-import nz.coreyh.risktionary.words.application.service.WordService
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -46,7 +46,6 @@ import kotlin.time.Clock
 class GameSessionServiceTests {
     private lateinit var gameSessionTaskService: GameSessionTaskService
     private lateinit var gameTicketService: GameTicketService
-    private lateinit var wordService: WordService
     private lateinit var gameRoundSessionService: GameRoundSessionService
     private lateinit var gameStateOrchestrator: GameStateOrchestrator
     private lateinit var gameSessionStore: GameSessionStore
@@ -59,7 +58,6 @@ class GameSessionServiceTests {
     fun setup() {
         gameSessionTaskService = mockk(relaxed = true)
         gameTicketService = mockk(relaxed = true)
-        wordService = mockk(relaxed = true)
         gameRoundSessionService = mockk(relaxed = true)
         gameStateOrchestrator = mockk(relaxed = true)
         gameSessionStore = mockk(relaxed = true)
@@ -69,7 +67,6 @@ class GameSessionServiceTests {
             GameSessionService(
                 gameSessionTaskService = gameSessionTaskService,
                 gameTicketService = gameTicketService,
-                wordService = wordService,
                 gameRoundSessionService = gameRoundSessionService,
                 gameStateOrchestrator = gameStateOrchestrator,
                 gameSessionStore = gameSessionStore,
@@ -84,10 +81,11 @@ class GameSessionServiceTests {
         @Test
         fun `create session creates session with correct host`() {
             val hostId = createTestUserId()
+            val command = createTestCreateGameCommand(hostId = hostId)
             every { clock.now() } returns Clock.System.now()
             every { gameSessionStore.findByCode(any()) } returns null
 
-            val session = service.createSession(hostId)
+            val session = service.createSession(command)
 
             session.host.id shouldBe hostId
             session.host.status.shouldBeInstanceOf<GameSessionHostStatus.Pending>()
@@ -98,7 +96,7 @@ class GameSessionServiceTests {
             every { clock.now() } returns Clock.System.now()
             every { gameSessionStore.findByCode(any()) } returns null
 
-            val session = service.createSession(createTestUserId())
+            val session = service.createSession(createTestCreateGameCommand())
 
             session.id shouldNotBe null
             session.code.length shouldBe GameSessionService.CODE_LENGTH
@@ -110,7 +108,7 @@ class GameSessionServiceTests {
             every { clock.now() } returns now
             every { gameSessionStore.findByCode(any()) } returns null
 
-            val session = service.createSession(createTestUserId())
+            val session = service.createSession(createTestCreateGameCommand())
 
             session.createdAt shouldBe now
         }
@@ -120,7 +118,7 @@ class GameSessionServiceTests {
             every { clock.now() } returns Clock.System.now()
             every { gameSessionStore.findByCode(any()) } returns null
 
-            val session = service.createSession(createTestUserId())
+            val session = service.createSession(createTestCreateGameCommand())
 
             verify { gameSessionStore.addSession(session.id, session) }
         }
@@ -130,7 +128,7 @@ class GameSessionServiceTests {
             every { gameSessionStore.findByCode(any()) } returns mockk()
 
             shouldThrow<IllegalStateException> {
-                service.createSession(createTestUserId())
+                service.createSession(createTestCreateGameCommand())
             }
         }
     }

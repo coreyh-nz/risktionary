@@ -3,6 +3,7 @@ package nz.coreyh.risktionary.words.application.service
 import nz.coreyh.risktionary.user.domain.model.UserId
 import nz.coreyh.risktionary.words.application.exception.WordNotFoundException
 import nz.coreyh.risktionary.words.domain.model.Word
+import nz.coreyh.risktionary.words.domain.model.WordId
 import nz.coreyh.risktionary.words.domain.model.toWordIdOrNull
 import nz.coreyh.risktionary.words.domain.repository.WordRepository
 import org.springframework.stereotype.Service
@@ -14,6 +15,8 @@ class WordService(
     private val clock: Clock = Clock.System,
 ) {
     fun findWords(): List<Word> = wordRepository.findAll()
+
+    fun findWordsByIds(ids: List<WordId>) = wordRepository.findByIds(ids)
 
     fun getWord(id: String): Word =
         id

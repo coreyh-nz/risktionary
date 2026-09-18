@@ -9,13 +9,16 @@ import nz.coreyh.risktionary.game.application.service.GameSessionService
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerIdentity
 import nz.coreyh.risktionary.game.web.dto.request.CreateGameRequest
 import nz.coreyh.risktionary.game.web.dto.request.JoinGameRequest
+import nz.coreyh.risktionary.game.web.dto.request.toCommand
 import nz.coreyh.risktionary.game.web.dto.response.CreateGameResponse
 import nz.coreyh.risktionary.game.web.dto.response.JoinGameResponse
 import nz.coreyh.risktionary.game.web.dto.toHostView
 import nz.coreyh.risktionary.game.web.oas.ApiResponseGameNotFound
 import nz.coreyh.risktionary.shared.oas.ApiResponseInternalServerError
 import nz.coreyh.risktionary.shared.oas.ApiResponseUnauthorized
+import nz.coreyh.risktionary.shared.oas.ApiResponseValidationError
 import nz.coreyh.risktionary.shared.web.support.Routes
+import nz.coreyh.risktionary.words.application.service.WordService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -26,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 class GameController(
     private val gameSessionService: GameSessionService,
+    private val wordService: WordService,
 ) {
     @PostMapping(Routes.V1.Game.CREATE)
     @Operation(
@@ -34,6 +38,7 @@ class GameController(
     )
     @ApiResponseUnauthorized
     @ApiResponseInternalServerError
+    @ApiResponseValidationError
     @ApiResponseGameNotFound
     @ApiResponse(
         responseCode = "201",
@@ -44,7 +49,9 @@ class GameController(
         @AuthenticationPrincipal principal: UserPrincipal,
         @RequestBody request: CreateGameRequest,
     ): ResponseEntity<CreateGameResponse> {
-        val session = gameSessionService.createSession(hostId = principal.userId)
+        val hostId = principal.userId
+        val command = request.toCommand(hostId, wordService)
+        val session = gameSessionService.createSession(command)
         val response = CreateGameResponse(session.toHostView())
         return ResponseEntity.status(HttpStatus.CREATED).body(response)
     }

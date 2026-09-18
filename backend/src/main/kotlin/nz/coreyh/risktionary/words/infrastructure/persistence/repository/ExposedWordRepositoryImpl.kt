@@ -1,5 +1,6 @@
 package nz.coreyh.risktionary.words.infrastructure.persistence.repository
 
+import java.util.UUID
 import nz.coreyh.risktionary.user.domain.model.UserId
 import nz.coreyh.risktionary.user.domain.model.toUserId
 import nz.coreyh.risktionary.words.domain.model.Word
@@ -10,6 +11,7 @@ import nz.coreyh.risktionary.words.infrastructure.persistence.table.ExposedWordS
 import nz.coreyh.risktionary.words.infrastructure.persistence.table.ExposedWordTable
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.jdbc.Query
 import org.jetbrains.exposed.v1.jdbc.batchInsert
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
@@ -18,7 +20,6 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 import org.springframework.stereotype.Repository
-import java.util.UUID
 import kotlin.time.Instant
 
 @Repository
@@ -27,6 +28,14 @@ class ExposedWordRepositoryImpl : WordRepository {
         transaction {
             (ExposedWordTable leftJoin ExposedWordSynonymTable)
                 .selectAll()
+                .toWordList()
+        }
+
+    override fun findByIds(ids: List<WordId>): List<Word> =
+        transaction {
+            (ExposedWordTable leftJoin ExposedWordSynonymTable)
+                .selectAll()
+                .where { ExposedWordTable.id inList ids.map { it.value } }
                 .toWordList()
         }
 

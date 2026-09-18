@@ -8,6 +8,8 @@ import kotlin.time.Instant
 interface WordRepository {
     fun findAll(): List<Word>
 
+    fun findByIds(ids: List<WordId>): List<Word>
+
     fun findById(id: WordId): Word?
 
     fun create(
