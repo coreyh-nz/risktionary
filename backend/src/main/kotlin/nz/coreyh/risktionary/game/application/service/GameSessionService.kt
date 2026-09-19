@@ -14,6 +14,7 @@ import nz.coreyh.risktionary.game.application.session.requireActiveRound
 import nz.coreyh.risktionary.game.application.session.round.GameRoundPhase
 import nz.coreyh.risktionary.game.application.session.round.GameRoundSession
 import nz.coreyh.risktionary.game.application.session.round.GameRoundState
+import nz.coreyh.risktionary.game.application.session.round.requireInProgressPhase
 import nz.coreyh.risktionary.game.application.store.GameSessionStore
 import nz.coreyh.risktionary.game.domain.model.GameConfiguration
 import nz.coreyh.risktionary.game.domain.model.GameId
@@ -29,6 +30,7 @@ import nz.coreyh.risktionary.game.domain.model.player.GameTicket
 import nz.coreyh.risktionary.game.domain.model.player.createPlayerId
 import nz.coreyh.risktionary.game.socket.messages.GameEventPublisher
 import nz.coreyh.risktionary.user.domain.model.UserId
+import nz.coreyh.risktionary.words.domain.model.Word
 import org.springframework.stereotype.Service
 import kotlin.time.Clock
 
@@ -260,6 +262,13 @@ class GameSessionService(
         val round = gameRoundSessionService.createRound(game = game, word = word)
         game.currentRound = round
         return round
+    }
+
+    fun getCurrentWord(gameId: GameId): Word {
+        val session = getSession(gameId)
+        val round = session.requireActiveRound()
+        round.requireInProgressPhase<GameRoundPhase.WordReview>()
+        return round.word
     }
 
     // TODO: idk if this should be here, its not an action

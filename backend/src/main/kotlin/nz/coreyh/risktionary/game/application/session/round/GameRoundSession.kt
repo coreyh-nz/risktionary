@@ -81,3 +81,6 @@ class GameRoundSession(
 }
 
 inline fun <reified T : GameRoundState> GameRoundSession.requireState(): T = state as? T ?: throw GameRoundStateInvalidException()
+
+inline fun <reified T : GameRoundPhase> GameRoundSession.requireInProgressPhase(): T =
+    requireState<GameRoundState.InProgress>().phase as? T ?: throw GameRoundStateInvalidException()

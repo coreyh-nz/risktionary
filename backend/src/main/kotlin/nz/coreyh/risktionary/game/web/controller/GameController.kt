@@ -5,14 +5,18 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import nz.coreyh.risktionary.auth.domain.model.UserPrincipal
+import nz.coreyh.risktionary.game.application.exception.GameNotFoundException
 import nz.coreyh.risktionary.game.application.service.GameSessionService
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerIdentity
+import nz.coreyh.risktionary.game.domain.model.toGameIdOrNull
 import nz.coreyh.risktionary.game.web.dto.request.CreateGameRequest
 import nz.coreyh.risktionary.game.web.dto.request.JoinGameRequest
 import nz.coreyh.risktionary.game.web.dto.request.toCommand
 import nz.coreyh.risktionary.game.web.dto.response.CreateGameResponse
+import nz.coreyh.risktionary.game.web.dto.response.CurrentGameRoundWordResponse
 import nz.coreyh.risktionary.game.web.dto.response.JoinGameResponse
 import nz.coreyh.risktionary.game.web.dto.toHostView
+import nz.coreyh.risktionary.game.web.dto.toReviewView
 import nz.coreyh.risktionary.game.web.oas.ApiResponseGameNotFound
 import nz.coreyh.risktionary.shared.oas.ApiResponseInternalServerError
 import nz.coreyh.risktionary.shared.oas.ApiResponseUnauthorized
@@ -22,6 +26,8 @@ import nz.coreyh.risktionary.words.application.service.WordService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
@@ -95,6 +101,30 @@ class GameController(
                 playerId = ticket.playerId,
                 displayName = sessionPlayer.player.identity.displayName,
             )
+        return ResponseEntity.ok(response)
+    }
+
+    @GetMapping(Routes.V1.Game.CURRENT_ROUND_WORD)
+    @Operation(
+        summary = "Get the current round's word",
+        description =
+            "Returns the description of the current round's word. Only available once the round " +
+                "has reached a phase where the word is revealed to all players (drawing review or " +
+                "word review).",
+    )
+    @ApiResponseInternalServerError
+    @ApiResponseGameNotFound
+    @ApiResponse(
+        responseCode = "200",
+        description = "Successfully retrieved the current round's word",
+        content = [Content(schema = Schema(implementation = CurrentGameRoundWordResponse::class))],
+    )
+    fun getCurrentRoundWord(
+        @PathVariable("gameId") gameIdString: String,
+    ): ResponseEntity<CurrentGameRoundWordResponse> {
+        val gameId = gameIdString.toGameIdOrNull() ?: throw GameNotFoundException()
+        val word = gameSessionService.getCurrentWord(gameId)
+        val response = CurrentGameRoundWordResponse(word.toReviewView())
         return ResponseEntity.ok(response)
     }
 }
