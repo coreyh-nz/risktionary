@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM node:24-alpine AS builder
+FROM node:25-alpine AS builder
 
 WORKDIR /app
 
@@ -19,7 +19,7 @@ ENV NEXT_PUBLIC_PERSIST_GAME_SESSION=$NEXT_PUBLIC_PERSIST_GAME_SESSION
 RUN npm run build
 
 # Stage 2: Run
-FROM node:24-alpine AS runner
+FROM node:25-alpine AS runner
 
 WORKDIR /app
 ENV NODE_ENV=production
