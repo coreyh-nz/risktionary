@@ -1,4 +1,5 @@
 import { ChatMessage } from "@/features/game/types/round/phase/drawing/chat"
+import { RiskRatingCount } from "@/features/game/types/round/phase/risk/risk"
 import { WordHint } from "@/features/game/types/round/phase/round"
 import { TimerView } from "@/types/time"
 import { GameSessionPlayer } from "../../game"
@@ -88,6 +89,11 @@ export interface RoundCorrectGuessesUpdatedEvent {
   correctGuesses: number
 }
 
+export interface RoundRiskRatingsUpdatedEvent {
+  type: "RISK_RATINGS_UPDATED"
+  counts: RiskRatingCount[]
+}
+
 export type RoundEvent =
   | RoundStateEvent
   | RoundPhaseStateEvent
@@ -96,3 +102,4 @@ export type RoundEvent =
   | RoundChatMessageEvent
   | RoundCorrectGuessEvent
   | RoundCorrectGuessesUpdatedEvent
+  | RoundRiskRatingsUpdatedEvent

@@ -10,6 +10,7 @@ import {
   RoundCorrectGuessEvent,
   RoundEvent,
   RoundPhaseStateEvent,
+  RoundRiskRatingsUpdatedEvent,
   RoundStateEvent,
 } from "../../types/round/phase/events"
 import { RoundState } from "../../types/round/phase/round"
@@ -41,6 +42,9 @@ const handleRoundEvent = (event: RoundEvent) => {
       break
     case "CORRECT_GUESSES_COUNT":
       handleCorrectGuessesUpdatedEvent(event)
+      break
+    case "RISK_RATINGS_UPDATED":
+      handleRiskRatingsUpdatedEvent(event)
       break
     default:
       assertNever(type)
@@ -102,6 +106,10 @@ const handleCorrectGuessesUpdatedEvent = (
   event: RoundCorrectGuessesUpdatedEvent
 ) => {
   useGameStore.getState().setRoundCorrectGuessesCount(event.correctGuesses)
+}
+
+const handleRiskRatingsUpdatedEvent = (event: RoundRiskRatingsUpdatedEvent) => {
+  useGameStore.getState().setRoundRiskRatingCounts(event.counts)
 }
 
 export const setupRoundSubscriptions = (client: Client, gameId: string) => {
