@@ -81,6 +81,7 @@ export const WebSocketProvider = ({ children }: PropsWithChildren) => {
       const stompClient = new Client({
         brokerURL: url,
         reconnectDelay: 1000,
+        splitLargeFrames: true,
 
         onConnect: () => {
           dispatch({ type: "CONNECTED" })

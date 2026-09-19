@@ -12,6 +12,7 @@ const SpectatorCanvas = ({
 }) => {
   const { canvasRef } = useCanvasRenderer(width, height)
   useDrawingEvents()
+
   return (
     <div style={{ width, height }} className="shrink-0">
       <Canvas canvasRef={canvasRef} />

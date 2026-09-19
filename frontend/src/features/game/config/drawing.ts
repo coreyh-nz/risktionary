@@ -30,4 +30,4 @@ export const STROKE_FLUSH_INTERVAL_MS = 1000 / STROKE_FLUSH_FPS
 
 export const SNAPSHOT_INTERVAL_MS = 10000
 export const SNAPSHOT_IMAGE_TYPE = "image/png"
-export const SNAPSHOT_IMAGE_QUALITY = 1
+export const SNAPSHOT_MAX_DIMENSION = 1024

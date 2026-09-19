@@ -1,5 +1,5 @@
+import { DRAWING_ASPECT_RATIO } from "@/features/game/config/drawing"
 import { useLayoutEffect, useRef, useState } from "react"
-import { DRAWING_ASPECT_RATIO } from "../../config/canvas"
 
 /**
  * Computes the largest possible canvas size that:
