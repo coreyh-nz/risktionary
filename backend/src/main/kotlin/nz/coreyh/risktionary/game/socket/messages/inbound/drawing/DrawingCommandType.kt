@@ -5,4 +5,5 @@ enum class DrawingCommandType {
     STROKE_POINTS,
     STROKE_END,
     CANVAS_CLEAR,
+    SNAPSHOT,
 }

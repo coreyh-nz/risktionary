@@ -16,4 +16,6 @@ enum class RoundEventType {
     CORRECT_GUESSES_COUNT,
 
     RISK_RATINGS_UPDATED,
+
+    FEEDBACK,
 }

@@ -1,6 +1,7 @@
 package nz.coreyh.risktionary.game.application.handler.action.handler
 
 import nz.coreyh.risktionary.game.application.handler.action.GameRoundPhaseActionHandler
+import nz.coreyh.risktionary.game.application.service.round.GameRoundFeedbackService
 import nz.coreyh.risktionary.game.application.service.round.GameRoundSessionChatService
 import nz.coreyh.risktionary.game.application.session.GamePlayerSession
 import nz.coreyh.risktionary.game.application.session.GameSession
@@ -27,6 +28,7 @@ import org.springframework.stereotype.Service
 class GameRoundPhaseGuessActionHandler(
     private val gameRoundSessionChatService: GameRoundSessionChatService,
     private val gameEventPublisher: GameEventPublisher,
+    private val gameRoundFeedbackService: GameRoundFeedbackService,
 ) : GameRoundPhaseActionHandler<GameRoundPhase.Drawing, GameRoundPhaseGuessAction, GameRoundPhaseGuessActionResult> {
     override val phaseClass = GameRoundPhase.Drawing::class
     override val actionClass = GameRoundPhaseGuessAction::class
@@ -47,7 +49,7 @@ class GameRoundPhaseGuessActionHandler(
                 !hasCorrectlyGuessed &&
                 roundState.phase is GameRoundPhase.Drawing
 
-        if (!isGuessAttempt) return GameRoundPhaseGuessActionResult.SKIPPED
+        if (!isGuessAttempt) return GameRoundPhaseGuessActionResult.Skipped()
 
         val guess = action.guess
         val word = round.word
@@ -60,7 +62,7 @@ class GameRoundPhaseGuessActionHandler(
                 false -> GuessResultType.INCORRECT
             }
 
-        round.guesses.recordGuess(player.id, guess, result)
+        val recordedGuess = round.guesses.recordGuess(player.id, guess, result)
 
         if (result == GuessResultType.CORRECT) {
             gameEventPublisher.publishRoundCorrectGuessesCountUpdated(
@@ -71,16 +73,19 @@ class GameRoundPhaseGuessActionHandler(
                 playerId = player.id,
                 word = round.word,
             )
-            gameRoundSessionChatService.sendMessage(
-                round,
-                ChatMessage.System.CorrectGuess(
-                    player = player.player.toView(),
-                ),
-            )
-            return GameRoundPhaseGuessActionResult.CONSUMED
+            val message =
+                gameRoundSessionChatService.sendMessage(
+                    round,
+                    ChatMessage.System.CorrectGuess(
+                        player = player.player.toView(),
+                    ),
+                )
+            gameRoundFeedbackService.onGuess(round, player, recordedGuess, message.id)
+            return GameRoundPhaseGuessActionResult.Consumed
         }
 
-        return GameRoundPhaseGuessActionResult.SKIPPED
+        // incorrect guesses are shown as chat messages, so their feedback is handled with the message
+        return GameRoundPhaseGuessActionResult.Skipped(recordedGuess)
     }
 
     override fun isPhaseComplete(

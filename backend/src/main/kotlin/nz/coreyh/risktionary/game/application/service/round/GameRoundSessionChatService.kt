@@ -11,22 +11,24 @@ import org.springframework.stereotype.Service
 class GameRoundSessionChatService(
     private val gameEventPublisher: GameEventPublisher,
 ) {
-    fun sendMessage(
+    fun <T : ChatMessage> sendMessage(
         round: GameRoundSession,
-        message: ChatMessage,
-    ) {
+        message: T,
+    ): T {
         round.addMessage(message)
         gameEventPublisher.publishRoundChatMessage(
             gameId = round.game.id,
             message = message,
         )
+        return message
     }
 
     fun sendPlayerMessage(
         round: GameRoundSession,
         player: GamePlayerSession,
         text: String,
-    ) = sendMessage(
+    ): ChatMessage.Player =
+        sendMessage(
         round,
         ChatMessage.Player(
             player = player.player.toView(),

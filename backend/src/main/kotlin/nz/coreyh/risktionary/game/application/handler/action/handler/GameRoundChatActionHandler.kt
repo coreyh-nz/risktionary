@@ -2,6 +2,7 @@ package nz.coreyh.risktionary.game.application.handler.action.handler
 
 import nz.coreyh.risktionary.game.application.handler.action.GameActionHandler
 import nz.coreyh.risktionary.game.application.handler.action.dispatcher.GameRoundActionDispatcher
+import nz.coreyh.risktionary.game.application.service.round.GameRoundFeedbackService
 import nz.coreyh.risktionary.game.application.service.round.GameRoundSessionChatService
 import nz.coreyh.risktionary.game.application.session.GamePlayerSession
 import nz.coreyh.risktionary.game.application.session.GameSession
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service
 @Service
 class GameRoundChatActionHandler(
     private val gameRoundSessionChatService: GameRoundSessionChatService,
+    private val gameRoundFeedbackService: GameRoundFeedbackService,
     private val gameRoundActionDispatcher: GameRoundActionDispatcher,
     private val gameRoundPhaseGuessActionHandler: GameRoundPhaseGuessActionHandler,
 ) : GameActionHandler<GameRoundChatAction> {
@@ -35,13 +37,20 @@ class GameRoundChatActionHandler(
                 player,
                 GameRoundPhaseGuessAction(text),
             )
-        if (result == GameRoundPhaseGuessActionResult.CONSUMED) return
+        if (result is GameRoundPhaseGuessActionResult.Consumed) return
 
         // otherwise treat it as just a chat message
-        gameRoundSessionChatService.sendPlayerMessage(
-            round = round,
-            player = player,
-            text = text,
-        )
+        val message =
+            gameRoundSessionChatService.sendPlayerMessage(
+                round = round,
+                player = player,
+                text = text,
+            )
+
+        // an incorrect guess is also a chat message, which its feedback is shown under
+        val guess = (result as? GameRoundPhaseGuessActionResult.Skipped)?.guess
+        if (guess != null) {
+            gameRoundFeedbackService.onGuess(round, player, guess, message.id)
+        }
     }
 }

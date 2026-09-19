@@ -63,6 +63,18 @@ app:
         host-join-grace-period: 60s
         host-abandoned-timeout: 5m
         stuck-starting-timeout: 2m
+  feedback:
+    ai:
+      use-cases:
+        image-analysis:
+          model: ${FEEDBACK_AI_USE_CASE_IMAGE_ANALYSIS_MODEL}
+          temperature: ${FEEDBACK_AI_USE_CASE_IMAGE_ANALYSIS_TEMPERATURE:0.2}
+        fact-generation:
+          model: ${FEEDBACK_AI_USE_CASE_FACT_GENERATION_MODEL}
+          temperature: ${FEEDBACK_AI_USE_CASE_FACT_GENERATION_TEMPERATURE:0.3}
+        fact-framing-rewrite:
+          model: ${FEEDBACK_AI_USE_CASE_FACT_FRAMING_REWRITE_MODEL}
+          temperature: ${FEEDBACK_AI_USE_CASE_FACT_FRAMING_REWRITE_TEMPERATURE:0.4}
 
 jwt:
   access-lifetime: 30d

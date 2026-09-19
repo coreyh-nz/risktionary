@@ -41,7 +41,7 @@ class PromptTemplateLoader(
     ): Message =
         UserMessage
             .builder()
-            .text(resource)
+            .text(render(resource, variables))
             .media(media)
             .build()
 

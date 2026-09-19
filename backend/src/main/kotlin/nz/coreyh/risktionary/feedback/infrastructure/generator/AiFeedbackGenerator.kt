@@ -4,84 +4,99 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import nz.coreyh.risktionary.ai.domain.AiResponse
 import nz.coreyh.risktionary.ai.infrastructure.service.AiChatService
 import nz.coreyh.risktionary.feedback.domain.model.FeedbackFactPayload
-import nz.coreyh.risktionary.feedback.domain.model.FeedbackFramingCondition
+import nz.coreyh.risktionary.feedback.domain.model.FeedbackGenerationResult
+import nz.coreyh.risktionary.feedback.domain.model.FeedbackGenerationStatus
+import nz.coreyh.risktionary.feedback.domain.model.condition.FeedbackFramingCondition
 import nz.coreyh.risktionary.feedback.domain.service.FeedbackGenerator
 import nz.coreyh.risktionary.feedback.infrastructure.prompt.FeedbackPromptTemplates
 import org.springframework.ai.chat.model.ChatModel
-import org.springframework.ai.openai.OpenAiChatOptions
-import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.context.annotation.Profile
+import org.springframework.ai.chat.prompt.ChatOptions
 import org.springframework.stereotype.Component
+import kotlin.time.Clock
 
 private val logger = KotlinLogging.logger {}
 
-// chat model is provided by Spring AI's `OpenAiChatAutoConfiguration`,
-// which is only active when the `ai` profile is on
+/**
+ * Generates feedback in two AI steps: a neutral fact note from the guesses
+ * made so far, then a rewrite of that fixed note in the requested framing.
+ */
 @Component
-@Qualifier("ai-feedback-generator")
-@Profile("ai")
-@Suppress("SpringJavaInjectionPointsAutowiringInspection")
 class AiFeedbackGenerator(
     private val chatModel: ChatModel,
+    private val feedbackFactGenerationChatOptions: ChatOptions,
+    private val feedbackFactFramingRewriteChatOptions: ChatOptions,
     private val feedbackPromptTemplates: FeedbackPromptTemplates,
     private val aiChatService: AiChatService,
+    private val clock: Clock = Clock.System,
 ) : FeedbackGenerator {
-    override fun generate(payload: FeedbackFactPayload) {
+    override fun generate(payload: FeedbackFactPayload): FeedbackGenerationResult {
+        val framingCondition = payload.condition
+
         val factResponse = generateFact(payload)
         if (factResponse !is AiResponse.Success) {
             logger.warn { "Could not generate a feedback fact." }
-            return
+            return result(FeedbackGenerationStatus.FACT_FAILED, null, null, framingCondition)
         }
-
         val fact = factResponse.data
-        logger.debug { "Generated feedback fact for \"${payload.guess}\": \"$fact\". Cost: ${factResponse.costToString()}" }
+        logger.debug { "Generated feedback fact for ${payload.guesses.size} guess(es): \"$fact\". Cost: ${factResponse.costToString()}" }
 
-        val framingCondition = FeedbackFramingCondition.CORRECTIVE
-        val framingRewriteResponse = generateFramingRewrite(fact, FeedbackFramingCondition.POSITIVE)
+        val framingRewriteResponse = generateFramingRewrite(fact, framingCondition)
         if (framingRewriteResponse !is AiResponse.Success) {
             logger.warn { "Could not generate a feedback fact frame rewrite." }
-            return
+            return result(FeedbackGenerationStatus.FRAMING_FAILED, fact, null, framingCondition)
         }
-
         val framingRewrite = framingRewriteResponse.data
         logger.debug {
-            "Generated feedback fact rewrite for \"${payload.guess}\" with condition ${framingCondition.name}: \"$framingRewrite\". Cost: ${framingRewriteResponse.costToString()}"
+            "Generated feedback rewrite with condition ${framingCondition.name}: \"$framingRewrite\". Cost: ${framingRewriteResponse.costToString()}"
         }
+
+        return result(FeedbackGenerationStatus.SUCCESS, fact, framingRewrite, framingCondition)
     }
+
+    private fun result(
+        status: FeedbackGenerationStatus,
+        fact: String?,
+        framed: String?,
+        framingCondition: FeedbackFramingCondition,
+    ) = FeedbackGenerationResult(
+        status = status,
+        factText = fact,
+        framedText = framed,
+        framingCondition = framingCondition,
+        generatedAt = clock.now(),
+    )
 
     private fun generateFact(payload: FeedbackFactPayload): AiResponse<String> {
         val word = payload.word
-        val options = OpenAiChatOptions.builder().model("gemini-3.5-flash-lite").build()
-        return aiChatService.send<String>(
+        return aiChatService.send(
             chatModel = chatModel,
             messages =
                 listOf(
                     feedbackPromptTemplates.factGenerationSystem(),
                     feedbackPromptTemplates.factGenerationUser(
-                        submittedGuess = payload.guess,
+                        guesses = payload.guesses,
                         correctAnswer = word.value,
-                        correct = payload.correct,
                         synonyms = word.synonyms,
-                        description = "", // TODO
+                        description = word.descriptionText,
                     ),
                 ),
-            options = options,
+            options = feedbackFactGenerationChatOptions,
+            responseClass = String::class,
         )
     }
 
     private fun generateFramingRewrite(
         fact: String,
         condition: FeedbackFramingCondition,
-    ): AiResponse<String> {
-        val options = OpenAiChatOptions.builder().model("gemini-3.5-flash-lite").build()
-        return aiChatService.send<String>(
+    ): AiResponse<String> =
+        aiChatService.send(
             chatModel = chatModel,
             messages =
                 listOf(
                     feedbackPromptTemplates.framingRewriteSystem(condition),
                     feedbackPromptTemplates.framingRewriteUser(fact),
                 ),
-            options = options,
+            options = feedbackFactFramingRewriteChatOptions,
+            responseClass = String::class,
         )
-    }
 }

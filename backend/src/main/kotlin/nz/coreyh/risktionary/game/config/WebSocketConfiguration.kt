@@ -16,6 +16,7 @@ import org.springframework.messaging.simp.config.MessageBrokerRegistry
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer
+import org.springframework.web.socket.config.annotation.WebSocketTransportRegistration
 
 /**
  * WebSocket configuration that establishes the STOMP message broker infrastructure for real-time game communication.
@@ -85,5 +86,12 @@ class WebSocketConfiguration(
             webSocketChannelInterceptor,
             WebSocketLoggingInterceptor(WebSocketLoggingDirection.INBOUND),
         )
+    }
+
+    override fun configureWebSocketTransport(registration: WebSocketTransportRegistration) {
+        registration
+            .setMessageSizeLimit(512 * 1024) // 512KB,
+            .setSendBufferSizeLimit(1024 * 1024) // 1MB
+            .setSendTimeLimit(20 * 1000)
     }
 }

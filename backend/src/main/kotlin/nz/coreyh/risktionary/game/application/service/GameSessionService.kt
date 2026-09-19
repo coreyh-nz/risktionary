@@ -1,14 +1,19 @@
 package nz.coreyh.risktionary.game.application.service
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import nz.coreyh.risktionary.feedback.domain.model.FeedbackGenerationMode
 import nz.coreyh.risktionary.game.application.command.CreateGameCommand
 import nz.coreyh.risktionary.game.application.exception.GameNotFoundException
 import nz.coreyh.risktionary.game.application.exception.GamePlayerDisplayNameInUseException
 import nz.coreyh.risktionary.game.application.handler.state.orchestrator.GameStateOrchestrator
+import nz.coreyh.risktionary.game.application.service.round.GameRoundDrawingAnalysisService
 import nz.coreyh.risktionary.game.application.service.round.GameRoundSessionService
 import nz.coreyh.risktionary.game.application.session.GamePlayerSession
 import nz.coreyh.risktionary.game.application.session.GameSession
+import nz.coreyh.risktionary.game.application.session.requireActiveRound
+import nz.coreyh.risktionary.game.application.session.round.GameRoundPhase
 import nz.coreyh.risktionary.game.application.session.round.GameRoundSession
+import nz.coreyh.risktionary.game.application.session.round.GameRoundState
 import nz.coreyh.risktionary.game.application.store.GameSessionStore
 import nz.coreyh.risktionary.game.domain.model.GameConfiguration
 import nz.coreyh.risktionary.game.domain.model.GameId
@@ -38,6 +43,8 @@ class GameSessionService(
     private val gameSessionTaskService: GameSessionTaskService,
     private val gameTicketService: GameTicketService,
     private val gameRoundSessionService: GameRoundSessionService,
+    private val gameRoundDrawingAnalysisService: GameRoundDrawingAnalysisService,
+    private val gameSessionFeedbackAssignmentService: GameSessionFeedbackAssignmentService,
     private val gameStateOrchestrator: GameStateOrchestrator,
     private val gameSessionStore: GameSessionStore,
     private val gameEventPublisher: GameEventPublisher,
@@ -56,6 +63,7 @@ class GameSessionService(
                 lobbyCountdown = command.lobbyCountdown,
                 phaseDurations = command.phaseDurations,
                 skippingCountdownsEnabled = command.skippingCountdownsEnabled,
+                feedbackGenerationMode = FeedbackGenerationMode.AI,
             )
         val session =
             GameSession(
@@ -85,6 +93,12 @@ class GameSessionService(
             ?: throw GameNotFoundException()
 
     fun removeSession(gameId: GameId) {
+        gameSessionStore.findById(gameId)?.let { session ->
+            session.currentRound?.drawing?.close()
+            if (session.config.feedbackGenerationEnabled) {
+                session.feedback.feedbackDispatcher.close()
+            }
+        }
         gameSessionStore.remove(gameId)
         gameSessionTaskService.cancelAll(gameId)
     }
@@ -150,6 +164,12 @@ class GameSessionService(
     ) {
         val gameSession = getSession(gameId)
         val player = gameSession.activate(playerId)
+
+        // todo: need to come up with a better way cause this is specific to the study
+        //  possibly feedback condition assignment using strategy pattern - idk
+        if (gameSession.config.feedbackGenerationEnabled) {
+            gameSessionFeedbackAssignmentService.assign(gameSession, player)
+        }
 
         gameEventPublisher.publishPlayerJoined(
             gameId = gameId,
@@ -240,6 +260,27 @@ class GameSessionService(
         val round = gameRoundSessionService.createRound(game = game, word = word)
         game.currentRound = round
         return round
+    }
+
+    // TODO: idk if this should be here, its not an action
+    fun handleDrawingSnapshot(
+        gameId: GameId,
+        dataUrl: String,
+    ) {
+        val session = getSession(gameId)
+        if (session.config.feedbackGenerationMode != FeedbackGenerationMode.AI) return
+
+        val round = session.requireActiveRound()
+
+        // snapshots only matter while the drawing is in progress
+        val state = round.state as? GameRoundState.InProgress
+        if (state?.phase !is GameRoundPhase.Drawing) return
+
+        gameRoundDrawingAnalysisService.analyse(
+            round = round,
+            aiDispatcher = round.drawing.aiDispatcher,
+            dataUrl = dataUrl,
+        )
     }
 
     private fun generateCode(): String {

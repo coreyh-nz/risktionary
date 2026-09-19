@@ -39,6 +39,7 @@ private class DrawingCommandTypeResolver : TypeIdResolverBase() {
             DrawingCommandType.STROKE_POINTS -> DrawingStrokePointsCommand::class
             DrawingCommandType.STROKE_END -> DrawingStrokeEndCommand::class
             DrawingCommandType.CANVAS_CLEAR -> DrawingCanvasClearEvent::class
+            DrawingCommandType.SNAPSHOT -> DrawingSnapshotCommand::class
         }.let {
             context.constructType(it.java)
         }

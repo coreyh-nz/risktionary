@@ -11,15 +11,18 @@ import io.mockk.verify
 import nz.coreyh.risktionary.game.application.exception.GameNotFoundException
 import nz.coreyh.risktionary.game.application.exception.GamePlayerDisplayNameInUseException
 import nz.coreyh.risktionary.game.application.handler.state.orchestrator.GameStateOrchestrator
+import nz.coreyh.risktionary.game.application.service.GameSessionFeedbackAssignmentService
 import nz.coreyh.risktionary.game.application.service.GameSessionService
 import nz.coreyh.risktionary.game.application.service.GameSessionTaskService
 import nz.coreyh.risktionary.game.application.service.GameTicketService
+import nz.coreyh.risktionary.game.application.service.round.GameRoundDrawingAnalysisService
 import nz.coreyh.risktionary.game.application.service.round.GameRoundSessionService
 import nz.coreyh.risktionary.game.application.session.GamePlayerSession
 import nz.coreyh.risktionary.game.application.session.GameSession
 import nz.coreyh.risktionary.game.application.session.GameVolunteerSession
 import nz.coreyh.risktionary.game.application.session.GameWordsSession
 import nz.coreyh.risktionary.game.application.store.GameSessionStore
+import nz.coreyh.risktionary.game.domain.model.GameConfiguration
 import nz.coreyh.risktionary.game.domain.model.TimeWindow
 import nz.coreyh.risktionary.game.domain.model.host.GameSessionHostStatus
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerId
@@ -48,6 +51,8 @@ class GameSessionServiceTests {
     private lateinit var gameTicketService: GameTicketService
     private lateinit var gameRoundSessionService: GameRoundSessionService
     private lateinit var gameStateOrchestrator: GameStateOrchestrator
+    private lateinit var gameRoundDrawingAnalysisService: GameRoundDrawingAnalysisService
+    private lateinit var gameSessionFeedbackAssignmentService: GameSessionFeedbackAssignmentService
     private lateinit var gameSessionStore: GameSessionStore
     private lateinit var gameEventPublisher: GameEventPublisher
     private lateinit var clock: Clock
@@ -60,6 +65,8 @@ class GameSessionServiceTests {
         gameTicketService = mockk(relaxed = true)
         gameRoundSessionService = mockk(relaxed = true)
         gameStateOrchestrator = mockk(relaxed = true)
+        gameRoundDrawingAnalysisService = mockk(relaxed = true)
+        gameSessionFeedbackAssignmentService = mockk(relaxed = true)
         gameSessionStore = mockk(relaxed = true)
         gameEventPublisher = mockk(relaxed = true)
         clock = mockk(relaxed = true)
@@ -69,6 +76,8 @@ class GameSessionServiceTests {
                 gameTicketService = gameTicketService,
                 gameRoundSessionService = gameRoundSessionService,
                 gameStateOrchestrator = gameStateOrchestrator,
+                gameRoundDrawingAnalysisService = gameRoundDrawingAnalysisService,
+                gameSessionFeedbackAssignmentService = gameSessionFeedbackAssignmentService,
                 gameSessionStore = gameSessionStore,
                 gameEventPublisher = gameEventPublisher,
                 clock = clock,
@@ -259,6 +268,36 @@ class GameSessionServiceTests {
             shouldThrow<GameNotFoundException> {
                 service.handleConnected(gameId, playerId)
             }
+        }
+
+        @Test
+        fun `handle connected assigns feedback combination when feedback generation is enabled`() {
+            val session = mockk<GameSession>(relaxed = true)
+            val player = mockk<GamePlayerSession>(relaxed = true)
+            val config = mockk<GameConfiguration>(relaxed = true)
+            every { gameSessionStore.findById(gameId) } returns session
+            every { session.activate(playerId) } returns player
+            every { session.config } returns config
+            every { config.feedbackGenerationEnabled } returns true
+
+            service.handleConnected(gameId, playerId)
+
+            verify { gameSessionFeedbackAssignmentService.assign(session, player) }
+        }
+
+        @Test
+        fun `handle connected does not assign feedback combination when feedback generation is disabled`() {
+            val session = mockk<GameSession>(relaxed = true)
+            val player = mockk<GamePlayerSession>(relaxed = true)
+            val config = mockk<GameConfiguration>(relaxed = true)
+            every { gameSessionStore.findById(gameId) } returns session
+            every { session.activate(playerId) } returns player
+            every { session.config } returns config
+            every { config.feedbackGenerationEnabled } returns false
+
+            service.handleConnected(gameId, playerId)
+
+            verify(exactly = 0) { gameSessionFeedbackAssignmentService.assign(any(), any()) }
         }
     }
 

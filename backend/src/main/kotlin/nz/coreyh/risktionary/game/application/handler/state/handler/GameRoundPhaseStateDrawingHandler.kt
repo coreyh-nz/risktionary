@@ -1,6 +1,7 @@
 package nz.coreyh.risktionary.game.application.handler.state.handler
 
 import nz.coreyh.risktionary.game.application.handler.state.GameRoundPhaseStateHandler
+import nz.coreyh.risktionary.game.application.service.round.GameRoundFeedbackService
 import nz.coreyh.risktionary.game.application.service.round.GameRoundSessionChatService
 import nz.coreyh.risktionary.game.application.session.round.GameRoundPhase
 import nz.coreyh.risktionary.game.application.session.round.GameRoundSession
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service
 @Service
 class GameRoundPhaseStateDrawingHandler(
     private val gameRoundSessionChatService: GameRoundSessionChatService,
+    private val gameRoundFeedbackService: GameRoundFeedbackService,
     private val gameEventPublisher: GameEventPublisher,
 ) : GameRoundPhaseStateHandler<GameRoundPhase.Drawing> {
     override val phaseClass = GameRoundPhase.Drawing::class
@@ -41,5 +43,18 @@ class GameRoundPhaseStateDrawingHandler(
             .getPlayers()
             .filter { it.id != drawer.id }
             .forEach { gameEventPublisher.publishAssignedGuesserEvent(it.id, wordHint) }
+    }
+
+    /**
+     * Drawing analysis only matters while the drawing is in progress, so its
+     * dispatcher is shut down when the phase ends. That is also when guessing
+     * ends, so delayed feedback is generated now.
+     */
+    override fun onExit(
+        round: GameRoundSession,
+        phase: GameRoundPhase.Drawing,
+    ) {
+        round.drawing.close()
+        gameRoundFeedbackService.generateDelayed(round)
     }
 }
