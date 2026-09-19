@@ -1,4 +1,8 @@
 import { ChatMessage } from "@/features/game/types/round/phase/drawing/chat"
+import {
+  RiskRating,
+  RiskRatingCount,
+} from "@/features/game/types/round/phase/risk/risk"
 import { StateCreator } from "zustand"
 import { Round, RoundRole, WordHint } from "../../types/round/phase/round"
 
@@ -7,15 +11,18 @@ export interface RoundSlice {
   roundRole: RoundRole | null
   roundChatMessages: ChatMessage[]
   roundCorrectGuessesCount: number
+  roundRiskRatingCounts: RiskRatingCount[] | null
+  roundSubmittedRiskRating: RiskRating | null
 
   setRound: (round: Round) => void
   setRoundDrawer: (word: string) => void
   setRoundGuesser: (hint: WordHint) => void
   setRoundGuesserCorrectWord: (word: string) => void
+  setRoundRiskRatingCounts: (riskRatingCounts: RiskRatingCount[]) => void
+  setRoundCorrectGuessesCount: (roundCorrectGuessesCount: number) => void
+  setRoundSubmittedRiskRating: (riskRating: RiskRating) => void
 
   addRoundChatMessage: (message: ChatMessage) => void
-
-  setRoundCorrectGuessesCount: (roundCorrectGuessesCount: number) => void
 
   resetRound: () => void
 }
@@ -27,9 +34,10 @@ export const createRoundSlice: StateCreator<RoundSlice, [], [], RoundSlice> = (
   roundRole: null,
   roundChatMessages: [],
   roundCorrectGuessesCount: 0,
+  roundRiskRatingCounts: null,
+  roundSubmittedRiskRating: null,
 
   setRound: (round) => set({ round }),
-
   setRoundDrawer: (word) => set({ roundRole: { type: "DRAWER", word } }),
   setRoundGuesser: (hint) => set({ roundRole: { type: "GUESSER", hint } }),
   setRoundGuesserCorrectWord: (word: string) =>
@@ -38,13 +46,19 @@ export const createRoundSlice: StateCreator<RoundSlice, [], [], RoundSlice> = (
       return { roundRole: { ...state.roundRole, correctGuessWord: word } }
     }),
 
+  setRoundCorrectGuessesCount: (roundCorrectGuessesCount: number) =>
+    set({ roundCorrectGuessesCount }),
+
+  setRoundRiskRatingCounts: (riskRatingCounts: RiskRatingCount[]) =>
+    set({ roundRiskRatingCounts: riskRatingCounts }),
+
+  setRoundSubmittedRiskRating: (riskRating: RiskRating) =>
+    set({ roundSubmittedRiskRating: riskRating }),
+
   addRoundChatMessage: (message) =>
     set((state) => ({
       roundChatMessages: [...state.roundChatMessages, message],
     })),
-
-  setRoundCorrectGuessesCount: (roundCorrectGuessesCount: number) =>
-    set({ roundCorrectGuessesCount }),
 
   resetRound: () =>
     set({
@@ -52,5 +66,7 @@ export const createRoundSlice: StateCreator<RoundSlice, [], [], RoundSlice> = (
       roundRole: null,
       roundChatMessages: [],
       roundCorrectGuessesCount: 0,
+      roundRiskRatingCounts: null,
+      roundSubmittedRiskRating: null,
     }),
 })
