@@ -19,7 +19,7 @@ data class GameConfiguration(
      * A value of null means the phase has no timer and will continue until
      * manually advanced.
      */
-    val phaseDurations: Map<RoundPhaseType, Duration?>,
+    val phaseDurations: Map<RoundPhaseType, Duration>,
     /**
      * Whether countdowns can be skipped by the host.
      */

@@ -88,6 +88,11 @@ enum class ErrorCode(
         httpStatus = HttpStatus.BAD_REQUEST,
         defaultMessage = "The request is invalid",
     ),
+    VALIDATION_FAILED(
+        code = "generic.validation-failed",
+        httpStatus = HttpStatus.BAD_REQUEST,
+        defaultMessage = "One or more fields are invalid",
+    ),
     NOT_FOUND(
         code = "generic.not-found",
         httpStatus = HttpStatus.NOT_FOUND,

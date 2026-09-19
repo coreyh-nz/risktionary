@@ -13,7 +13,9 @@ class GameWordsSession(
         get() = withLock { field }
         private set
 
-    fun hasNextWord(): Boolean = withLock { index + 1 < words.size }
+    fun count(): Int = words.size
+
+    fun hasNextWord(): Boolean = withLock { index + 1 < count() }
 
     /**
      * Advances to the next word.

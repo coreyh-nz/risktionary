@@ -1,5 +1,7 @@
 package nz.coreyh.risktionary.game.application.service
 
+import io.github.oshai.kotlinlogging.KotlinLogging
+import nz.coreyh.risktionary.game.application.command.CreateGameCommand
 import nz.coreyh.risktionary.game.application.exception.GameNotFoundException
 import nz.coreyh.risktionary.game.application.exception.GamePlayerDisplayNameInUseException
 import nz.coreyh.risktionary.game.application.handler.state.orchestrator.GameStateOrchestrator
@@ -22,10 +24,10 @@ import nz.coreyh.risktionary.game.domain.model.player.GameTicket
 import nz.coreyh.risktionary.game.domain.model.player.createPlayerId
 import nz.coreyh.risktionary.game.socket.messages.GameEventPublisher
 import nz.coreyh.risktionary.user.domain.model.UserId
-import nz.coreyh.risktionary.words.application.service.WordService
 import org.springframework.stereotype.Service
 import kotlin.time.Clock
-import kotlin.time.Duration.Companion.seconds
+
+private val logger = KotlinLogging.logger {}
 
 /**
  * Coordinates the lifecycle of active game sessions and the players within
@@ -35,7 +37,6 @@ import kotlin.time.Duration.Companion.seconds
 class GameSessionService(
     private val gameSessionTaskService: GameSessionTaskService,
     private val gameTicketService: GameTicketService,
-    private val wordService: WordService,
     private val gameRoundSessionService: GameRoundSessionService,
     private val gameStateOrchestrator: GameStateOrchestrator,
     private val gameSessionStore: GameSessionStore,
@@ -46,27 +47,31 @@ class GameSessionService(
      * Creates a new in‑memory [GameSession] and registers it in the session
      * store.
      *
-     * @param hostId The user who created the game.
-     * @return The newly created session.
+     * [command] is assumed to already be validated (see `CreateGameRequest.toCommand`).
      */
-    fun createSession(hostId: UserId): GameSession {
-        // todo - make this configurable
+    fun createSession(command: CreateGameCommand): GameSession {
         val config =
             GameConfiguration(
-                words = wordService.findWords(),
-                lobbyCountdown = 5.seconds,
-                phaseDurations = mapOf(),
-                skippingCountdownsEnabled = true,
+                words = command.words,
+                lobbyCountdown = command.lobbyCountdown,
+                phaseDurations = command.phaseDurations,
+                skippingCountdownsEnabled = command.skippingCountdownsEnabled,
             )
-        return GameSession(
-            id = createGameId(),
-            host = GameSessionHost(hostId, GameSessionHostStatus.Pending),
-            code = generateCode(),
-            config = config,
-            createdAt = clock.now(),
-        ).also {
-            gameSessionStore.addSession(it.id, it)
+        val session =
+            GameSession(
+                id = createGameId(),
+                host = GameSessionHost(command.hostId, GameSessionHostStatus.Pending),
+                code = generateCode(),
+                config = config,
+                createdAt = clock.now(),
+            )
+        gameSessionStore.addSession(session.id, session)
+
+        logger.debug {
+            "Created game session: id=${session.id}, code=${session.code}, hostId=${session.host.id}, wordCount=${session.words.count()}"
         }
+
+        return session
     }
 
     fun getSessions(): List<GameSession> = gameSessionStore.getAll()
