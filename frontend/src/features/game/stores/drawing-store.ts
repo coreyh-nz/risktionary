@@ -20,6 +20,7 @@ interface DrawingStoreState {
   remoteDrawers: Map<string, LiveDrawingState>
   tool: DrawingTool
   colour: DrawingColour
+  revision: number
 }
 
 interface DrawingStoreActions {
@@ -56,6 +57,7 @@ export const drawingStore = createStore<DrawingStore>((set, get) => ({
   remoteDrawers: new Map(),
   tool: DEFAULT_DRAWING_TOOL,
   colour: DEFAULT_DRAWING_COLOUR,
+  revision: 0,
 
   startLocalStroke: (point, colour, tool) =>
     set({ localDrawing: { points: [point], colour, tool } }),
@@ -81,7 +83,7 @@ export const drawingStore = createStore<DrawingStore>((set, get) => ({
       colour: current.colour,
       tool: current.tool,
     }
-    set((s) => ({ strokes: [...s.strokes, stroke] }))
+    set((s) => ({ strokes: [...s.strokes, stroke], revision: s.revision + 1 }))
     return stroke
   },
 
@@ -117,7 +119,11 @@ export const drawingStore = createStore<DrawingStore>((set, get) => ({
       }
       const remoteDrawers = new Map(s.remoteDrawers)
       remoteDrawers.delete(userId)
-      return { remoteDrawers, strokes: [...s.strokes, stroke] }
+      return {
+        remoteDrawers,
+        strokes: [...s.strokes, stroke],
+        revision: s.revision + 1,
+      }
     }),
 
   clearRemoteDrawer: (userId) =>
@@ -128,10 +134,20 @@ export const drawingStore = createStore<DrawingStore>((set, get) => ({
     }),
 
   clearCanvas: () =>
-    set({ strokes: [], localDrawing: null, remoteDrawers: new Map() }),
+    set((s) => ({
+      strokes: [],
+      localDrawing: null,
+      remoteDrawers: new Map(),
+      revision: s.revision + 1,
+    })),
 
   loadStrokes: (strokes) =>
-    set({ strokes, localDrawing: null, remoteDrawers: new Map() }),
+    set((s) => ({
+      strokes,
+      localDrawing: null,
+      remoteDrawers: new Map(),
+      revision: s.revision + 1,
+    })),
 
   setTool: (tool) => set({ tool }),
   setColour: (colour) => set({ colour }),
