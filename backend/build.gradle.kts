@@ -1,8 +1,8 @@
 plugins {
-    kotlin("jvm") version "2.3.20"
-    kotlin("plugin.spring") version "2.3.20"
-    id("org.springframework.boot") version "4.0.4"
-    id("io.spring.dependency-management") version "1.1.7"
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.plugin.spring)
+    alias(libs.plugins.spring.boot)
+    alias(libs.plugins.spring.dependency.management)
     jacoco
 }
 
@@ -21,40 +21,40 @@ repositories {
 }
 
 dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-security")
-    implementation("org.springframework.boot:spring-boot-starter-webmvc")
+    implementation(libs.spring.boot.starter.security)
+    implementation(libs.spring.boot.starter.webmvc)
 
     // database
-    implementation("org.jetbrains.exposed:exposed-spring-boot4-starter:1.1.1")
-    implementation("org.jetbrains.exposed:exposed-kotlin-datetime:1.1.1")
-    runtimeOnly("com.h2database:h2:2.4.240")
-    runtimeOnly("org.postgresql:postgresql:42.7.11")
+    implementation(libs.exposed.spring.boot.starter)
+    implementation(libs.exposed.kotlin.datetime)
+    runtimeOnly(libs.h2)
+    runtimeOnly(libs.postgresql)
 
     // migration
-    implementation("org.springframework.boot:spring-boot-starter-flyway")
-    runtimeOnly("org.flywaydb:flyway-database-postgresql")
+    implementation(libs.spring.boot.starter.flyway)
+    runtimeOnly(libs.flyway.database.postgresql)
 
-    implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2")
+    implementation(libs.spring.boot.starter.oauth2.client)
+    implementation(libs.springdoc.openapi.starter.webmvc.ui)
 
     // sockets
-    implementation("org.springframework.boot:spring-boot-starter-websocket")
+    implementation(libs.spring.boot.starter.websocket)
 
     // logging
-    implementation("io.github.oshai:kotlin-logging-jvm:8.0.01")
+    implementation(libs.kotlin.logging.jvm)
 
-    implementation("org.jetbrains.kotlin:kotlin-reflect")
-    implementation("tools.jackson.module:jackson-module-kotlin")
+    implementation(libs.kotlin.reflect)
+    implementation(libs.jackson.module.kotlin)
 
     // testing
-    testImplementation("io.mockk:mockk:1.14.9")
-    testImplementation("io.kotest:kotest-assertions-core:6.1.9")
-    testImplementation("com.ninja-squad:springmockk:5.0.1")
+    testImplementation(libs.mockk)
+    testImplementation(libs.kotest.assertions.core)
+    testImplementation(libs.springmockk)
 
-    testImplementation("org.springframework.boot:spring-boot-starter-security-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation(libs.spring.boot.starter.security.test)
+    testImplementation(libs.spring.boot.starter.webmvc.test)
+    testImplementation(libs.kotlin.test.junit5)
+    testRuntimeOnly(libs.junit.platform.launcher)
 }
 
 kotlin {
@@ -64,7 +64,7 @@ kotlin {
 }
 
 jacoco {
-    toolVersion = "0.8.14"
+    toolVersion = libs.versions.jacoco.get()
 }
 
 tasks.withType<Test> {
