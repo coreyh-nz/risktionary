@@ -123,7 +123,7 @@ class GameRoundFeedbackServiceTests {
                 playerId = scenario.player.id,
                 feedbackId = feedback.id,
                 messageId = messageId,
-                timing = FeedbackTimingCondition.INSTANT,
+                roundNumber = scenario.session.roundNumber,
                 text = "framed",
             )
         }
@@ -182,7 +182,7 @@ class GameRoundFeedbackServiceTests {
                 playerId = scenario.player.id,
                 feedbackId = feedback.id,
                 messageId = null,
-                timing = FeedbackTimingCondition.DELAYED,
+                roundNumber = scenario.session.roundNumber,
                 text = "framed",
             )
         }

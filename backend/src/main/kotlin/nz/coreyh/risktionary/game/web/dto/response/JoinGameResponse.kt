@@ -8,4 +8,6 @@ class JoinGameResponse(
     val ticket: String,
     val playerId: GamePlayerId,
     val displayName: String,
+    /** Whether AI feedback is generated in this game. When false, the client should not show any feedback UI. */
+    val feedbackEnabled: Boolean,
 )

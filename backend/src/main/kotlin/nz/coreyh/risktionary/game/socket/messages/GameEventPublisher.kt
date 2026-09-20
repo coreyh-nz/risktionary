@@ -9,7 +9,6 @@ import nz.coreyh.risktionary.game.domain.model.GameId
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerId
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerStatus
 import nz.coreyh.risktionary.game.domain.model.risk.RiskRatingCount
-import nz.coreyh.risktionary.feedback.domain.model.condition.FeedbackTimingCondition
 import nz.coreyh.risktionary.game.domain.model.round.chat.ChatMessage
 import nz.coreyh.risktionary.game.domain.model.round.chat.ChatMessageId
 import nz.coreyh.risktionary.game.domain.model.round.hint.WordHint
@@ -204,13 +203,13 @@ class GameEventPublisher(
         playerId: GamePlayerId,
         feedbackId: FeedbackId,
         messageId: ChatMessageId?,
-        timing: FeedbackTimingCondition,
+        roundNumber: Int,
         text: String,
     ) {
         messagingTemplate.sendToPlayer(
             playerId = playerId,
             destination = WebSocketDestinations.Queue.ROUND,
-            message = RoundFeedbackEvent(feedbackId, messageId, timing, text),
+            message = RoundFeedbackEvent(feedbackId, messageId, roundNumber, text),
         )
     }
 
