@@ -1,5 +1,6 @@
 package nz.coreyh.risktionary.game.application.session
 
+import nz.coreyh.risktionary.game.application.exception.GameFeedbackNotEnabledException
 import nz.coreyh.risktionary.game.application.exception.GamePlayerAlreadyInSessionException
 import nz.coreyh.risktionary.game.application.exception.GamePlayerNotInSessionException
 import nz.coreyh.risktionary.game.application.exception.GamePlayerStateInvalidException
@@ -46,6 +47,10 @@ class GameSession(
     private val players: MutableMap<GamePlayerId, GamePlayerSession> = mutableMapOf()
     val volunteers: GameVolunteerSession = GameVolunteerSession()
     val words: GameWordsSession = GameWordsSession(words = config.words)
+
+    private val _feedback: GameFeedbackSession? = if (config.feedbackGenerationEnabled) GameFeedbackSession() else null
+    val feedback: GameFeedbackSession
+        get() = _feedback ?: throw GameFeedbackNotEnabledException()
 
     /** The current lifecycle state of the game session. */
     var state: GameState = GameState.Lobby

@@ -1,6 +1,7 @@
 package nz.coreyh.risktionary.game.socket.messages
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import nz.coreyh.risktionary.feedback.domain.model.FeedbackId
 import nz.coreyh.risktionary.game.application.session.GamePlayerSession
 import nz.coreyh.risktionary.game.application.session.GameSession
 import nz.coreyh.risktionary.game.application.session.round.GameRoundSession
@@ -8,7 +9,9 @@ import nz.coreyh.risktionary.game.domain.model.GameId
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerId
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerStatus
 import nz.coreyh.risktionary.game.domain.model.risk.RiskRatingCount
+import nz.coreyh.risktionary.feedback.domain.model.condition.FeedbackTimingCondition
 import nz.coreyh.risktionary.game.domain.model.round.chat.ChatMessage
+import nz.coreyh.risktionary.game.domain.model.round.chat.ChatMessageId
 import nz.coreyh.risktionary.game.domain.model.round.hint.WordHint
 import nz.coreyh.risktionary.game.socket.messages.outbound.GameStateEvent
 import nz.coreyh.risktionary.game.socket.messages.outbound.PlayerJoinedEvent
@@ -19,6 +22,7 @@ import nz.coreyh.risktionary.game.socket.messages.outbound.round.ChatMessageEven
 import nz.coreyh.risktionary.game.socket.messages.outbound.round.RoundAssignedDrawerEvent
 import nz.coreyh.risktionary.game.socket.messages.outbound.round.RoundAssignedGuesserEvent
 import nz.coreyh.risktionary.game.socket.messages.outbound.round.RoundCorrectGuessEvent
+import nz.coreyh.risktionary.game.socket.messages.outbound.round.RoundFeedbackEvent
 import nz.coreyh.risktionary.game.socket.messages.outbound.round.RoundCorrectGuessesCountUpdatedEvent
 import nz.coreyh.risktionary.game.socket.messages.outbound.round.RoundPhaseStateEvent
 import nz.coreyh.risktionary.game.socket.messages.outbound.round.RoundRiskRatingsUpdatedEvent
@@ -193,6 +197,20 @@ class GameEventPublisher(
             playerId = playerId,
             destination = WebSocketDestinations.Queue.ROUND,
             message = RoundCorrectGuessEvent(word.value),
+        )
+    }
+
+    fun publishRoundFeedback(
+        playerId: GamePlayerId,
+        feedbackId: FeedbackId,
+        messageId: ChatMessageId?,
+        timing: FeedbackTimingCondition,
+        text: String,
+    ) {
+        messagingTemplate.sendToPlayer(
+            playerId = playerId,
+            destination = WebSocketDestinations.Queue.ROUND,
+            message = RoundFeedbackEvent(feedbackId, messageId, timing, text),
         )
     }
 

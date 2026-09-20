@@ -1,6 +1,7 @@
 package nz.coreyh.risktionary.game.socket.controller
 
 import nz.coreyh.risktionary.game.application.handler.action.dispatcher.GameActionDispatcher
+import nz.coreyh.risktionary.game.domain.model.action.GameRoundPhaseRiskRatingAction
 import nz.coreyh.risktionary.game.domain.model.risk.RiskLikelihood
 import nz.coreyh.risktionary.game.domain.model.risk.RiskRating
 import nz.coreyh.risktionary.game.domain.model.risk.RiskSeverity
@@ -28,7 +29,7 @@ class GameRoundRiskRatingSocketController(
         gameActionDispatcher.dispatch(
             gameId = principal.gameId,
             playerId = principal.id,
-            action = riskRating,
+            action = GameRoundPhaseRiskRatingAction(rating = riskRating),
         )
     }
 }

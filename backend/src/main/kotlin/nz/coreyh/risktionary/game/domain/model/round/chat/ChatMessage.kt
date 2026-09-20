@@ -3,6 +3,7 @@ package nz.coreyh.risktionary.game.domain.model.round.chat
 import nz.coreyh.risktionary.game.socket.messages.view.GamePlayerView
 
 sealed interface ChatMessage {
+    val id: ChatMessageId
     val type: ChatMessageType
 
     sealed interface System : ChatMessage {
@@ -11,6 +12,7 @@ sealed interface ChatMessage {
         data class DrawerSelected(
             val player: GamePlayerView,
         ) : System {
+            override val id: ChatMessageId = createChatMessageId()
             override val type: ChatMessageType = ChatMessageType.SYSTEM
             override val kind: ChatMessageSystemType = ChatMessageSystemType.DRAWER_SELECTED
         }
@@ -18,6 +20,7 @@ sealed interface ChatMessage {
         data class CorrectGuess(
             val player: GamePlayerView,
         ) : System {
+            override val id: ChatMessageId = createChatMessageId()
             override val type: ChatMessageType = ChatMessageType.SYSTEM
             override val kind: ChatMessageSystemType = ChatMessageSystemType.PLAYER_GUESSED_CORRECTLY
         }
@@ -25,6 +28,7 @@ sealed interface ChatMessage {
         data class DrawingEndedAllGuessed(
             val word: String,
         ) : System {
+            override val id: ChatMessageId = createChatMessageId()
             override val type: ChatMessageType = ChatMessageType.SYSTEM
             override val kind: ChatMessageSystemType = ChatMessageSystemType.DRAWING_ENDED_ALL_GUESSED
         }
@@ -32,6 +36,7 @@ sealed interface ChatMessage {
         data class DrawingEndedTimeUp(
             val word: String,
         ) : System {
+            override val id: ChatMessageId = createChatMessageId()
             override val type: ChatMessageType = ChatMessageType.SYSTEM
             override val kind: ChatMessageSystemType = ChatMessageSystemType.DRAWING_ENDED_TIME_UP
         }
@@ -41,6 +46,7 @@ sealed interface ChatMessage {
         val player: GamePlayerView,
         val text: String,
     ) : ChatMessage {
+        override val id: ChatMessageId = createChatMessageId()
         override val type: ChatMessageType = ChatMessageType.PLAYER
     }
 }

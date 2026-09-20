@@ -8,19 +8,39 @@ import nz.coreyh.risktionary.game.domain.model.round.RoundId
 import nz.coreyh.risktionary.game.domain.model.round.RoundStateType
 import nz.coreyh.risktionary.game.domain.model.round.chat.ChatMessage
 import nz.coreyh.risktionary.words.domain.model.Word
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 class GameRoundSession(
     val id: RoundId,
     val game: GameSession,
     val word: Word,
+    private val clock: Clock = Clock.System,
 ) : LockableSession() {
     var state: GameRoundState = GameRoundState.SelectingDrawer
         get() = withLock { field }
         private set(value) = withLock { field = value }
 
-    val guesses: GameRoundGuessSession = GameRoundGuessSession()
-    val riskRatings: GameRoundRiskRatingSession = GameRoundRiskRatingSession()
+    /**
+     * When the drawing phase began. This is the reference point for every
+     * "time elapsed since the round started" statistic. Null until the round
+     * enters [GameRoundPhase.Drawing].
+     */
+    var drawingStartedAt: Instant? = null
+        get() = withLock { field }
+        private set(value) = withLock { field = value }
+
+    val drawing = GameRoundDrawingSession()
+    val guesses = GameRoundGuessSession(clock, ::elapsedMsSinceDrawingStarted)
+    val riskRatings = GameRoundRiskRatingSession()
+    val feedback = GameRoundFeedbackSession()
     private val messages: MutableList<ChatMessage> = mutableListOf()
+
+    /**
+     * Milliseconds between the start of the drawing phase and [at], or null
+     * if the drawing phase hasn't started.
+     */
+    fun elapsedMsSinceDrawingStarted(at: Instant): Long? = drawingStartedAt?.let { (at - it).inWholeMilliseconds }
 
     /**
      * Transitions the round into the in-progress state with a confirmed drawer.
@@ -45,6 +65,9 @@ class GameRoundSession(
     fun updatePhase(phase: GameRoundPhase): Unit =
         withLock {
             val current = requireState<GameRoundState.InProgress>()
+            if (phase is GameRoundPhase.Drawing && drawingStartedAt == null) {
+                drawingStartedAt = clock.now()
+            }
             state = current.copy(phase = phase)
         }
 

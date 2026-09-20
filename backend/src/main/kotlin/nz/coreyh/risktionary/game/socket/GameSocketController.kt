@@ -3,6 +3,7 @@ package nz.coreyh.risktionary.game.socket
 import nz.coreyh.risktionary.game.application.service.GameSessionService
 import nz.coreyh.risktionary.game.socket.messages.inbound.drawing.DrawingCanvasClearCommand
 import nz.coreyh.risktionary.game.socket.messages.inbound.drawing.DrawingCommand
+import nz.coreyh.risktionary.game.socket.messages.inbound.drawing.DrawingSnapshotCommand
 import nz.coreyh.risktionary.game.socket.messages.inbound.drawing.DrawingStrokeEndCommand
 import nz.coreyh.risktionary.game.socket.messages.inbound.drawing.DrawingStrokePointsCommand
 import nz.coreyh.risktionary.game.socket.messages.inbound.drawing.DrawingStrokeStartCommand
@@ -73,6 +74,11 @@ class GameSocketController(
 
                 is DrawingCanvasClearCommand -> {
                     DrawingCanvasClearEvent()
+                }
+
+                is DrawingSnapshotCommand -> {
+                    // snapshot command is handled via /game/draw/snapshot and is not sent to others
+                    return
                 }
             }
 

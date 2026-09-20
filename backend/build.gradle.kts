@@ -40,6 +40,13 @@ dependencies {
     // sockets
     implementation(libs.spring.boot.starter.websocket)
 
+    // ai
+    implementation(platform(libs.spring.ai.bom))
+    implementation(libs.spring.ai.starter.model.openai)
+
+    // coroutines
+    implementation(libs.kotlinx.coroutines.core)
+
     // logging
     implementation(libs.kotlin.logging.jvm)
 

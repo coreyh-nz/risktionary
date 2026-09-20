@@ -1,5 +1,6 @@
 package nz.coreyh.risktionary.game.domain.model
 
+import nz.coreyh.risktionary.feedback.domain.model.FeedbackGenerationMode
 import nz.coreyh.risktionary.game.domain.model.round.phase.RoundPhaseType
 import nz.coreyh.risktionary.words.domain.model.Word
 import kotlin.time.Duration
@@ -24,4 +25,10 @@ data class GameConfiguration(
      * Whether countdowns can be skipped by the host.
      */
     val skippingCountdownsEnabled: Boolean,
-)
+    /**
+     * Controls how feedback is generated during the game.
+     */
+    val feedbackGenerationMode: FeedbackGenerationMode,
+) {
+    val feedbackGenerationEnabled = feedbackGenerationMode != FeedbackGenerationMode.NONE
+}
