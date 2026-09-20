@@ -203,7 +203,7 @@ class GameRoundFeedbackServiceTests {
     fun `guess context carries the drawing note and time remaining current at the time of the guess`() {
         val scenario = Scenario(FeedbackTimingCondition.DELAYED)
         service.onGuess(scenario.round, scenario.player, scenario.guess("early"), createChatMessageId())
-        scenario.round.drawing.record(byteArrayOf(1), DrawingAnalysisResult.Fact("a building"))
+        scenario.round.drawing.record(byteArrayOf(1), "image/png", DrawingAnalysisResult.Fact("a building"), Clock.System.now())
         service.onGuess(scenario.round, scenario.player, scenario.guess("late"), createChatMessageId())
 
         val (early, late) = scenario.round.feedback.getGuessesByPlayer().getValue(scenario.player.id)
@@ -217,7 +217,7 @@ class GameRoundFeedbackServiceTests {
     @Test
     fun `a no-fact drawing analysis gives no drawing note`() {
         val scenario = Scenario(FeedbackTimingCondition.DELAYED)
-        scenario.round.drawing.record(byteArrayOf(1), DrawingAnalysisResult.NoFact)
+        scenario.round.drawing.record(byteArrayOf(1), "image/png", DrawingAnalysisResult.NoFact, Clock.System.now())
 
         service.onGuess(scenario.round, scenario.player, scenario.guess("clinic"), createChatMessageId())
 

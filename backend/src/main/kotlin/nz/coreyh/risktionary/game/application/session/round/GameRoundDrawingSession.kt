@@ -5,6 +5,7 @@ import nz.coreyh.risktionary.ai.infrastructure.dispatch.AiDispatcher
 import nz.coreyh.risktionary.feedback.domain.model.analysis.DrawingAnalysisEntry
 import nz.coreyh.risktionary.feedback.domain.model.analysis.DrawingAnalysisResult
 import nz.coreyh.risktionary.game.application.session.LockableSession
+import kotlin.time.Instant
 
 /**
  * Holds the periodic drawing screenshots and their AI-generated
@@ -13,7 +14,9 @@ import nz.coreyh.risktionary.game.application.session.LockableSession
  * Owns the [AiDispatcher] the analyses run on. It is closed once the round
  * leaves the drawing phase, after which nothing further is recorded.
  */
-class GameRoundDrawingSession : LockableSession() {
+class GameRoundDrawingSession(
+    private val elapsedMsAt: (Instant) -> Long? = { null },
+) : LockableSession() {
     private val analyses = CopyOnWriteArrayList<DrawingAnalysisEntry>()
     private var closed = false
 
@@ -24,14 +27,26 @@ class GameRoundDrawingSession : LockableSession() {
      * are never observed out of sync with each other.
      *
      * Ignored once the session has been [close]d.
+     *
+     * @param capturedAt when the screenshot was received.
      */
     fun record(
         imageBytes: ByteArray,
+        mimeType: String,
         result: DrawingAnalysisResult,
+        capturedAt: Instant,
     ) {
         withLock {
             if (closed) return
-            analyses.add(DrawingAnalysisEntry(imageBytes, result))
+            analyses.add(
+                DrawingAnalysisEntry(
+                    imageBytes = imageBytes,
+                    mimeType = mimeType,
+                    result = result,
+                    capturedAt = capturedAt,
+                    elapsedMs = elapsedMsAt(capturedAt),
+                ),
+            )
         }
     }
 

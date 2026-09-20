@@ -42,6 +42,11 @@ sealed class GameRoundPhase {
         override val type = RoundPhaseType.WORD_REVIEW
     }
 
+    data object Saving : GameRoundPhase() {
+        override val type = RoundPhaseType.SAVING
+        override val timeWindow: TimeWindow? = null
+    }
+
     data class Scoring(
         override val timeWindow: TimeWindow?,
     ) : GameRoundPhase() {

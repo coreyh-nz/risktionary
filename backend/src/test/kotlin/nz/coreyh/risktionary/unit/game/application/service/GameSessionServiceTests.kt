@@ -11,6 +11,7 @@ import io.mockk.verify
 import nz.coreyh.risktionary.game.application.exception.GameNotFoundException
 import nz.coreyh.risktionary.game.application.exception.GamePlayerDisplayNameInUseException
 import nz.coreyh.risktionary.game.application.handler.state.orchestrator.GameStateOrchestrator
+import nz.coreyh.risktionary.game.application.service.GameResearchPersistenceService
 import nz.coreyh.risktionary.game.application.service.GameSessionFeedbackAssignmentService
 import nz.coreyh.risktionary.game.application.service.GameSessionService
 import nz.coreyh.risktionary.game.application.service.GameSessionTaskService
@@ -53,6 +54,7 @@ class GameSessionServiceTests {
     private lateinit var gameStateOrchestrator: GameStateOrchestrator
     private lateinit var gameRoundDrawingAnalysisService: GameRoundDrawingAnalysisService
     private lateinit var gameSessionFeedbackAssignmentService: GameSessionFeedbackAssignmentService
+    private lateinit var gameResearchPersistenceService: GameResearchPersistenceService
     private lateinit var gameSessionStore: GameSessionStore
     private lateinit var gameEventPublisher: GameEventPublisher
     private lateinit var clock: Clock
@@ -67,6 +69,7 @@ class GameSessionServiceTests {
         gameStateOrchestrator = mockk(relaxed = true)
         gameRoundDrawingAnalysisService = mockk(relaxed = true)
         gameSessionFeedbackAssignmentService = mockk(relaxed = true)
+        gameResearchPersistenceService = mockk(relaxed = true)
         gameSessionStore = mockk(relaxed = true)
         gameEventPublisher = mockk(relaxed = true)
         clock = mockk(relaxed = true)
@@ -78,6 +81,7 @@ class GameSessionServiceTests {
                 gameStateOrchestrator = gameStateOrchestrator,
                 gameRoundDrawingAnalysisService = gameRoundDrawingAnalysisService,
                 gameSessionFeedbackAssignmentService = gameSessionFeedbackAssignmentService,
+                gameResearchPersistenceService = gameResearchPersistenceService,
                 gameSessionStore = gameSessionStore,
                 gameEventPublisher = gameEventPublisher,
                 clock = clock,

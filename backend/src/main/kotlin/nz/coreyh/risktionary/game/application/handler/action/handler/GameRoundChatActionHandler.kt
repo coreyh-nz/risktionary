@@ -40,15 +40,17 @@ class GameRoundChatActionHandler(
         if (result is GameRoundPhaseGuessActionResult.Consumed) return
 
         // otherwise treat it as just a chat message
+        // an incorrect guess is also a chat message, which its feedback is shown under
+        val guess = (result as? GameRoundPhaseGuessActionResult.Skipped)?.guess
+
         val message =
             gameRoundSessionChatService.sendPlayerMessage(
                 round = round,
                 player = player,
                 text = text,
+                guessId = guess?.id,
             )
 
-        // an incorrect guess is also a chat message, which its feedback is shown under
-        val guess = (result as? GameRoundPhaseGuessActionResult.Skipped)?.guess
         if (guess != null) {
             gameRoundFeedbackService.onGuess(round, player, guess, message.id)
         }

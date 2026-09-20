@@ -43,6 +43,11 @@ sealed interface GameRoundPhaseView {
         override val type = RoundPhaseType.WORD_REVIEW
     }
 
+    data object Saving : GameRoundPhaseView {
+        override val type = RoundPhaseType.SAVING
+        override val timer: TimerView? = null
+    }
+
     data class Scoring(
         override val timer: TimerView?,
     ) : GameRoundPhaseView {
@@ -81,6 +86,10 @@ fun GameRoundSession.toPhaseStateView(clock: Clock = Clock.System): GameRoundPha
 
         is GameRoundPhase.RankingReview -> {
             GameRoundPhaseView.RankingReview(timer = timer)
+        }
+
+        is GameRoundPhase.Saving -> {
+            GameRoundPhaseView.Saving
         }
 
         is GameRoundPhase.Scoring -> {

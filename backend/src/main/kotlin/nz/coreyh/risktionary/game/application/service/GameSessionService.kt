@@ -47,6 +47,7 @@ class GameSessionService(
     private val gameRoundSessionService: GameRoundSessionService,
     private val gameRoundDrawingAnalysisService: GameRoundDrawingAnalysisService,
     private val gameSessionFeedbackAssignmentService: GameSessionFeedbackAssignmentService,
+    private val gameResearchPersistenceService: GameResearchPersistenceService,
     private val gameStateOrchestrator: GameStateOrchestrator,
     private val gameSessionStore: GameSessionStore,
     private val gameEventPublisher: GameEventPublisher,
@@ -75,6 +76,8 @@ class GameSessionService(
                 config = config,
                 createdAt = clock.now(),
             )
+        // persisted first, so a failed write leaves no session behind that later rows could not reference
+        gameResearchPersistenceService.persistGame(session)
         gameSessionStore.addSession(session.id, session)
 
         logger.debug {

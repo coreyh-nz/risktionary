@@ -1,0 +1,39 @@
+  CREATE TABLE IF NOT EXISTS risktionary_game (id uuid PRIMARY KEY, code VARCHAR(16) NOT NULL, host_user_id uuid NOT NULL, created_at TIMESTAMP NOT NULL, feedback_generation_mode VARCHAR(16) NOT NULL, lobby_countdown_ms BIGINT NOT NULL, skipping_countdowns_enabled BOOLEAN NOT NULL, end_reason VARCHAR(16) NULL, ended_at TIMESTAMP NULL, CONSTRAINT fk_risktionary_game_host_user_id__id FOREIGN KEY (host_user_id) REFERENCES risktionary_user(id) ON DELETE RESTRICT ON UPDATE RESTRICT);
+CREATE INDEX risktionary_game_host_user_id ON risktionary_game (host_user_id);
+
+CREATE TABLE IF NOT EXISTS risktionary_game_phase_duration (game_id uuid, phase VARCHAR(32), duration_ms BIGINT NOT NULL, CONSTRAINT pk_risktionary_game_phase_duration PRIMARY KEY (game_id, phase), CONSTRAINT fk_risktionary_game_phase_duration_game_id__id FOREIGN KEY (game_id) REFERENCES risktionary_game(id) ON DELETE CASCADE ON UPDATE RESTRICT);
+
+CREATE TABLE IF NOT EXISTS risktionary_game_word (game_id uuid, "position" INT, word_id uuid NULL, word_value VARCHAR(100) NOT NULL, CONSTRAINT pk_risktionary_game_word PRIMARY KEY (game_id, "position"), CONSTRAINT fk_risktionary_game_word_game_id__id FOREIGN KEY (game_id) REFERENCES risktionary_game(id) ON DELETE CASCADE ON UPDATE RESTRICT, CONSTRAINT fk_risktionary_game_word_word_id__id FOREIGN KEY (word_id) REFERENCES risktionary_word(id) ON DELETE SET NULL ON UPDATE RESTRICT);
+
+CREATE TABLE IF NOT EXISTS risktionary_game_player (id uuid PRIMARY KEY, game_id uuid NOT NULL, feedback_framing_condition VARCHAR(16) NULL, feedback_timing_condition VARCHAR(16) NULL, CONSTRAINT fk_risktionary_game_player_game_id__id FOREIGN KEY (game_id) REFERENCES risktionary_game(id) ON DELETE CASCADE ON UPDATE RESTRICT);
+CREATE INDEX risktionary_game_player_game_id ON risktionary_game_player (game_id);
+CREATE INDEX risktionary_game_player_conditions ON risktionary_game_player (feedback_framing_condition, feedback_timing_condition);
+
+CREATE TABLE IF NOT EXISTS risktionary_game_round (id uuid PRIMARY KEY, game_id uuid NOT NULL, round_number INT NOT NULL, word_id uuid NULL, word_value VARCHAR(100) NOT NULL, drawer_id uuid NOT NULL, started_at TIMESTAMP NULL, ended_at TIMESTAMP NOT NULL, final_state VARCHAR(16) NOT NULL, CONSTRAINT fk_risktionary_game_round_game_id__id FOREIGN KEY (game_id) REFERENCES risktionary_game(id) ON DELETE CASCADE ON UPDATE RESTRICT, CONSTRAINT fk_risktionary_game_round_word_id__id FOREIGN KEY (word_id) REFERENCES risktionary_word(id) ON DELETE SET NULL ON UPDATE RESTRICT, CONSTRAINT fk_risktionary_game_round_drawer_id__id FOREIGN KEY (drawer_id) REFERENCES risktionary_game_player(id) ON DELETE RESTRICT ON UPDATE RESTRICT);
+ALTER TABLE risktionary_game_round ADD CONSTRAINT risktionary_game_round_game_id_round_number_unique UNIQUE (game_id, round_number);
+CREATE INDEX risktionary_game_round_drawer_id ON risktionary_game_round (drawer_id);
+
+CREATE TABLE IF NOT EXISTS risktionary_game_round_guess (id uuid PRIMARY KEY, round_id uuid NOT NULL, player_id uuid NOT NULL, seq INT NOT NULL, guess_text TEXT NOT NULL, guess_result VARCHAR(16) NOT NULL, submitted_at TIMESTAMP NOT NULL, elapsed_ms BIGINT NULL, CONSTRAINT fk_risktionary_game_round_guess_round_id__id FOREIGN KEY (round_id) REFERENCES risktionary_game_round(id) ON DELETE CASCADE ON UPDATE RESTRICT, CONSTRAINT fk_risktionary_game_round_guess_player_id__id FOREIGN KEY (player_id) REFERENCES risktionary_game_player(id) ON DELETE RESTRICT ON UPDATE RESTRICT);
+CREATE INDEX risktionary_game_round_guess_round_id ON risktionary_game_round_guess (round_id);
+CREATE INDEX risktionary_game_round_guess_player_id ON risktionary_game_round_guess (player_id);
+CREATE INDEX risktionary_game_round_guess_guess_result ON risktionary_game_round_guess (guess_result);
+
+CREATE TABLE IF NOT EXISTS risktionary_game_round_chat_message (id uuid PRIMARY KEY, round_id uuid NOT NULL, seq INT NOT NULL, sent_at TIMESTAMP NOT NULL, elapsed_ms BIGINT NULL, message_type VARCHAR(16) NOT NULL, system_kind VARCHAR(32) NULL, player_id uuid NULL, chat_text TEXT NULL, guess_id uuid NULL, CONSTRAINT fk_risktionary_game_round_chat_message_round_id__id FOREIGN KEY (round_id) REFERENCES risktionary_game_round(id) ON DELETE CASCADE ON UPDATE RESTRICT, CONSTRAINT fk_risktionary_game_round_chat_message_player_id__id FOREIGN KEY (player_id) REFERENCES risktionary_game_player(id) ON DELETE RESTRICT ON UPDATE RESTRICT, CONSTRAINT fk_risktionary_game_round_chat_message_guess_id__id FOREIGN KEY (guess_id) REFERENCES risktionary_game_round_guess(id) ON DELETE SET NULL ON UPDATE RESTRICT);
+CREATE INDEX risktionary_game_round_chat_message_round_id ON risktionary_game_round_chat_message (round_id);
+CREATE INDEX risktionary_game_round_chat_message_player_id ON risktionary_game_round_chat_message (player_id);
+CREATE INDEX risktionary_game_round_chat_message_guess_id ON risktionary_game_round_chat_message (guess_id);
+
+CREATE TABLE IF NOT EXISTS risktionary_game_round_risk_rating (id uuid PRIMARY KEY, round_id uuid NOT NULL, player_id uuid NOT NULL, seq INT NOT NULL, likelihood VARCHAR(16) NOT NULL, severity VARCHAR(16) NOT NULL, rated_at TIMESTAMP NOT NULL, CONSTRAINT fk_risktionary_game_round_risk_rating_round_id__id FOREIGN KEY (round_id) REFERENCES risktionary_game_round(id) ON DELETE CASCADE ON UPDATE RESTRICT, CONSTRAINT fk_risktionary_game_round_risk_rating_player_id__id FOREIGN KEY (player_id) REFERENCES risktionary_game_player(id) ON DELETE RESTRICT ON UPDATE RESTRICT);
+CREATE INDEX risktionary_game_round_risk_rating_round_id_player_id ON risktionary_game_round_risk_rating (round_id, player_id);
+CREATE INDEX risktionary_game_round_risk_rating_player_id ON risktionary_game_round_risk_rating (player_id);
+
+CREATE TABLE IF NOT EXISTS risktionary_game_round_drawing_analysis (id uuid PRIMARY KEY, round_id uuid NOT NULL, seq INT NOT NULL, captured_at TIMESTAMP NOT NULL, elapsed_ms BIGINT NULL, image BYTEA NOT NULL, image_mime_type VARCHAR(64) NOT NULL, result_type VARCHAR(16) NOT NULL, fact_note TEXT NULL, CONSTRAINT fk_risktionary_game_round_drawing_analysis_round_id__id FOREIGN KEY (round_id) REFERENCES risktionary_game_round(id) ON DELETE CASCADE ON UPDATE RESTRICT);
+CREATE INDEX risktionary_game_round_drawing_analysis_round_id ON risktionary_game_round_drawing_analysis (round_id);
+
+CREATE TABLE IF NOT EXISTS risktionary_game_round_feedback (id uuid PRIMARY KEY, round_id uuid NOT NULL, player_id uuid NOT NULL, framing_condition VARCHAR(16) NOT NULL, timing_condition VARCHAR(16) NOT NULL, status VARCHAR(16) NOT NULL, fact_text TEXT NULL, framed_text TEXT NULL, generated_at TIMESTAMP NOT NULL, CONSTRAINT fk_risktionary_game_round_feedback_round_id__id FOREIGN KEY (round_id) REFERENCES risktionary_game_round(id) ON DELETE CASCADE ON UPDATE RESTRICT, CONSTRAINT fk_risktionary_game_round_feedback_player_id__id FOREIGN KEY (player_id) REFERENCES risktionary_game_player(id) ON DELETE RESTRICT ON UPDATE RESTRICT);
+CREATE INDEX risktionary_game_round_feedback_round_id ON risktionary_game_round_feedback (round_id);
+CREATE INDEX risktionary_game_round_feedback_player_id ON risktionary_game_round_feedback (player_id);
+CREATE INDEX risktionary_game_round_feedback_conditions ON risktionary_game_round_feedback (framing_condition, timing_condition);
+
+CREATE TABLE IF NOT EXISTS risktionary_game_round_feedback_guess (feedback_id uuid, guess_id uuid, CONSTRAINT pk_risktionary_game_round_feedback_guess PRIMARY KEY (feedback_id, guess_id), CONSTRAINT fk_risktionary_game_round_feedback_guess_feedback_id__id FOREIGN KEY (feedback_id) REFERENCES risktionary_game_round_feedback(id) ON DELETE CASCADE ON UPDATE RESTRICT, CONSTRAINT fk_risktionary_game_round_feedback_guess_guess_id__id FOREIGN KEY (guess_id) REFERENCES risktionary_game_round_guess(id) ON DELETE CASCADE ON UPDATE RESTRICT);
+CREATE INDEX risktionary_game_round_feedback_guess_guess_id ON risktionary_game_round_feedback_guess (guess_id);
