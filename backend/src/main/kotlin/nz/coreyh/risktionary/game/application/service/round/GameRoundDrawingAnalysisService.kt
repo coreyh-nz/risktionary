@@ -35,12 +35,13 @@ class GameRoundDrawingAnalysisService(
             dispatcher = aiDispatcher,
             decodedDataUrl = decodedDataUrl,
             word = round.word.value,
-            onResult = { result ->
-                logger.debug { "Drawing analysis completed (round=${round.id}, result=\"$result\")" }
+            onResult = { outcome ->
+                logger.debug { "Drawing analysis completed (round=${round.id}, result=\"${outcome.result}\")" }
+                outcome.usage?.let { round.aiUsage.record(it) }
                 round.drawing.record(
                     imageBytes = decodedDataUrl.bytes,
                     mimeType = decodedDataUrl.mimeType.toString(),
-                    result = result,
+                    result = outcome.result,
                     capturedAt = capturedAt,
                 )
             },

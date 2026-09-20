@@ -16,6 +16,7 @@ object ExposedGameRoundTable : UUIDTable("risktionary_game_round") {
     val startedAt = timestamp("started_at").nullable()
     val endedAt = timestamp("ended_at")
     val finalState = enumerationByName<RoundStateType>("final_state", 16)
+    val abandonedAiCalls = integer("abandoned_ai_calls").default(0)
 
     init {
         uniqueIndex(gameId, roundNumber)

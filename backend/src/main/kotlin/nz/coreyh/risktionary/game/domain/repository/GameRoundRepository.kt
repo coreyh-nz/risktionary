@@ -17,6 +17,7 @@ interface GameRoundRepository {
         startedAt: Instant?,
         endedAt: Instant,
         finalState: RoundStateType,
+        abandonedAiCalls: Int,
     )
 
     fun updateFinalState(

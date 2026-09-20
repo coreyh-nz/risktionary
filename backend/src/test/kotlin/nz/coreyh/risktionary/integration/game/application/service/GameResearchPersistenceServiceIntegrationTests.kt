@@ -3,14 +3,16 @@ package nz.coreyh.risktionary.integration.game.application.service
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import nz.coreyh.risktionary.ai.domain.AiUsage
+import nz.coreyh.risktionary.ai.domain.AiUsagePurpose
 import nz.coreyh.risktionary.feedback.domain.model.FeedbackGenerationStatus
 import nz.coreyh.risktionary.feedback.domain.model.GamePlayerFeedbackAssignment
 import nz.coreyh.risktionary.feedback.domain.model.GeneratedFeedback
-import nz.coreyh.risktionary.feedback.domain.model.createFeedbackId
 import nz.coreyh.risktionary.feedback.domain.model.analysis.DrawingAnalysisResult
 import nz.coreyh.risktionary.feedback.domain.model.analysis.DrawingAnalysisResultType
 import nz.coreyh.risktionary.feedback.domain.model.condition.FeedbackFramingCondition
 import nz.coreyh.risktionary.feedback.domain.model.condition.FeedbackTimingCondition
+import nz.coreyh.risktionary.feedback.domain.model.createFeedbackId
 import nz.coreyh.risktionary.game.application.service.GameResearchPersistenceService
 import nz.coreyh.risktionary.game.application.service.GameSessionService
 import nz.coreyh.risktionary.game.application.session.round.GameRoundPhase
@@ -22,6 +24,7 @@ import nz.coreyh.risktionary.game.domain.model.round.RoundStateType
 import nz.coreyh.risktionary.game.domain.model.round.chat.ChatMessage
 import nz.coreyh.risktionary.game.domain.model.round.guess.GuessResultType
 import nz.coreyh.risktionary.game.infrastructure.persistence.table.ExposedGamePlayerTable
+import nz.coreyh.risktionary.game.infrastructure.persistence.table.ExposedGameRoundAiUsageTable
 import nz.coreyh.risktionary.game.infrastructure.persistence.table.ExposedGameRoundChatMessageTable
 import nz.coreyh.risktionary.game.infrastructure.persistence.table.ExposedGameRoundDrawingAnalysisTable
 import nz.coreyh.risktionary.game.infrastructure.persistence.table.ExposedGameRoundFeedbackGuessTable
@@ -73,7 +76,9 @@ class GameResearchPersistenceServiceIntegrationTests(
         val guesser = createTestGamePlayerSession(status = GamePlayerStatus.ACTIVE)
         listOf(drawer, guesser).forEach {
             game.requestJoin(it)
-            game.feedback.assign(it.id) { GamePlayerFeedbackAssignment(FeedbackFramingCondition.CORRECTIVE, FeedbackTimingCondition.DELAYED) }
+            game.feedback.assign(
+                it.id,
+            ) { GamePlayerFeedbackAssignment(FeedbackFramingCondition.CORRECTIVE, FeedbackTimingCondition.DELAYED) }
         }
 
         val round = gameSessionService.createNextRound(game)
@@ -84,9 +89,12 @@ class GameResearchPersistenceServiceIntegrationTests(
         round.addMessage(ChatMessage.Player(guesser.player.toView(), "wrong"), guess.id)
         round.riskRatings.submitRating(guesser.id, RiskLikelihood.LIKELY, RiskSeverity.MAJOR)
         round.riskRatings.submitRating(guesser.id, RiskLikelihood.RARE, RiskSeverity.MINOR)
+
         val image = byteArrayOf(1, 2, 3)
         round.drawing.record(image, "image/png", DrawingAnalysisResult.Fact("a fact"), Clock.System.now())
         round.drawing.record(image, "image/png", DrawingAnalysisResult.NoFact, Clock.System.now())
+        round.aiUsage.record(AiUsage(AiUsagePurpose.FACT_GENERATION, "test-model", 10, 5, 15), guesser.id)
+        round.aiUsage.record(AiUsage(AiUsagePurpose.DRAWING_ANALYSIS, "test-model", 20, 8, 28))
         round.feedback.record(
             GeneratedFeedback(
                 id = createFeedbackId(),
@@ -101,7 +109,7 @@ class GameResearchPersistenceServiceIntegrationTests(
             ),
         )
 
-        persistenceService.persistRound(round)
+        persistenceService.persistRound(round, abandonedAiCalls = 2)
         persistenceService.markRoundCompleted(round)
         persistenceService.markGameEnded(game, GameEndReason.COMPLETED)
 
@@ -111,6 +119,7 @@ class GameResearchPersistenceServiceIntegrationTests(
             roundRow[ExposedGameRoundTable.roundNumber] shouldBe 1
             roundRow[ExposedGameRoundTable.startedAt].shouldNotBeNull()
             roundRow[ExposedGameRoundTable.finalState] shouldBe RoundStateType.COMPLETED
+            roundRow[ExposedGameRoundTable.abandonedAiCalls] shouldBe 2
 
             ExposedGamePlayerTable
                 .selectAll()
@@ -136,6 +145,13 @@ class GameResearchPersistenceServiceIntegrationTests(
 
             ExposedGameRoundFeedbackTable.selectAll().single()[ExposedGameRoundFeedbackTable.framedText] shouldBe "framed"
             ExposedGameRoundFeedbackGuessTable.selectAll().single()[ExposedGameRoundFeedbackGuessTable.guessId] shouldBe guess.id.value
+
+            val usage = ExposedGameRoundAiUsageTable.selectAll().orderBy(ExposedGameRoundAiUsageTable.seq).toList()
+            usage.map { it[ExposedGameRoundAiUsageTable.usagePurpose] } shouldBe
+                listOf(AiUsagePurpose.FACT_GENERATION, AiUsagePurpose.DRAWING_ANALYSIS)
+            usage.first()[ExposedGameRoundAiUsageTable.playerId] shouldBe guesser.id.value
+            usage.first()[ExposedGameRoundAiUsageTable.totalTokens] shouldBe 15
+            usage.last()[ExposedGameRoundAiUsageTable.playerId] shouldBe null
 
             ExposedGameTable
                 .selectAll()

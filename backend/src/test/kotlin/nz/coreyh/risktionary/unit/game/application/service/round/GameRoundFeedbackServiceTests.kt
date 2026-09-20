@@ -8,6 +8,8 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
+import nz.coreyh.risktionary.ai.domain.AiUsage
+import nz.coreyh.risktionary.ai.domain.AiUsagePurpose
 import nz.coreyh.risktionary.feedback.domain.model.FeedbackFactPayload
 import nz.coreyh.risktionary.feedback.domain.model.FeedbackGenerationMode
 import nz.coreyh.risktionary.feedback.domain.model.FeedbackGenerationResult
@@ -38,6 +40,7 @@ import org.junit.jupiter.api.Test
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 class GameRoundFeedbackServiceTests {
@@ -59,6 +62,7 @@ class GameRoundFeedbackServiceTests {
             framedText = "framed",
             framingCondition = framing,
             generatedAt = Clock.System.now(),
+            usage = listOf(AiUsage(AiUsagePurpose.FACT_GENERATION, "test-model", 10, 5, 15), AiUsage(AiUsagePurpose.FRAMING_REWRITE, "test-model", 4, 3, 7)),
         )
 
     private inner class Scenario(
@@ -269,5 +273,52 @@ class GameRoundFeedbackServiceTests {
 
         verify(exactly = 0) { feedbackService.generate(any(), any()) }
         scenario.round.feedback.getGuessesByPlayer() shouldBe emptyMap()
+    }
+
+    @Test
+    fun `token usage of a generation is recorded on the round against the player`() {
+        val scenario = Scenario(FeedbackTimingCondition.INSTANT)
+        every { feedbackService.generate(any(), any()) } returns success()
+        val latch = publishedLatch()
+
+        service.onGuess(scenario.round, scenario.player, scenario.guess("clinic"), createChatMessageId())
+        latch.awaitPublished()
+
+        val usage = scenario.round.aiUsage.getAll()
+        usage.map { it.usage.purpose } shouldBe listOf(AiUsagePurpose.FACT_GENERATION, AiUsagePurpose.FRAMING_REWRITE)
+        usage.map { it.playerId }.distinct() shouldBe listOf(scenario.player.id)
+    }
+
+    @Test
+    fun `the round waits for a generation that is still running`() {
+        val scenario = Scenario(FeedbackTimingCondition.INSTANT)
+        every { feedbackService.generate(any(), any()) } answers
+            {
+                Thread.sleep(300)
+                success()
+            }
+
+        service.onGuess(scenario.round, scenario.player, scenario.guess("clinic"), createChatMessageId())
+        scenario.round.feedback.awaitPending(5.seconds) shouldBe 0
+
+        scenario.round.feedback.getAll() shouldHaveSize 1
+    }
+
+    @Test
+    fun `a generation that finishes after the round stopped waiting is discarded`() {
+        val scenario = Scenario(FeedbackTimingCondition.INSTANT)
+        every { feedbackService.generate(any(), any()) } answers
+            {
+                Thread.sleep(400)
+                success()
+            }
+
+        service.onGuess(scenario.round, scenario.player, scenario.guess("clinic"), createChatMessageId())
+        scenario.round.feedback.awaitPending(50.milliseconds) shouldBe 1
+        Thread.sleep(800)
+
+        scenario.round.feedback.getAll() shouldBe emptyList()
+        scenario.round.aiUsage.getAll() shouldBe emptyList()
+        verify(exactly = 0) { gameEventPublisher.publishRoundFeedback(any(), any(), any(), any(), any()) }
     }
 }

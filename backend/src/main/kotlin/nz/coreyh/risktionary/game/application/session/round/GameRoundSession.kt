@@ -36,6 +36,7 @@ class GameRoundSession(
     val guesses = GameRoundGuessSession(clock, ::elapsedMsSinceDrawingStarted)
     val riskRatings = GameRoundRiskRatingSession(clock)
     val feedback = GameRoundFeedbackSession()
+    val aiUsage = GameRoundAiUsageSession(clock)
     private val messages: MutableList<RecordedChatMessage> = mutableListOf()
 
     /**

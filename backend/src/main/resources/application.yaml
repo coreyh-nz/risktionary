@@ -57,6 +57,8 @@ app:
   game:
     ticket:
       lifetime: 30m
+    persistence:
+      pending-ai-timeout: 10s
     session:
       cleanup:
         interval: 30s

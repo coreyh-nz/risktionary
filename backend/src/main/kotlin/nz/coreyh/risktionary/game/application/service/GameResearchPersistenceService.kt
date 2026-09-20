@@ -9,6 +9,7 @@ import nz.coreyh.risktionary.game.domain.model.GameEndReason
 import nz.coreyh.risktionary.game.domain.model.round.RoundStateType
 import nz.coreyh.risktionary.game.domain.repository.GamePlayerRepository
 import nz.coreyh.risktionary.game.domain.repository.GameRepository
+import nz.coreyh.risktionary.game.domain.repository.GameRoundAiUsageRepository
 import nz.coreyh.risktionary.game.domain.repository.GameRoundChatMessageRepository
 import nz.coreyh.risktionary.game.domain.repository.GameRoundDrawingAnalysisRepository
 import nz.coreyh.risktionary.game.domain.repository.GameRoundFeedbackRepository
@@ -43,6 +44,7 @@ class GameResearchPersistenceService(
     private val gameRoundRiskRatingRepository: GameRoundRiskRatingRepository,
     private val gameRoundDrawingAnalysisRepository: GameRoundDrawingAnalysisRepository,
     private val gameRoundFeedbackRepository: GameRoundFeedbackRepository,
+    private val gameRoundAiUsageRepository: GameRoundAiUsageRepository,
     private val clock: Clock = Clock.System,
 ) {
     /**
@@ -64,8 +66,13 @@ class GameResearchPersistenceService(
      * Records everything that happened in [round], along with any players in
      * the game not yet recorded (players can join at any time), in a single
      * transaction.
+     *
+     * @param abandonedAiCalls AI calls that were still running and were given up on, recorded on the round.
      */
-    fun persistRound(round: GameRoundSession) {
+    fun persistRound(
+        round: GameRoundSession,
+        abandonedAiCalls: Int = 0,
+    ) {
         val game = round.game
         val drawer = round.requireState<GameRoundState.InProgress>().drawer
 
@@ -91,6 +98,7 @@ class GameResearchPersistenceService(
                 startedAt = round.drawingStartedAt,
                 endedAt = clock.now(),
                 finalState = round.state.type,
+                abandonedAiCalls = abandonedAiCalls,
             )
 
             // guesses must be inserted before the chat messages and feedback that reference them
@@ -99,6 +107,7 @@ class GameResearchPersistenceService(
             gameRoundRiskRatingRepository.insertAll(round.id, round.riskRatings.getRatingHistory())
             gameRoundDrawingAnalysisRepository.insertAll(round.id, round.drawing.history())
             gameRoundFeedbackRepository.insertAll(round.id, round.feedback.getAll())
+            gameRoundAiUsageRepository.insertAll(round.id, round.aiUsage.getAll())
         }
 
         logger.debug { "Persisted round (game=${game.id}, round=${round.id})" }
