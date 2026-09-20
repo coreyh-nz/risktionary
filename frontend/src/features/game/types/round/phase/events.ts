@@ -46,6 +46,10 @@ export type RoundPhaseStateView =
       timer?: TimerView
     }
   | {
+      type: "SAVING"
+      timer?: TimerView
+    }
+  | {
       type: "SCORING"
       timer?: TimerView
     }
@@ -94,6 +98,14 @@ export interface RoundRiskRatingsUpdatedEvent {
   counts: RiskRatingCount[]
 }
 
+export interface RoundFeedbackEvent {
+  type: "FEEDBACK"
+  feedbackId: string
+  messageId: string | null
+  roundNumber: number
+  text: string
+}
+
 export type RoundEvent =
   | RoundStateEvent
   | RoundPhaseStateEvent
@@ -103,3 +115,4 @@ export type RoundEvent =
   | RoundCorrectGuessEvent
   | RoundCorrectGuessesUpdatedEvent
   | RoundRiskRatingsUpdatedEvent
+  | RoundFeedbackEvent

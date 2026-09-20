@@ -1,15 +1,17 @@
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { ChatMessageRow } from "@/features/game/components/round/phase/drawing/chat/message/chat-message-row"
+import { useFeedbackStore } from "@/features/game/stores/selectors/feedback.selectors"
 import { useGameRoundChatMessages } from "@/features/game/stores/game-store-selectors"
 import { useEffect, useRef } from "react"
 
 export const ChatFeed = () => {
   const messages = useGameRoundChatMessages()
+  const { byMessage } = useFeedbackStore()
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [messages])
+  }, [messages, byMessage])
 
   return (
     <ScrollArea className="h-full">

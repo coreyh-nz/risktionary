@@ -3,6 +3,7 @@ import { StateCreator } from "zustand"
 
 export interface SessionSlice {
   session: UserSession | null
+  feedbackEnabled: boolean
 
   setHost: (gameId: string, gameCode: string) => void
   setPlayer: (
@@ -10,7 +11,8 @@ export interface SessionSlice {
     gameCode: string,
     ticket: string,
     playerId: string,
-    displayName: string
+    displayName: string,
+    feedbackEnabled: boolean
   ) => void
   clearSession: () => void
 
@@ -24,10 +26,21 @@ export const createSessionSlice: StateCreator<
   SessionSlice
 > = (set) => ({
   session: null,
+  feedbackEnabled: false,
 
   setHost: (gameId, gameCode) =>
-    set({ session: { role: "host", gameId, gameCode } }),
-  setPlayer: (gameId, gameCode, ticket, playerId, displayName) =>
+    set({
+      session: { role: "host", gameId, gameCode },
+      feedbackEnabled: false,
+    }),
+  setPlayer: (
+    gameId,
+    gameCode,
+    ticket,
+    playerId,
+    displayName,
+    feedbackEnabled
+  ) =>
     set({
       session: {
         role: "player",
@@ -37,8 +50,9 @@ export const createSessionSlice: StateCreator<
         playerId,
         displayName,
       },
+      feedbackEnabled,
     }),
   clearSession: () => set({ session: null }),
 
-  resetSession: () => set({ session: null }),
+  resetSession: () => set({ session: null, feedbackEnabled: false }),
 })

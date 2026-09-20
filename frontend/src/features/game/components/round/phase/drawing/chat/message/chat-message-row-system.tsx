@@ -1,3 +1,4 @@
+import { FeedbackThread } from "@/features/game/components/feedback/feedback-thread"
 import { useGameIsPlayerMe } from "@/features/game/stores/game-store-selectors"
 import { SystemMessage } from "@/features/game/types/round/phase/drawing/chat"
 import { assertNever } from "@/lib/utils"
@@ -57,7 +58,12 @@ export const SystemChatMessageRow = ({
     case "DRAWER_SELECTED":
       return <DrawerSelectedRow player={message.player} />
     case "PLAYER_GUESSED_CORRECTLY":
-      return <PlayerGuessedCorrectlyRow player={message.player} />
+      return (
+        <PlayerGuessedCorrectlyRow
+          messageId={message.id}
+          player={message.player}
+        />
+      )
     case "DRAWING_ENDED_ALL_GUESSED":
       return (
         <SystemMessageRow
@@ -107,16 +113,21 @@ const DrawerSelectedRow = ({
 }
 
 const PlayerGuessedCorrectlyRow = ({
+  messageId,
   player,
 }: {
+  messageId: string
   player: Extract<SystemMessage, { kind: "DRAWER_SELECTED" }>["player"]
 }) => {
   const isMe = useGameIsPlayerMe(player.id)
   return (
-    <SystemMessageRow
-      icon={CheckCircle2}
-      text={`${isMe ? "You" : player.displayName} guessed correctly!`}
-      tone="success"
-    />
+    <>
+      <SystemMessageRow
+        icon={CheckCircle2}
+        text={`${isMe ? "You" : player.displayName} guessed correctly!`}
+        tone="success"
+      />
+      {isMe && <FeedbackThread messageId={messageId} />}
+    </>
   )
 }

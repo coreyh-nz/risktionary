@@ -6,6 +6,7 @@ import {
   ListOrdered,
   LucideIcon,
   Pencil,
+  Save,
   SkipForward,
   Trophy,
 } from "lucide-react"
@@ -26,6 +27,7 @@ const ROUND_PHASE_META: Record<
   RANKING: { label: "Ranking", icon: ListOrdered },
   RANKING_REVIEW: { label: "Ranking Review", icon: CheckCheck },
   WORD_REVIEW: { label: "Word Review", icon: BookOpen },
+  SAVING: { label: "Saving", icon: Save },
   SCORING: { label: "Scoring", icon: Trophy },
   COMPLETED: { label: "Completed", icon: Trophy },
 }
