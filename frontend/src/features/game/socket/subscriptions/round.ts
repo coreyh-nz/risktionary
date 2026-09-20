@@ -9,6 +9,7 @@ import {
   RoundCorrectGuessesUpdatedEvent,
   RoundCorrectGuessEvent,
   RoundEvent,
+  RoundFeedbackEvent,
   RoundPhaseStateEvent,
   RoundRiskRatingsUpdatedEvent,
   RoundStateEvent,
@@ -45,6 +46,9 @@ const handleRoundEvent = (event: RoundEvent) => {
       break
     case "RISK_RATINGS_UPDATED":
       handleRiskRatingsUpdatedEvent(event)
+      break
+    case "FEEDBACK":
+      handleFeedbackEvent(event)
       break
     default:
       assertNever(type)
@@ -92,7 +96,35 @@ const handleAssignedDrawerEvent = (event: RoundAssignedDrawerEvent) => {
 }
 
 const handleChatMessageEvent = (event: RoundChatMessageEvent) => {
-  useGameStore.getState().addRoundChatMessage(event.message)
+  const state = useGameStore.getState()
+  const message = event.message
+  state.addRoundChatMessage(message)
+
+  // remember our own guesses so feedback can be shown against them later
+  const session = state.session
+  if (!state.feedbackEnabled || session?.role !== "player") return
+  const roundNumber = state.round?.number ?? 0
+  if (message.type === "PLAYER" && message.player.id === session.playerId) {
+    state.addFeedbackGuess({ id: message.id, roundNumber, text: message.text })
+  } else if (
+    message.type === "SYSTEM" &&
+    message.kind === "PLAYER_GUESSED_CORRECTLY" &&
+    message.player.id === session.playerId
+  ) {
+    state.addFeedbackGuess({ id: message.id, roundNumber, text: null })
+  }
+}
+
+const handleFeedbackEvent = (event: RoundFeedbackEvent) => {
+  const state = useGameStore.getState()
+  if (!state.feedbackEnabled) return
+  state.addFeedback({
+    id: event.feedbackId,
+    messageId: event.messageId,
+    roundNumber: event.roundNumber,
+    text: event.text,
+    receivedAt: Date.now(),
+  })
 }
 
 const handleCorrectGuessEvent = (event: RoundCorrectGuessEvent) => {

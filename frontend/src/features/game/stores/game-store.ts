@@ -1,17 +1,31 @@
-import { createPlayersSlice, PlayersSlice, } from "@/features/game/stores/slices/players.slice"
-import { createSessionSlice, SessionSlice, } from "@/features/game/stores/slices/session.slice"
-import { createGamePhaseSlice, GameStateSlice, } from "@/features/game/stores/slices/state.slice"
+import {
+  createPlayersSlice,
+  PlayersSlice,
+} from "@/features/game/stores/slices/players.slice"
+import {
+  createSessionSlice,
+  SessionSlice,
+} from "@/features/game/stores/slices/session.slice"
+import {
+  createGamePhaseSlice,
+  GameStateSlice,
+} from "@/features/game/stores/slices/state.slice"
 import { config } from "@/lib/config"
 import { create, StateCreator } from "zustand"
 import { createJSONStorage, persist } from "zustand/middleware"
+import { createFeedbackSlice, FeedbackSlice } from "./slices/feedback.slice"
 import { createRoundSlice, RoundSlice } from "./slices/round.slice"
-import { createVolunteersSlice, VolunteersSlice, } from "./slices/volunteers.slice"
+import {
+  createVolunteersSlice,
+  VolunteersSlice,
+} from "./slices/volunteers.slice"
 
 type GameStore = SessionSlice &
   GameStateSlice &
   PlayersSlice &
   VolunteersSlice &
-  RoundSlice & {
+  RoundSlice &
+  FeedbackSlice & {
     reset: () => void
   }
 
@@ -23,6 +37,7 @@ const storeDefinition: StateCreator<GameStore> = (...args) => {
     ...createPlayersSlice(...args),
     ...createVolunteersSlice(...args),
     ...createRoundSlice(...args),
+    ...createFeedbackSlice(...args),
 
     reset: () => {
       get().resetState()
@@ -30,6 +45,7 @@ const storeDefinition: StateCreator<GameStore> = (...args) => {
       get().resetPlayers()
       get().resetVolunteers()
       get().resetRound()
+      get().resetFeedback()
     },
   }
 }
@@ -41,6 +57,7 @@ export const useGameStore = config.persistGameSession
         storage: createJSONStorage(() => sessionStorage),
         partialize: (state) => ({
           session: state.session,
+          feedbackEnabled: state.feedbackEnabled,
         }),
       })
     )

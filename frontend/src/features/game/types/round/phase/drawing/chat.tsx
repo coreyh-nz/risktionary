@@ -1,6 +1,7 @@
 import { GameSessionPlayer } from "@/features/game/types/game"
 
 export type PlayerMessage = {
+  id: string
   type: "PLAYER"
   player: GameSessionPlayer
   text: string
@@ -15,6 +16,7 @@ export type DrawerSelectedSystemMessage = {
 export type PlayerGuessCorrectlySystemMessage = {
   type: "SYSTEM"
   kind: "PLAYER_GUESSED_CORRECTLY"
+  id: string
   player: GameSessionPlayer
 }
 

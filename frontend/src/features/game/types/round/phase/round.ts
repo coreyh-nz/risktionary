@@ -41,6 +41,10 @@ export type RoundPhase =
       countdown?: CountdownState
     }
   | {
+      type: "SAVING"
+      countdown?: CountdownState
+    }
+  | {
       type: "SCORING"
       countdown?: CountdownState
     }

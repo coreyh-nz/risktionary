@@ -1,4 +1,5 @@
 import { CenteredLayout } from "@/components/layout/centered-layout"
+import { FeedbackHistory } from "@/features/game/components/feedback/feedback-history"
 import { GAME_STATE_COMPONENTS } from "@/features/game/components/game-state-registry"
 import ConnectingScreen from "@/features/game/components/lobby/connecting-screen"
 import { useGameConnection } from "@/features/game/hooks/connection/use-game-connection"
@@ -17,5 +18,10 @@ export const GameScreen = () => {
   }
 
   const GameStateComponent = GAME_STATE_COMPONENTS[stateType]
-  return <GameStateComponent />
+  return (
+    <>
+      <GameStateComponent />
+      <FeedbackHistory />
+    </>
+  )
 }

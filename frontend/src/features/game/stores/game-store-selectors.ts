@@ -50,5 +50,8 @@ export const useGameRoundRole = () =>
 export const useGameRoundChatMessages = () =>
   useGameStore(useShallow((s) => s.roundChatMessages))
 
+export const useGameFeedbackEnabled = () =>
+  useGameStore((s) => s.feedbackEnabled)
+
 export const useGameRoundCorrectGuessesCount = () =>
   useGameStore((s) => s.roundCorrectGuessesCount)

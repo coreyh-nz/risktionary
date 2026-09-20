@@ -1,6 +1,7 @@
 import { PhaseCompletedScreen } from "@/features/game/components/round/phase/completed/phase-completed-screen"
 import { PhaseDrawingScreen } from "@/features/game/components/round/phase/drawing/phase-drawing-screen"
 import { PhaseRiskRatingScreen } from "@/features/game/components/round/phase/rating/phase-risk-rating-screen"
+import { PhaseSavingScreen } from "@/features/game/components/round/phase/saving/phase-saving-screen"
 import { PhaseScoringScreen } from "@/features/game/components/round/phase/scoring/phase-scoring-screen"
 import { PhaseWordReviewScreen } from "@/features/game/components/round/phase/word-review/phase-word-review-screen"
 import { RoundPhaseType } from "@/features/game/types/round/phase/round"
@@ -12,6 +13,7 @@ export const PHASE_COMPONENTS: Record<RoundPhaseType, ComponentType> = {
   RANKING: PhaseRiskRatingScreen,
   RANKING_REVIEW: PhaseRiskRatingScreen,
   WORD_REVIEW: PhaseWordReviewScreen,
+  SAVING: PhaseSavingScreen,
   SCORING: PhaseScoringScreen,
   COMPLETED: PhaseCompletedScreen,
 }

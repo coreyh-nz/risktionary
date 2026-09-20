@@ -51,9 +51,17 @@ export const JoinGameForm = () => {
     const ticket = response.data.ticket
     const playerId = response.data.playerId
     const displayName = response.data.displayName
+    const feedbackEnabled = response.data.feedbackEnabled
 
     reset()
-    setPlayer(session.id, session.code, ticket, playerId, displayName)
+    setPlayer(
+      session.id,
+      session.code,
+      ticket,
+      playerId,
+      displayName,
+      feedbackEnabled
+    )
     setState(session.state)
     router.push(ROUTES.GAME.PLAY)
   }

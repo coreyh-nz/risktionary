@@ -12,6 +12,7 @@ interface JoinGameResponse {
   ticket: string
   playerId: string
   displayName: string
+  feedbackEnabled: boolean
 }
 
 export const useJoinGame = () => {

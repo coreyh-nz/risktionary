@@ -1,7 +1,7 @@
 import * as yup from "yup"
 import { RoundPhaseType } from "../../types/round/phase/round"
 
-export type ConfigurableTimerPhase = Exclude<RoundPhaseType, "COMPLETED">
+export type ConfigurableTimerPhase = Exclude<RoundPhaseType, "COMPLETED" | "SAVING">
 export type FeedbackType = "NONE" | "AI"
 export type FeedbackAllocationMode = "BALANCED_RANDOM" | "FIXED"
 export type FeedbackTiming = "DELAYED" | "INSTANT"
