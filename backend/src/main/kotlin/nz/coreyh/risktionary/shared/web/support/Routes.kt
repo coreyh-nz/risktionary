@@ -24,6 +24,8 @@ object Routes {
             const val CREATE = "$BASE/create"
             const val JOIN = "$BASE/join"
             const val SOCKET = "/ws"
+
+            const val CURRENT_ROUND_WORD = "$BASE/{gameId}/round/word"
         }
 
         object Words {
