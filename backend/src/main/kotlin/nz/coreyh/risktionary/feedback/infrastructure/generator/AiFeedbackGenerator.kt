@@ -10,6 +10,7 @@ import nz.coreyh.risktionary.feedback.domain.model.FeedbackFactPayload
 import nz.coreyh.risktionary.feedback.domain.model.FeedbackGenerationResult
 import nz.coreyh.risktionary.feedback.domain.model.FeedbackGenerationStatus
 import nz.coreyh.risktionary.feedback.domain.model.condition.FeedbackFramingCondition
+import nz.coreyh.risktionary.feedback.domain.model.condition.FeedbackTimingCondition
 import nz.coreyh.risktionary.feedback.domain.service.FeedbackGenerator
 import nz.coreyh.risktionary.feedback.infrastructure.prompt.FeedbackPromptTemplates
 import org.springframework.ai.chat.model.ChatModel
@@ -46,7 +47,7 @@ class AiFeedbackGenerator(
         val fact = factResponse.data
         logger.debug { "Generated feedback fact for ${payload.guesses.size} guess(es): \"$fact\". Cost: ${factResponse.costToString()}" }
 
-        val framingRewriteResponse = generateFramingRewrite(fact, framingCondition)
+        val framingRewriteResponse = generateFramingRewrite(fact, framingCondition, payload.timing)
         if (framingRewriteResponse !is AiResponse.Success) {
             logger.warn { "Could not generate a feedback fact frame rewrite." }
             return result(FeedbackGenerationStatus.FRAMING_FAILED, fact, null, framingCondition, usage)
@@ -82,12 +83,13 @@ class AiFeedbackGenerator(
             chatModel = chatModel,
             messages =
                 listOf(
-                    feedbackPromptTemplates.factGenerationSystem(),
+                    feedbackPromptTemplates.factGenerationSystem(payload.timing),
                     feedbackPromptTemplates.factGenerationUser(
                         guesses = payload.guesses,
                         correctAnswer = word.value,
                         synonyms = word.synonyms,
                         description = word.descriptionText,
+                        timing = payload.timing,
                     ),
                 ),
             options = feedbackFactGenerationChatOptions,
@@ -98,12 +100,13 @@ class AiFeedbackGenerator(
     private fun generateFramingRewrite(
         fact: String,
         condition: FeedbackFramingCondition,
+        timing: FeedbackTimingCondition,
     ): AiResponse<String> =
         aiChatService.send(
             chatModel = chatModel,
             messages =
                 listOf(
-                    feedbackPromptTemplates.framingRewriteSystem(condition),
+                    feedbackPromptTemplates.framingRewriteSystem(condition, timing),
                     feedbackPromptTemplates.framingRewriteUser(fact),
                 ),
             options = feedbackFactFramingRewriteChatOptions,

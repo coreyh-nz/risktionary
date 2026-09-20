@@ -115,6 +115,7 @@ class GameRoundFeedbackService(
                                 guesses = guesses,
                                 word = round.word,
                                 condition = assignment.framingCondition,
+                                timing = assignment.timingCondition,
                             ),
                     )
                 },

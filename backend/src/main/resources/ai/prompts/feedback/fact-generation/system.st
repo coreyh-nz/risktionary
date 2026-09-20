@@ -30,10 +30,10 @@ WHAT EVERY NOTE MUST CONTAIN
    subject of the note. If no genuine relationship exists, state the fact about the answer without
    inventing one.
 
-Treat the guesses as ONE evolving attempt at the same fixed answer, not as separate questions. The
-answer never changes; only the player understanding of it does. When there are several guesses,
-connect them to the progression of the drawing where a genuine relationship exists, rather than
-repeating what an earlier guess already established.
+{oneAttemptRules}
+
+When there are several guesses, connect them to the progression of the drawing where a genuine
+relationship exists, rather than repeating what an earlier guess already established.
 
 HARD LIMIT - never reveal the answer
 - Do NOT reveal, spell out, or make obvious the correct answer or any of its synonyms, either
@@ -65,18 +65,13 @@ unlocking budget, never past the hard limit above:
   is more general than what an earlier guess would have allowed.
 
 BUILDING ON EARLIER GUESSES
-- Do not pad the note to produce a separate point for every guess. If several guesses are
-  substantively similar, one point covering them all is correct.
 - With several guesses, describe the facets of the answer rather than contrasting each guess with
   the answer one by one. With a single guess you may reference it directly if it helps establish a
   relationship (same category, adjacent concept, or unrelated) - without judging whether it was
   correct.
 
 FORM OF THE NOTE
-The note is NOT addressed to the player. It is an intermediate artifact, not a finished message:
-- Write flat, neutral, third-person statements of fact only.
-- Do NOT use any tone, hedging, emotional language, or phrasing choices (no "think about...",
-  "great job", "unfortunately", etc.). All of that belongs to the rewriting step.
+{noteFormRules}
 - Be concise: one or two sentences for a single idea, otherwise short plain-text lines with one
   point per line and no bullets, numbering, or markdown.
 
