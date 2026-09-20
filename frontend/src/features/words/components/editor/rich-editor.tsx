@@ -5,19 +5,9 @@ import { Separator } from "@/components/ui/separator"
 import { Toggle } from "@/components/ui/toggle"
 import { cn } from "cn"
 
-import Blockquote from "@tiptap/extension-blockquote"
-import Bold from "@tiptap/extension-bold"
-import BulletList from "@tiptap/extension-bullet-list"
-import Document from "@tiptap/extension-document"
-import Heading from "@tiptap/extension-heading"
+import { sharedExtensions } from "@/lib/tiptap/extensions"
 import History from "@tiptap/extension-history"
-import Image from "@tiptap/extension-image"
-import Italic from "@tiptap/extension-italic"
-import ListItem from "@tiptap/extension-list-item"
-import OrderedList from "@tiptap/extension-ordered-list"
-import Paragraph from "@tiptap/extension-paragraph"
 import Placeholder from "@tiptap/extension-placeholder"
-import Text from "@tiptap/extension-text"
 import { Editor, EditorContent, useEditor, useEditorState } from "@tiptap/react"
 import {
   Bold as BoldIcon,
@@ -50,17 +40,7 @@ export function RichEditor({
 }: RichEditorProps) {
   const editor = useEditor({
     extensions: [
-      Document,
-      Paragraph,
-      Text,
-      Bold,
-      Italic,
-      Heading.configure({ levels: [1, 2, 3] }),
-      BulletList,
-      OrderedList,
-      ListItem,
-      Blockquote,
-      Image,
+      ...sharedExtensions,
       History,
       Placeholder.configure({ placeholder }),
     ],

@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { ApiError } from "@/lib/api/errors"
 import { apiRequest, ApiResponse } from "@/lib/api/request"
 
@@ -19,13 +19,18 @@ export const useApi = <TResult, TBody = unknown>(
 ): UseApiReturn<TResult, TBody> => {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<ApiError | null>(null)
+  const optionsRef = useRef(defaultOptions)
+
+  useEffect(() => {
+    optionsRef.current = defaultOptions
+  }, [defaultOptions])
 
   const request = useCallback(
     async (callOptions?: UseApiOptions<TBody>) => {
       setIsLoading(true)
       setError(null)
 
-      const merged = { ...defaultOptions, ...callOptions }
+      const merged = { ...optionsRef.current, ...callOptions }
       const res = await apiRequest<TResult, TBody>(url, merged)
 
       setIsLoading(false)
@@ -36,7 +41,7 @@ export const useApi = <TResult, TBody = unknown>(
 
       return res
     },
-    [url, defaultOptions]
+    [url]
   )
 
   return {
