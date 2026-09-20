@@ -1,2 +1,31 @@
 jwt:
   secret: "${random.base64(64)}"
+
+# Placeholder values for everything application.yaml reads from the environment, so the full
+# context loads in tests without any env vars. No real AI or OAuth calls are made in tests.
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: test-google-client-id
+            client-secret: test-google-client-secret
+          microsoft:
+            client-id: test-microsoft-client-id
+            client-secret: test-microsoft-client-secret
+  ai:
+    openai:
+      api-key: test-openai-api-key
+      base-url: http://localhost:0
+
+app:
+  feedback:
+    ai:
+      use-cases:
+        image-analysis:
+          model: test-model
+        fact-generation:
+          model: test-model
+        fact-framing-rewrite:
+          model: test-model

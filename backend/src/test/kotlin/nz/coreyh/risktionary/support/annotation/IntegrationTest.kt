@@ -1,7 +1,9 @@
 package nz.coreyh.risktionary.support.annotation
 
+import nz.coreyh.risktionary.support.config.TestAiConfiguration
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
+import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.TestConstructor
 
@@ -9,6 +11,7 @@ import org.springframework.test.context.TestConstructor
 @Retention(AnnotationRetention.RUNTIME)
 @AutoConfigureMockMvc
 @SpringBootTest
+@Import(TestAiConfiguration::class)
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 @ActiveProfiles("test", "h2")
 annotation class IntegrationTest
