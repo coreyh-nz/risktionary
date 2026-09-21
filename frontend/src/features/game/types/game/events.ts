@@ -1,3 +1,4 @@
+import { StandingEntry } from "./scoring"
 import { TimerView } from "@/types/time"
 import { GameSessionPlayer } from "."
 import { RoundView } from "../round/phase/events"
@@ -16,6 +17,7 @@ export type GameStateView =
     }
   | {
       type: "COMPLETED"
+      standings?: StandingEntry[]
     }
 
 export interface GameStateEvent {

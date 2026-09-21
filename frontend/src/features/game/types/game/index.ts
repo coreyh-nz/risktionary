@@ -1,3 +1,4 @@
+import { StandingEntry } from "@/features/game/types/game/scoring"
 import { CountdownState } from "@/types/time"
 
 export type GameState =
@@ -5,7 +6,7 @@ export type GameState =
   | { type: "LOBBY" }
   | { type: "STARTING"; countdown: CountdownState }
   | { type: "IN_PROGRESS" }
-  | { type: "COMPLETED" }
+  | { type: "COMPLETED"; standings?: StandingEntry[] }
 
 export type GameStateType = GameState["type"]
 

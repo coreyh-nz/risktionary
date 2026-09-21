@@ -17,8 +17,9 @@ export const mapGameStateViewToGameState = (
       }
     case "LOBBY":
     case "IN_PROGRESS":
-    case "COMPLETED":
       return { type: stateView.type }
+    case "COMPLETED":
+      return { type: "COMPLETED", standings: stateView.standings }
     default:
       assertNever(type)
   }
@@ -34,6 +35,14 @@ export const mapRoundViewToRound = (roundView: RoundView): Round => {
 export const mapRoundStateViewToRoundState = (
   stateView: RoundStateView
 ): RoundState => {
+  // phases carry timers that need converting to countdowns, including when
+  // the state comes from a resync
+  if (stateView.type === "IN_PROGRESS") {
+    return {
+      ...stateView,
+      phase: mapRoundPhaseStateViewToRoundPhaseState(stateView.phase),
+    }
+  }
   return stateView
 }
 
