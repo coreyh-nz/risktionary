@@ -11,13 +11,14 @@ import { useEffect } from "react"
 import { useGameSession } from "../../../../stores/game-store-selectors"
 
 export const useDrawingEvents = () => {
-  const { subscribe } = useWebSocket()
+  const { subscribe, connected } = useWebSocket()
   const session = useGameSession()
   const { user } = useAuth()
   const gameId = session?.gameId
 
   useEffect(() => {
-    if (!session) return
+    // re-runs on every (re)connect: subscriptions die with the connection
+    if (!session || !connected) return
 
     const subscription = subscribe(
       `/topic/game/${gameId}/draw`,
@@ -49,6 +50,12 @@ export const useDrawingEvents = () => {
       })
     )
 
-    return () => subscription && subscription.unsubscribe()
-  }, [subscribe, gameId, session, user])
+    return () => {
+      try {
+        subscription?.unsubscribe()
+      } catch {
+        // connection already closed; the subscription went with it
+      }
+    }
+  }, [subscribe, connected, gameId, session, user])
 }

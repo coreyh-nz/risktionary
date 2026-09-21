@@ -1,4 +1,9 @@
-import { Client, IMessage, StompSubscription } from "@stomp/stompjs"
+import {
+  Client,
+  IMessage,
+  ReconnectionTimeMode,
+  StompSubscription,
+} from "@stomp/stompjs"
 import {
   createContext,
   PropsWithChildren,
@@ -9,6 +14,10 @@ import {
 } from "react"
 
 const MAX_RETRIES = 5
+
+// must match the server's negotiated heartbeat; 0 would stop the server
+// heartbeating us and let idle sockets be closed by proxies.
+const HEARTBEAT_MS = 10000
 
 export interface WebSocketError {
   code: string
@@ -94,9 +103,15 @@ export const WebSocketProvider = ({ children }: PropsWithChildren) => {
       const stompClient = new Client({
         brokerURL: url,
         reconnectDelay: 1000,
+        reconnectTimeMode: ReconnectionTimeMode.EXPONENTIAL,
+        maxReconnectDelay: 10000,
+        heartbeatIncoming: HEARTBEAT_MS,
+        heartbeatOutgoing: HEARTBEAT_MS,
         splitLargeFrames: true,
 
         onConnect: () => {
+          // a successful connection means earlier failures were transient.
+          attemptsRef.current = 0
           dispatch({ type: "CONNECTED" })
           onConnect(stompClient)
         },
