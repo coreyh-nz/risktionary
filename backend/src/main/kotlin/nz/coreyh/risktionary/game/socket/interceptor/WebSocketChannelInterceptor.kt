@@ -79,7 +79,8 @@ class WebSocketChannelInterceptor : ChannelInterceptor {
                     accessor.destination
                         ?: run {
                             kLogger.debug {
-                                "Rejecting subscription: missing destination (sessionId=${accessor.sessionId})"
+                                "Rejecting subscription: missing destination (sessionId=${accessor.sessionId}, " +
+                                    "user=${principal.name}, headers=${accessor.toNativeHeaderMap()})"
                             }
                             throw MessageDeliveryException("Unauthorized subscription destination")
                         }
