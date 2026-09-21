@@ -63,6 +63,32 @@ class FeedbackPromptTemplatesTests {
         text shouldNotContain "time_remaining"
     }
 
+    private fun delayedUser(guessedCorrectly: Boolean) =
+        templates
+            .factGenerationUser(listOf(guess("cable")), "trip hazard", emptyList(), "desc", FeedbackTimingCondition.DELAYED, guessedCorrectly)
+            .text!!
+
+    @Test
+    fun `delayed user prompt says the player went on to guess the answer when they did`() {
+        val text = delayedUser(guessedCorrectly = true)
+
+        text shouldContain "round_outcome: the player went on to guess the correct answer"
+        text shouldNotContain "did not guess"
+    }
+
+    @Test
+    fun `delayed user prompt says the player never got there when they did not`() {
+        val text = delayedUser(guessedCorrectly = false)
+
+        text shouldContain "round_outcome: the player did not guess the correct answer before the round ended"
+        text shouldNotContain "went on to guess"
+    }
+
+    @Test
+    fun `instant user prompt does not include a round outcome`() {
+        user(listOf(guess("cable"))) shouldNotContain "round_outcome"
+    }
+
     @Test
     fun `fact generation user prompt leaves no placeholders unfilled`() {
         FeedbackTimingCondition.entries.forEach { timing ->
@@ -92,6 +118,7 @@ class FeedbackPromptTemplatesTests {
         text shouldContain "the guesses that progress"
         text shouldContain "3 to 5 sentences"
         text shouldContain "reading strategy"
+        text shouldContain "round_outcome"
         text shouldNotContain "HARD LIMIT"
         text shouldNotContain "TIME-AWARE SPECIFICITY"
     }

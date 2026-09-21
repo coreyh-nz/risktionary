@@ -77,7 +77,7 @@ class GameRoundFeedbackService(
             )
 
         if (assignment.timingCondition == FeedbackTimingCondition.INSTANT) {
-            generate(round, mode, player.id, assignment, guessesSoFar, messageId)
+            generate(round, mode, player.id, assignment, guessesSoFar, messageId, guessedCorrectly = false)
         }
     }
 
@@ -93,7 +93,15 @@ class GameRoundFeedbackService(
         round.feedback.getGuessesByPlayer().forEach { (playerId, guesses) ->
             val assignment = game.feedback.findAssignmentFor(playerId) ?: return@forEach
             if (assignment.timingCondition == FeedbackTimingCondition.DELAYED) {
-                generate(round, mode, playerId, assignment, guesses, messageId = null)
+                generate(
+                    round,
+                    mode,
+                    playerId,
+                    assignment,
+                    guesses,
+                    messageId = null,
+                    guessedCorrectly = round.guesses.hasGuessedCorrectly(playerId),
+                )
             }
         }
     }
@@ -105,6 +113,7 @@ class GameRoundFeedbackService(
         assignment: GamePlayerFeedbackAssignment,
         guesses: List<FeedbackGuessContext>,
         messageId: ChatMessageId?,
+        guessedCorrectly: Boolean,
     ) {
         val job =
             round.game.feedback.feedbackDispatcher.launch(
@@ -117,6 +126,7 @@ class GameRoundFeedbackService(
                                 word = round.word,
                                 condition = assignment.framingCondition,
                                 timing = assignment.timingCondition,
+                                guessedCorrectly = guessedCorrectly,
                             ),
                     )
                 },

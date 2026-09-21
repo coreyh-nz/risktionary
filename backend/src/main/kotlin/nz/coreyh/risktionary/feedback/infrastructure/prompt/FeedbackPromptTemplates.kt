@@ -60,6 +60,7 @@ class FeedbackPromptTemplates(
         synonyms: List<String>,
         description: String,
         timing: FeedbackTimingCondition,
+        guessedCorrectly: Boolean = false,
     ): Message =
         promptTemplateLoader.userMessage(
             factGenerationUserResource,
@@ -68,6 +69,7 @@ class FeedbackPromptTemplates(
                 "synonyms" to synonyms.joinToString(separator = ","),
                 "description" to description,
                 "guesses" to formatGuesses(guesses, includeTimeRemaining = timing == FeedbackTimingCondition.INSTANT),
+                "outcome" to formatOutcome(timing, guessedCorrectly),
             ),
         )
 
@@ -91,6 +93,20 @@ class FeedbackPromptTemplates(
         word: String,
         media: Media,
     ): Message = promptTemplateLoader.userMediaMessage(drawingAnalysisUserResource, media, mapOf("word" to word))
+
+    /**
+     * Whether the player reached the answer. Only stated for delayed feedback: instant
+     * feedback is generated mid-round, when the player has by definition not got it yet.
+     */
+    private fun formatOutcome(
+        timing: FeedbackTimingCondition,
+        guessedCorrectly: Boolean,
+    ): String =
+        when {
+            timing != FeedbackTimingCondition.DELAYED -> ""
+            guessedCorrectly -> "round_outcome: the player went on to guess the correct answer after the guesses listed above"
+            else -> "round_outcome: the player did not guess the correct answer before the round ended"
+        }
 
     private fun formatGuesses(
         guesses: List<FeedbackGuessContext>,

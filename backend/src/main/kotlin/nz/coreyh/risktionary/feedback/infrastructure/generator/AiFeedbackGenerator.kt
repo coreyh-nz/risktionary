@@ -90,6 +90,7 @@ class AiFeedbackGenerator(
                         synonyms = word.synonyms,
                         description = word.descriptionText,
                         timing = payload.timing,
+                        guessedCorrectly = payload.guessedCorrectly,
                     ),
                 ),
             options = feedbackFactGenerationChatOptions,
