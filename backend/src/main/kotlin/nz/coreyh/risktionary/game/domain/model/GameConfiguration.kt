@@ -2,6 +2,7 @@ package nz.coreyh.risktionary.game.domain.model
 
 import nz.coreyh.risktionary.feedback.domain.model.FeedbackGenerationMode
 import nz.coreyh.risktionary.game.domain.model.round.phase.RoundPhaseType
+import nz.coreyh.risktionary.game.domain.model.scoring.ScoringConfiguration
 import nz.coreyh.risktionary.words.domain.model.Word
 import kotlin.time.Duration
 
@@ -29,6 +30,10 @@ data class GameConfiguration(
      * Controls how feedback is generated during the game.
      */
     val feedbackGenerationMode: FeedbackGenerationMode,
+    /**
+     * How points are awarded for correct guesses.
+     */
+    val scoring: ScoringConfiguration,
 ) {
     val feedbackGenerationEnabled = feedbackGenerationMode != FeedbackGenerationMode.NONE
 }

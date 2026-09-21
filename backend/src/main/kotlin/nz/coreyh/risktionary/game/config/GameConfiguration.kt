@@ -1,5 +1,6 @@
 package nz.coreyh.risktionary.game.config
 
+import nz.coreyh.risktionary.game.domain.model.scoring.ScoringConfiguration
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Configuration
@@ -11,6 +12,7 @@ import kotlin.time.toKotlinDuration
     TicketProperties::class,
     GameSessionCleanupProperties::class,
     GameResearchPersistenceProperties::class,
+    GameScoringProperties::class,
 )
 class GameConfiguration
 
@@ -38,4 +40,15 @@ class GameResearchPersistenceProperties(
 ) {
     /** How long a round waits for in-flight AI calls to finish before it is saved. */
     val pendingAiTimeout = pendingAiTimeout.toKotlinDuration()
+}
+
+@ConfigurationProperties(prefix = "app.game.scoring")
+class GameScoringProperties(
+    val maxPoints: Int,
+    val minPoints: Int,
+    untimedReferenceWindow: Duration,
+) {
+    val untimedReferenceWindow = untimedReferenceWindow.toKotlinDuration()
+
+    fun toConfiguration() = ScoringConfiguration(maxPoints, minPoints, untimedReferenceWindow)
 }

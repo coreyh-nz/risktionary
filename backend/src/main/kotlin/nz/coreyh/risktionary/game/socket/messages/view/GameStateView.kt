@@ -24,7 +24,9 @@ sealed interface GameStateView {
         override val type: GameStateType = GameStateType.IN_PROGRESS
     }
 
-    data object Completed : GameStateView {
+    data class Completed(
+        val standings: List<StandingView>,
+    ) : GameStateView {
         override val type: GameStateType = GameStateType.COMPLETED
     }
 }
@@ -44,6 +46,6 @@ fun GameSession.toStateView(clock: Clock = Clock.System): GameStateView =
         }
 
         is GameState.Completed -> {
-            GameStateView.Completed
+            GameStateView.Completed(standings = toStandingsView())
         }
     }

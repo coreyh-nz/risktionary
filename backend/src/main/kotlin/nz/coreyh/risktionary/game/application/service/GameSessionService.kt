@@ -16,6 +16,7 @@ import nz.coreyh.risktionary.game.application.session.round.GameRoundSession
 import nz.coreyh.risktionary.game.application.session.round.GameRoundState
 import nz.coreyh.risktionary.game.application.session.round.requireInProgressPhase
 import nz.coreyh.risktionary.game.application.store.GameSessionStore
+import nz.coreyh.risktionary.game.config.GameScoringProperties
 import nz.coreyh.risktionary.game.domain.model.GameConfiguration
 import nz.coreyh.risktionary.game.domain.model.GameId
 import nz.coreyh.risktionary.game.domain.model.TimeWindow
@@ -48,6 +49,7 @@ class GameSessionService(
     private val gameRoundDrawingAnalysisService: GameRoundDrawingAnalysisService,
     private val gameSessionFeedbackAssignmentService: GameSessionFeedbackAssignmentService,
     private val gameResearchPersistenceService: GameResearchPersistenceService,
+    private val gameScoringProperties: GameScoringProperties,
     private val gameStateOrchestrator: GameStateOrchestrator,
     private val gameSessionStore: GameSessionStore,
     private val gameEventPublisher: GameEventPublisher,
@@ -67,6 +69,7 @@ class GameSessionService(
                 phaseDurations = command.phaseDurations,
                 skippingCountdownsEnabled = command.skippingCountdownsEnabled,
                 feedbackGenerationMode = FeedbackGenerationMode.AI,
+                scoring = gameScoringProperties.toConfiguration(),
             )
         val session =
             GameSession(

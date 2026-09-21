@@ -20,6 +20,7 @@ class GameRoundGuessSession(
         playerId: GamePlayerId,
         text: String,
         result: GuessResultType,
+        pointsFor: (Instant) -> Int = { 0 },
     ): GameRoundGuess {
         val now = clock.now()
         val guess =
@@ -30,6 +31,7 @@ class GameRoundGuessSession(
                 result = result,
                 submittedAt = now,
                 elapsedMs = elapsedMsAt(now),
+                points = if (result == GuessResultType.CORRECT) pointsFor(now) else null,
             )
         withLock { guesses.add(guess) }
         if (result == GuessResultType.CORRECT) {

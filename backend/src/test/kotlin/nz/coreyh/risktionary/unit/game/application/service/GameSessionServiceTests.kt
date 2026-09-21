@@ -23,6 +23,7 @@ import nz.coreyh.risktionary.game.application.session.GameSession
 import nz.coreyh.risktionary.game.application.session.GameVolunteerSession
 import nz.coreyh.risktionary.game.application.session.GameWordsSession
 import nz.coreyh.risktionary.game.application.store.GameSessionStore
+import nz.coreyh.risktionary.game.config.GameScoringProperties
 import nz.coreyh.risktionary.game.domain.model.GameConfiguration
 import nz.coreyh.risktionary.game.domain.model.TimeWindow
 import nz.coreyh.risktionary.game.domain.model.host.GameSessionHostStatus
@@ -82,6 +83,7 @@ class GameSessionServiceTests {
                 gameRoundDrawingAnalysisService = gameRoundDrawingAnalysisService,
                 gameSessionFeedbackAssignmentService = gameSessionFeedbackAssignmentService,
                 gameResearchPersistenceService = gameResearchPersistenceService,
+                gameScoringProperties = GameScoringProperties(1000, 100, java.time.Duration.ofSeconds(60)),
                 gameSessionStore = gameSessionStore,
                 gameEventPublisher = gameEventPublisher,
                 clock = clock,

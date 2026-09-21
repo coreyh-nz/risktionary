@@ -70,6 +70,42 @@ class GameResearchPersistenceServiceIntegrationTests(
     }
 
     @Test
+    fun `scoring is persisted with the game, each guess and the drawer`() {
+        val game = testGameSessionCreator.createTestGameSession()
+        val drawer = createTestGamePlayerSession(status = GamePlayerStatus.ACTIVE)
+        val guesser = createTestGamePlayerSession(status = GamePlayerStatus.ACTIVE)
+        listOf(drawer, guesser).forEach {
+            game.requestJoin(it)
+            game.feedback.assign(it.id) { GamePlayerFeedbackAssignment(FeedbackFramingCondition.NEUTRAL, FeedbackTimingCondition.INSTANT) }
+        }
+        val round = gameSessionService.createNextRound(game)
+        round.selectDrawer(drawer)
+        round.updatePhase(GameRoundPhase.Drawing(timeWindow = null))
+        round.guesses.recordGuess(guesser.id, "wrong", GuessResultType.INCORRECT)
+        round.guesses.recordGuess(guesser.id, "right", GuessResultType.CORRECT) { 640 }
+        game.scoreboard.recordCorrectGuess(game.roundNumber, drawer.id, guesser.id, 640)
+
+        persistenceService.persistRound(round)
+
+        transaction {
+            val gameRow = ExposedGameTable.selectAll().where { ExposedGameTable.id eq game.id.value }.single()
+            gameRow[ExposedGameTable.scoringMaxPoints] shouldBe game.config.scoring.maxPoints
+            gameRow[ExposedGameTable.scoringMinPoints] shouldBe game.config.scoring.minPoints
+            gameRow[ExposedGameTable.scoringUntimedWindowMs] shouldBe game.config.scoring.untimedReferenceWindow.inWholeMilliseconds
+
+            ExposedGameRoundTable
+                .selectAll()
+                .where { ExposedGameRoundTable.id eq round.id.value }
+                .single()[ExposedGameRoundTable.drawerPoints] shouldBe 640
+
+            ExposedGameRoundGuessTable
+                .selectAll()
+                .orderBy(ExposedGameRoundGuessTable.seq)
+                .map { it[ExposedGameRoundGuessTable.points] } shouldBe listOf(null, 640)
+        }
+    }
+
+    @Test
     fun `persisting a round records everything that happened in it`() {
         val game = testGameSessionCreator.createTestGameSession()
         val drawer = createTestGamePlayerSession(status = GamePlayerStatus.ACTIVE)

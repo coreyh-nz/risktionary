@@ -3,6 +3,7 @@ package nz.coreyh.risktionary.support.factory.game
 import nz.coreyh.risktionary.feedback.domain.model.FeedbackGenerationMode
 import nz.coreyh.risktionary.game.domain.model.GameConfiguration
 import nz.coreyh.risktionary.game.domain.model.round.phase.RoundPhaseType
+import nz.coreyh.risktionary.game.domain.model.scoring.ScoringConfiguration
 import nz.coreyh.risktionary.support.factory.word.createTestWord
 import nz.coreyh.risktionary.words.domain.model.Word
 import kotlin.time.Duration
@@ -14,6 +15,7 @@ fun createTestGameConfiguration(
     phaseDurations: Map<RoundPhaseType, Duration> = RoundPhaseType.entries.associateWith { 60.seconds },
     skippingCountdownsEnabled: Boolean = true,
     feedbackGenerationMode: FeedbackGenerationMode = FeedbackGenerationMode.AI,
+    scoring: ScoringConfiguration = ScoringConfiguration(maxPoints = 1000, minPoints = 100, untimedReferenceWindow = 60.seconds),
 ): GameConfiguration =
     GameConfiguration(
         words = words,
@@ -21,4 +23,5 @@ fun createTestGameConfiguration(
         phaseDurations = phaseDurations,
         skippingCountdownsEnabled = skippingCountdownsEnabled,
         feedbackGenerationMode = feedbackGenerationMode,
+        scoring = scoring,
     )

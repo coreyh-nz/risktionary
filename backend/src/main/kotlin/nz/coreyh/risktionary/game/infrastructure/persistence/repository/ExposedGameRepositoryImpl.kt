@@ -34,6 +34,9 @@ class ExposedGameRepositoryImpl : GameRepository {
                 it[ExposedGameTable.feedbackGenerationMode] = config.feedbackGenerationMode
                 it[ExposedGameTable.lobbyCountdownMs] = config.lobbyCountdown.inWholeMilliseconds
                 it[ExposedGameTable.skippingCountdownsEnabled] = config.skippingCountdownsEnabled
+                it[ExposedGameTable.scoringMaxPoints] = config.scoring.maxPoints
+                it[ExposedGameTable.scoringMinPoints] = config.scoring.minPoints
+                it[ExposedGameTable.scoringUntimedWindowMs] = config.scoring.untimedReferenceWindow.inWholeMilliseconds
             }
 
             config.phaseDurations.entries

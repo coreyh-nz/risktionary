@@ -59,6 +59,10 @@ app:
       lifetime: 30m
     persistence:
       pending-ai-timeout: 10s
+    scoring:
+      max-points: 1000
+      min-points: 100
+      untimed-reference-window: 60s
     session:
       cleanup:
         interval: 30s

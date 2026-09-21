@@ -1,5 +1,6 @@
 package nz.coreyh.risktionary.game.application.handler.action.handler
 
+import kotlin.time.Instant
 import nz.coreyh.risktionary.game.application.handler.action.GameRoundPhaseActionHandler
 import nz.coreyh.risktionary.game.application.service.round.GameRoundFeedbackService
 import nz.coreyh.risktionary.game.application.service.round.GameRoundSessionChatService
@@ -13,6 +14,7 @@ import nz.coreyh.risktionary.game.domain.model.action.GameRoundPhaseGuessAction
 import nz.coreyh.risktionary.game.domain.model.action.GameRoundPhaseGuessActionResult
 import nz.coreyh.risktionary.game.domain.model.round.chat.ChatMessage
 import nz.coreyh.risktionary.game.domain.model.round.guess.GuessResultType
+import nz.coreyh.risktionary.game.domain.model.scoring.GuessPointsCalculator
 import nz.coreyh.risktionary.game.socket.messages.GameEventPublisher
 import nz.coreyh.risktionary.game.socket.messages.view.toView
 import org.springframework.stereotype.Service
@@ -62,9 +64,13 @@ class GameRoundPhaseGuessActionHandler(
                 false -> GuessResultType.INCORRECT
             }
 
-        val recordedGuess = round.guesses.recordGuess(player.id, guess, result)
+        val recordedGuess =
+            round.guesses.recordGuess(player.id, guess, result) { at -> pointsForGuess(round, phase, at) }
 
         if (result == GuessResultType.CORRECT) {
+            recordedGuess.points?.let { points ->
+                round.game.scoreboard.recordCorrectGuess(round.game.roundNumber, drawerId, player.id, points)
+            }
             gameEventPublisher.publishRoundCorrectGuessesCountUpdated(
                 gameId = round.game.id,
                 correctGuesses = round.guesses.getCorrectGuessCount(),
@@ -87,6 +93,24 @@ class GameRoundPhaseGuessActionHandler(
 
         // incorrect guesses are shown as chat messages, so their feedback is handled with the message
         return GameRoundPhaseGuessActionResult.Skipped(recordedGuess)
+    }
+
+    /**
+     * What a correct guess made at [at] is worth. The phase timer decides how
+     * much of the drawing time has passed; without one, the untimed reference
+     * window stands in for it.
+     */
+    private fun pointsForGuess(
+        round: GameRoundSession,
+        phase: GameRoundPhase.Drawing,
+        at: Instant,
+    ): Int {
+        val start = phase.timeWindow?.startedAt ?: round.drawingStartedAt
+        return GuessPointsCalculator.pointsFor(
+            elapsed = start?.let { at - it },
+            drawingDuration = phase.timeWindow?.duration,
+            config = round.game.config.scoring,
+        )
     }
 
     override fun isPhaseComplete(
