@@ -5,6 +5,7 @@ import nz.coreyh.risktionary.game.socket.interceptor.WebSocketHandshakeHandler
 import nz.coreyh.risktionary.game.socket.interceptor.WebSocketHandshakeInterceptor
 import nz.coreyh.risktionary.game.socket.interceptor.WebSocketLoggingDirection
 import nz.coreyh.risktionary.game.socket.interceptor.WebSocketLoggingInterceptor
+import nz.coreyh.risktionary.game.socket.interceptor.WebSocketStompErrorHandler
 import nz.coreyh.risktionary.game.socket.support.WebSocketDestinations
 import nz.coreyh.risktionary.game.socket.support.WebSocketDestinations.App
 import nz.coreyh.risktionary.game.socket.support.WebSocketDestinations.Queue
@@ -27,6 +28,7 @@ class WebSocketConfiguration(
     private val webSocketHandshakeInterceptor: WebSocketHandshakeInterceptor,
     private val webSocketChannelInterceptor: WebSocketChannelInterceptor,
     private val webSocketHandshakeHandler: WebSocketHandshakeHandler,
+    private val webSocketStompErrorHandler: WebSocketStompErrorHandler,
     private val appProperties: AppProperties,
 ) : WebSocketMessageBrokerConfigurer {
     /**
@@ -60,12 +62,14 @@ class WebSocketConfiguration(
      * - Custom handshake handler ([WebSocketHandshakeHandler]) that assigns the [nz.coreyh.risktionary.game.socket.security.GameSocketPrincipal]
      *   to the WebSocket session after successful authentication
      * - Handshake interceptor ([WebSocketHandshakeInterceptor]) that validates player tickets
-     *   or host authentication before the WebSocket connection is established
+     *   or host authentication. Failures are recorded rather than rejected, and reported to the client
+     *   as a STOMP ERROR frame on CONNECT (see [WebSocketStompErrorHandler])
      * - Allowed origin patterns from application configuration to enforce CORS policies
      *
      * @param registry The STOMP endpoint registry to configure
      */
     override fun registerStompEndpoints(registry: StompEndpointRegistry) {
+        registry.setErrorHandler(webSocketStompErrorHandler)
         registry
             .addEndpoint("/ws")
             .setHandshakeHandler(webSocketHandshakeHandler)

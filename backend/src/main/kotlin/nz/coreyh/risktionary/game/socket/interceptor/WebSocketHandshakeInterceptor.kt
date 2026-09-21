@@ -8,10 +8,8 @@ import nz.coreyh.risktionary.game.application.service.GameTicketService
 import nz.coreyh.risktionary.game.application.store.GameSessionStore
 import nz.coreyh.risktionary.game.domain.model.toGameIdOrNull
 import nz.coreyh.risktionary.game.socket.security.GameSocketPrincipal
+import nz.coreyh.risktionary.game.socket.support.WebSocketSessionAttributes
 import nz.coreyh.risktionary.shared.exception.code.ErrorCode
-import nz.coreyh.risktionary.shared.web.dto.ApiErrorResponse
-import org.springframework.http.HttpStatus
-import org.springframework.http.MediaType
 import org.springframework.http.server.ServerHttpRequest
 import org.springframework.http.server.ServerHttpResponse
 import org.springframework.http.server.ServletServerHttpRequest
@@ -19,7 +17,6 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Component
 import org.springframework.web.socket.WebSocketHandler
 import org.springframework.web.socket.server.HandshakeInterceptor
-import tools.jackson.databind.ObjectMapper
 
 private val kLogger = KotlinLogging.logger {}
 
@@ -33,15 +30,15 @@ private val kLogger = KotlinLogging.logger {}
  * On successful validation, a [GameSocketPrincipal] (either Player or Host) is stored in the handshake
  * attributes for later retrieval by [WebSocketHandshakeHandler]. The handshake then proceeds normally.
  *
- * On validation failure, the handshake is rejected with HTTP 400 Bad Request and a JSON error response
- * containing [ErrorCode.GAME_TICKET_INVALID] with a descriptive message. The WebSocket connection is
- * closed before the STOMP protocol upgrades.
+ * On validation failure the handshake is still accepted, because browsers cannot read the status or body of a
+ * failed WebSocket upgrade. Instead the [ErrorCode] describing the failure is stored in the handshake attributes
+ * under [WebSocketSessionAttributes.CONNECT_ERROR], and [WebSocketChannelInterceptor] refuses the STOMP CONNECT
+ * frame with an ERROR frame the client can read.
  */
 @Component
 class WebSocketHandshakeInterceptor(
     private val gameTicketService: GameTicketService,
     private val gameSessionStore: GameSessionStore,
-    private val objectMapper: ObjectMapper,
 ) : HandshakeInterceptor {
     /**
      * Intercepts and validates the WebSocket handshake request before the WebSocket session is created.
@@ -51,10 +48,10 @@ class WebSocketHandshakeInterceptor(
      * - If no `ticket` parameter: attempts to authenticate as a game host via the HTTP session
      *
      * @param request The HTTP request that initiated the WebSocket upgrade
-     * @param response The HTTP response for rejecting the handshake if validation fails
+     * @param response The HTTP response (unused; failures are reported via the handshake attributes)
      * @param wsHandler The WebSocket handler that will be used
      * @param attributes Mutable map for storing handshake attributes (populated on success)
-     * @return `true` if validation passes and handshake should continue, `false` to reject the handshake
+     * @return always `true`; validation failures are recorded in [attributes] rather than rejecting the upgrade
      */
     override fun beforeHandshake(
         request: ServerHttpRequest,
@@ -67,16 +64,16 @@ class WebSocketHandshakeInterceptor(
                 ?.servletRequest
                 ?: run {
                     kLogger.debug { "Handshake rejected: request was not a servlet request" }
-                    return response.rejectHandshake("Invalid request type")
+                    return attributes.refuse(ErrorCode.INVALID_REQUEST)
                 }
 
         servletRequest.getParameter("ticket")?.let {
-            return handlePlayerHandshake(it, attributes, response)
+            return handlePlayerHandshake(it, attributes)
         }
         servletRequest.getParameter("gameId")?.let {
-            return handleHostHandshake(it, attributes, response)
+            return handleHostHandshake(it, attributes)
         }
-        return response.rejectHandshake("")
+        return attributes.refuse(ErrorCode.INVALID_REQUEST)
     }
 
     override fun afterHandshake(
@@ -100,33 +97,31 @@ class WebSocketHandshakeInterceptor(
      *
      * @param ticketParam The raw ticket string from the query parameter
      * @param attributes The handshake attributes map to populate with the principal
-     * @param response The HTTP response to send rejection details if validation fails
-     * @return `true` if validation passes, `false` if rejected
+     * @return always `true`; a failure is recorded via [refuse]
      */
     private fun handlePlayerHandshake(
         ticketParam: String,
         attributes: MutableMap<String, Any>,
-        response: ServerHttpResponse,
     ): Boolean {
         val ticket =
             try {
                 gameTicketService.decodeTicket(ticketParam)
             } catch (_: GameTicketInvalidException) {
                 kLogger.debug { "Handshake rejected: ticket failed validation" }
-                return response.rejectHandshake("Invalid ticket")
+                return attributes.refuse(ErrorCode.GAME_TICKET_INVALID)
             }
 
         val session = gameSessionStore.findById(ticket.gameId)
         if (session == null) {
             kLogger.debug { "Handshake rejected: ticket game's id is not valid" }
-            return response.rejectHandshake("Invalid ticket: game id is not valid")
+            return attributes.refuse(ErrorCode.GAME_NOT_FOUND)
         }
 
         try {
             session.getPlayer(ticket.playerId)
         } catch (_: GamePlayerNotInSessionException) {
             kLogger.debug { "Handshake rejected: ticket player's id has not joined the game" }
-            return response.rejectHandshake("Invalid ticket: player id has not joined game")
+            return attributes.refuse(ErrorCode.GAME_PLAYER_NOT_IN_SESSION)
         }
 
         kLogger.debug {
@@ -138,7 +133,7 @@ class WebSocketHandshakeInterceptor(
                 gameId = ticket.gameId,
                 id = ticket.playerId,
             )
-        attributes["principal"] = socketPrincipal
+        attributes[WebSocketSessionAttributes.PRINCIPAL] = socketPrincipal
         return true
     }
 
@@ -159,34 +154,32 @@ class WebSocketHandshakeInterceptor(
      *
      * @param gameIdParam The raw game ID string from the query parameter
      * @param attributes The handshake attributes map to populate with the principal
-     * @param response The HTTP response to send rejection details if validation fails
-     * @return `true` if validation passes, `false` if rejected
+     * @return always `true`; a failure is recorded via [refuse]
      */
     private fun handleHostHandshake(
         gameIdParam: String,
         attributes: MutableMap<String, Any>,
-        response: ServerHttpResponse,
     ): Boolean {
         val principal = SecurityContextHolder.getContext().authentication?.principal as? UserPrincipal
         if (principal == null) {
             kLogger.debug { "Host handshake rejected: no authenticated principal" }
-            return response.rejectHandshake("Unauthorized")
+            return attributes.refuse(ErrorCode.AUTH_UNAUTHENTICATED)
         }
 
         val gameId = gameIdParam.toGameIdOrNull()
         if (gameId == null) {
             kLogger.debug { "Host handshake rejected: invalid gameId format: $gameIdParam" }
-            return response.rejectHandshake("Handshake rejected: invalid game id")
+            return attributes.refuse(ErrorCode.GAME_NOT_FOUND)
         }
 
         val game = gameSessionStore.findById(gameId)
         if (game == null) {
             kLogger.debug { "Host handshake rejected: no game found for gameId=$gameId" }
-            return response.rejectHandshake("Handshake rejected: invalid game id")
+            return attributes.refuse(ErrorCode.GAME_NOT_FOUND)
         }
         if (game.host.id != principal.userId) {
             kLogger.debug { "Host handshake rejected: user ${principal.userId} is not host of game ${game.id}" }
-            return response.rejectHandshake("Handshake rejected: invalid game id")
+            return attributes.refuse(ErrorCode.GAME_NOT_FOUND)
         }
 
         val socketPrincipal =
@@ -194,37 +187,22 @@ class WebSocketHandshakeInterceptor(
                 gameId = game.id,
                 id = principal.userId,
             )
-        attributes["principal"] = socketPrincipal
+        attributes[WebSocketSessionAttributes.PRINCIPAL] = socketPrincipal
 
         kLogger.debug { "Host handshake accepted: gameId=${game.id}, userId=${principal.userId}" }
         return true
     }
 
     /**
-     * Helper extension function that rejects a WebSocket handshake with an HTTP error response.
+     * Records why the connection must be refused so [WebSocketChannelInterceptor] can report it on STOMP CONNECT.
      *
-     * Sets HTTP status to 400 Bad Request, Content-Type to application/json, and writes an
-     * [ApiErrorResponse] containing the error code [ErrorCode.GAME_TICKET_INVALID] and the provided
-     * message. This response is sent before the WebSocket protocol upgrade, allowing the client
-     * to receive proper error semantics over HTTP.
+     * A non-existent game and a game the user does not host both report [ErrorCode.GAME_NOT_FOUND] so that
+     * game existence is not leaked to non-hosts.
      *
-     * @param message The error message to include in the response body
-     * @return `false` to indicate the handshake should be rejected
+     * @return `true` so the handshake itself still proceeds
      */
-    private fun ServerHttpResponse.rejectHandshake(message: String): Boolean {
-        setStatusCode(HttpStatus.BAD_REQUEST)
-        headers.contentType = MediaType.APPLICATION_JSON
-        body.writer().apply {
-            write(
-                objectMapper.writeValueAsString(
-                    ApiErrorResponse(
-                        ErrorCode.GAME_TICKET_INVALID.code,
-                        message,
-                    ),
-                ),
-            )
-            flush()
-        }
-        return false
+    private fun MutableMap<String, Any>.refuse(errorCode: ErrorCode): Boolean {
+        this[WebSocketSessionAttributes.CONNECT_ERROR] = errorCode
+        return true
     }
 }

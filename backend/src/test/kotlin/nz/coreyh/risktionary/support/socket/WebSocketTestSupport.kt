@@ -50,6 +50,50 @@ object WebSocketTestSupport {
         return future.get(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
     }
 
+    /**
+     * Connects expecting the server to refuse the STOMP CONNECT, returning the headers of the ERROR frame it sent.
+     */
+    fun connectExpectingError(
+        port: Int,
+        ticket: String? = null,
+        gameId: String? = null,
+        handshakeHeaders: WebSocketHttpHeaders = WebSocketHttpHeaders(),
+    ): StompHeaders {
+        val client = WebSocketStompClient(StandardWebSocketClient())
+        val future = CompletableFuture<StompHeaders>()
+
+        client.connectAsync(
+            buildUrl(port, ticket, gameId),
+            handshakeHeaders,
+            object : StompSessionHandlerAdapter() {
+                override fun afterConnected(
+                    session: StompSession,
+                    connectedHeaders: StompHeaders,
+                ) {
+                    future.completeExceptionally(IllegalStateException("Connection was unexpectedly accepted"))
+                }
+
+                override fun getPayloadType(headers: StompHeaders) = String::class.java
+
+                override fun handleFrame(
+                    headers: StompHeaders,
+                    payload: Any?,
+                ) {
+                    future.complete(headers)
+                }
+
+                override fun handleTransportError(
+                    session: StompSession,
+                    exception: Throwable,
+                ) {
+                    future.completeExceptionally(exception)
+                }
+            },
+        )
+
+        return future.get(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+    }
+
     val noopFrameHandler: StompFrameHandler =
         object : StompFrameHandler {
             override fun getPayloadType(headers: StompHeaders) = String::class.java
