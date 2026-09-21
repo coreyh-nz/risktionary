@@ -60,6 +60,7 @@ class GameRoundFeedbackService(
         val game = round.game
         val mode = game.config.feedbackGenerationMode
         if (mode == FeedbackGenerationMode.NONE) return
+        if (guess.result == GuessResultType.CORRECT) return
 
         val assignment = game.feedback.findAssignmentFor(player.id) ?: return
 
@@ -69,7 +70,7 @@ class GameRoundFeedbackService(
                 FeedbackGuessContext(
                     guessId = guess.id,
                     text = guess.text,
-                    correct = guess.result == GuessResultType.CORRECT,
+                    correct = false,
                     drawingNote = (round.drawing.latestAnalysis() as? DrawingAnalysisResult.Fact)?.note,
                     timeRemainingFraction = timeRemainingFraction(round, guess.submittedAt),
                 ),
