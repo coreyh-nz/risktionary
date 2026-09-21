@@ -1,8 +1,11 @@
 package nz.coreyh.risktionary.feedback.infrastructure.service
 
 import nz.coreyh.risktionary.ai.domain.AiResponse
+import nz.coreyh.risktionary.ai.domain.AiUsagePurpose
+import nz.coreyh.risktionary.ai.domain.toUsage
 import nz.coreyh.risktionary.ai.infrastructure.dispatch.AiDispatcher
 import nz.coreyh.risktionary.ai.infrastructure.service.AiChatService
+import nz.coreyh.risktionary.feedback.domain.model.analysis.DrawingAnalysisOutcome
 import nz.coreyh.risktionary.feedback.domain.model.analysis.DrawingAnalysisResult
 import nz.coreyh.risktionary.feedback.infrastructure.prompt.FeedbackPromptTemplates
 import nz.coreyh.risktionary.shared.util.dataurl.DecodedDataUrl
@@ -22,7 +25,7 @@ class AiDrawingAnalysisService(
         dispatcher: AiDispatcher,
         word: String,
         decodedDataUrl: DecodedDataUrl,
-        onResult: (DrawingAnalysisResult) -> Unit,
+        onResult: (DrawingAnalysisOutcome) -> Unit,
         onError: (Throwable) -> Unit = {},
     ) {
         dispatcher.launch(
@@ -35,7 +38,7 @@ class AiDrawingAnalysisService(
     private fun analyse(
         word: String,
         decodedDataUrl: DecodedDataUrl,
-    ): DrawingAnalysisResult {
+    ): DrawingAnalysisOutcome {
         val media =
             Media
                 .builder()
@@ -56,8 +59,13 @@ class AiDrawingAnalysisService(
             )
 
         return when (response) {
-            is AiResponse.Success -> DrawingAnalysisResult.fromRawText(response.data)
-            is AiResponse.Failure -> DrawingAnalysisResult.Failed
+            is AiResponse.Success -> {
+                DrawingAnalysisOutcome(
+                    result = DrawingAnalysisResult.fromRawText(response.data),
+                    usage = response.toUsage(AiUsagePurpose.DRAWING_ANALYSIS, feedbackImageAnalysisChatOptions.model),
+                )
+            }
+            is AiResponse.Failure -> DrawingAnalysisOutcome(DrawingAnalysisResult.Failed, usage = null)
         }
     }
 

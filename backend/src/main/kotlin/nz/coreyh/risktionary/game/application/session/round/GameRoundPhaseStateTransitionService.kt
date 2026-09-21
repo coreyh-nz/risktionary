@@ -55,6 +55,10 @@ class GameRoundPhaseStateTransitionService(
             }
 
             is GameRoundPhase.WordReview -> {
+                GameRoundPhase.Saving
+            }
+
+            is GameRoundPhase.Saving -> {
                 GameRoundPhase.Scoring(
                     timeWindow = phaseTiming(RoundPhaseType.SCORING, config, clock),
                 )

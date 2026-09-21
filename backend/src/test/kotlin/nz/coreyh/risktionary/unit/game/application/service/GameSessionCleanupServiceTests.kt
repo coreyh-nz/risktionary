@@ -4,6 +4,7 @@ import io.mockk.every
 import io.mockk.justRun
 import io.mockk.mockk
 import io.mockk.verify
+import nz.coreyh.risktionary.game.application.service.GameResearchPersistenceService
 import nz.coreyh.risktionary.game.application.service.GameSessionCleanupService
 import nz.coreyh.risktionary.game.application.service.GameSessionService
 import nz.coreyh.risktionary.game.config.GameSessionCleanupProperties
@@ -23,6 +24,7 @@ import kotlin.time.toJavaDuration
 @MockKTest
 class GameSessionCleanupServiceTests {
     private lateinit var gameSessionService: GameSessionService
+    private lateinit var gameResearchPersistenceService: GameResearchPersistenceService
     private lateinit var clock: Clock
     private val cleanupProperties =
         GameSessionCleanupProperties(
@@ -36,11 +38,13 @@ class GameSessionCleanupServiceTests {
     @BeforeEach
     fun setup() {
         gameSessionService = mockk()
+        gameResearchPersistenceService = mockk(relaxed = true)
         clock = mockk()
         gameSessionCleanupService =
             GameSessionCleanupService(
                 gameSessionService = gameSessionService,
                 gameSessionCleanupProperties = cleanupProperties,
+                gameResearchPersistenceService = gameResearchPersistenceService,
                 clock = clock,
             )
     }

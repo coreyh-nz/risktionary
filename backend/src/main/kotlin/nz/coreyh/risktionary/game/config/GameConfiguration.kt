@@ -7,7 +7,11 @@ import java.time.Duration
 import kotlin.time.toKotlinDuration
 
 @Configuration
-@EnableConfigurationProperties(TicketProperties::class, GameSessionCleanupProperties::class)
+@EnableConfigurationProperties(
+    TicketProperties::class,
+    GameSessionCleanupProperties::class,
+    GameResearchPersistenceProperties::class,
+)
 class GameConfiguration
 
 @ConfigurationProperties("app.game.ticket")
@@ -26,4 +30,12 @@ class GameSessionCleanupProperties(
     val hostJoinGracePeriod = hostJoinGracePeriod.toKotlinDuration()
     val hostAbandonedTimeout = hostAbandonedTimeout.toKotlinDuration()
     val stuckStartingTimeout = stuckStartingTimeout.toKotlinDuration()
+}
+
+@ConfigurationProperties(prefix = "app.game.persistence")
+class GameResearchPersistenceProperties(
+    pendingAiTimeout: Duration,
+) {
+    /** How long a round waits for in-flight AI calls to finish before it is saved. */
+    val pendingAiTimeout = pendingAiTimeout.toKotlinDuration()
 }

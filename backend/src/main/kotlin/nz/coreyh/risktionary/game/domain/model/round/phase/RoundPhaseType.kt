@@ -39,6 +39,14 @@ enum class RoundPhaseType {
     WORD_REVIEW,
 
     /**
+     * The round's data is being written to persistent storage. Nothing is
+     * shown to players other than a loading state. Has no timer: the round
+     * advances to [SCORING] as soon as the write completes, and stays here
+     * if it fails.
+     */
+    SAVING,
+
+    /**
      * Final scoring and summary for the completed round. Displays total round
      * points, updates overall game leaderboard, shows standout performances,
      * and prepares the game for the next round. This acts as a satisfying

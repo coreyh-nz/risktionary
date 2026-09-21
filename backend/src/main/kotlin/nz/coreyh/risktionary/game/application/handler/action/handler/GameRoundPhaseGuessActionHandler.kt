@@ -79,6 +79,7 @@ class GameRoundPhaseGuessActionHandler(
                     ChatMessage.System.CorrectGuess(
                         player = player.player.toView(),
                     ),
+                    recordedGuess.id,
                 )
             gameRoundFeedbackService.onGuess(round, player, recordedGuess, message.id)
             return GameRoundPhaseGuessActionResult.Consumed

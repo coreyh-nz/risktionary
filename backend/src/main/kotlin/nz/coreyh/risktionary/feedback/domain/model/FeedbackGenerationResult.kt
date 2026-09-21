@@ -1,5 +1,6 @@
 package nz.coreyh.risktionary.feedback.domain.model
 
+import nz.coreyh.risktionary.ai.domain.AiUsage
 import nz.coreyh.risktionary.feedback.domain.model.condition.FeedbackFramingCondition
 import kotlin.time.Instant
 
@@ -14,4 +15,5 @@ data class FeedbackGenerationResult(
     val framedText: String?,
     val framingCondition: FeedbackFramingCondition,
     val generatedAt: Instant,
+    val usage: List<AiUsage> = emptyList(),
 )

@@ -3,6 +3,7 @@ package nz.coreyh.risktionary.game.application.service.round
 import io.github.oshai.kotlinlogging.KotlinLogging
 import nz.coreyh.risktionary.feedback.domain.model.FeedbackFactPayload
 import nz.coreyh.risktionary.feedback.domain.model.FeedbackGenerationMode
+import nz.coreyh.risktionary.feedback.domain.model.FeedbackGenerationResult
 import nz.coreyh.risktionary.feedback.domain.model.FeedbackGenerationStatus
 import nz.coreyh.risktionary.feedback.domain.model.FeedbackGuessContext
 import nz.coreyh.risktionary.feedback.domain.model.GamePlayerFeedbackAssignment
@@ -104,48 +105,67 @@ class GameRoundFeedbackService(
         guesses: List<FeedbackGuessContext>,
         messageId: ChatMessageId?,
     ) {
-        round.game.feedback.feedbackDispatcher.launch(
-            block = {
-                feedbackService.generate(
-                    mode = mode,
-                    payload =
-                        FeedbackFactPayload(
-                            guesses = guesses,
-                            word = round.word,
-                            condition = assignment.framingCondition,
-                        ),
-                )
-            },
-            onResult = { result ->
-                val feedback =
-                    GeneratedFeedback(
-                        id = createFeedbackId(),
-                        playerId = playerId,
-                        sourceGuessIds = guesses.map { it.guessId },
-                        framingCondition = assignment.framingCondition,
-                        timingCondition = assignment.timingCondition,
-                        status = result.status,
-                        factText = result.factText,
-                        framedText = result.framedText,
-                        generatedAt = result.generatedAt,
+        val job =
+            round.game.feedback.feedbackDispatcher.launch(
+                block = {
+                    feedbackService.generate(
+                        mode = mode,
+                        payload =
+                            FeedbackFactPayload(
+                                guesses = guesses,
+                                word = round.word,
+                                condition = assignment.framingCondition,
+                                timing = assignment.timingCondition,
+                            ),
                     )
-                round.feedback.record(feedback)
+                },
+                onResult = { result -> handleResult(round, playerId, assignment, guesses, messageId, result) },
+                onError = { e ->
+                    logger.error(e) { "Feedback generation failed (round=${round.id}, player=$playerId)" }
+                },
+            )
+        round.feedback.track(job)
+    }
 
-                val text = result.framedText
-                if (result.status == FeedbackGenerationStatus.SUCCESS && text != null) {
-                    gameEventPublisher.publishRoundFeedback(
-                        playerId = playerId,
-                        feedbackId = feedback.id,
-                        messageId = messageId,
-                        timing = assignment.timingCondition,
-                        text = text,
-                    )
-                }
-            },
-            onError = { e ->
-                logger.error(e) { "Feedback generation failed (round=${round.id}, player=$playerId)" }
-            },
-        )
+    private fun handleResult(
+        round: GameRoundSession,
+        playerId: GamePlayerId,
+        assignment: GamePlayerFeedbackAssignment,
+        guesses: List<FeedbackGuessContext>,
+        messageId: ChatMessageId?,
+        result: FeedbackGenerationResult,
+    ) {
+        if (round.feedback.isSettled) {
+            logger.warn { "Discarding feedback that finished after the round was saved (round=${round.id}, player=$playerId)" }
+            return
+        }
+
+        result.usage.forEach { round.aiUsage.record(it, playerId) }
+
+        val feedback =
+            GeneratedFeedback(
+                id = createFeedbackId(),
+                playerId = playerId,
+                sourceGuessIds = guesses.map { it.guessId },
+                framingCondition = assignment.framingCondition,
+                timingCondition = assignment.timingCondition,
+                status = result.status,
+                factText = result.factText,
+                framedText = result.framedText,
+                generatedAt = result.generatedAt,
+            )
+        round.feedback.record(feedback)
+
+        val text = result.framedText
+        if (result.status == FeedbackGenerationStatus.SUCCESS && text != null) {
+            gameEventPublisher.publishRoundFeedback(
+                playerId = playerId,
+                feedbackId = feedback.id,
+                messageId = messageId,
+                roundNumber = round.game.roundNumber,
+                text = text,
+            )
+        }
     }
 
     /**

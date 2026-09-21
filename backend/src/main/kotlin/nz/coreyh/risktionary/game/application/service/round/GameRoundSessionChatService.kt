@@ -3,6 +3,7 @@ package nz.coreyh.risktionary.game.application.service.round
 import nz.coreyh.risktionary.game.application.session.GamePlayerSession
 import nz.coreyh.risktionary.game.application.session.round.GameRoundSession
 import nz.coreyh.risktionary.game.domain.model.round.chat.ChatMessage
+import nz.coreyh.risktionary.game.domain.model.round.guess.GuessId
 import nz.coreyh.risktionary.game.socket.messages.GameEventPublisher
 import nz.coreyh.risktionary.game.socket.messages.view.toView
 import org.springframework.stereotype.Service
@@ -14,8 +15,9 @@ class GameRoundSessionChatService(
     fun <T : ChatMessage> sendMessage(
         round: GameRoundSession,
         message: T,
+        guessId: GuessId? = null,
     ): T {
-        round.addMessage(message)
+        round.addMessage(message, guessId)
         gameEventPublisher.publishRoundChatMessage(
             gameId = round.game.id,
             message = message,
@@ -27,12 +29,14 @@ class GameRoundSessionChatService(
         round: GameRoundSession,
         player: GamePlayerSession,
         text: String,
+        guessId: GuessId? = null,
     ): ChatMessage.Player =
         sendMessage(
-        round,
-        ChatMessage.Player(
-            player = player.player.toView(),
-            text = text,
-        ),
-    )
+            round,
+            ChatMessage.Player(
+                player = player.player.toView(),
+                text = text,
+            ),
+            guessId,
+        )
 }

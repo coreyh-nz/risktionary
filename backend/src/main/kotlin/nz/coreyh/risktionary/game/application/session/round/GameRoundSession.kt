@@ -7,6 +7,8 @@ import nz.coreyh.risktionary.game.application.session.LockableSession
 import nz.coreyh.risktionary.game.domain.model.round.RoundId
 import nz.coreyh.risktionary.game.domain.model.round.RoundStateType
 import nz.coreyh.risktionary.game.domain.model.round.chat.ChatMessage
+import nz.coreyh.risktionary.game.domain.model.round.chat.RecordedChatMessage
+import nz.coreyh.risktionary.game.domain.model.round.guess.GuessId
 import nz.coreyh.risktionary.words.domain.model.Word
 import kotlin.time.Clock
 import kotlin.time.Instant
@@ -30,11 +32,12 @@ class GameRoundSession(
         get() = withLock { field }
         private set(value) = withLock { field = value }
 
-    val drawing = GameRoundDrawingSession()
+    val drawing = GameRoundDrawingSession(::elapsedMsSinceDrawingStarted)
     val guesses = GameRoundGuessSession(clock, ::elapsedMsSinceDrawingStarted)
-    val riskRatings = GameRoundRiskRatingSession()
+    val riskRatings = GameRoundRiskRatingSession(clock)
     val feedback = GameRoundFeedbackSession()
-    private val messages: MutableList<ChatMessage> = mutableListOf()
+    val aiUsage = GameRoundAiUsageSession(clock)
+    private val messages: MutableList<RecordedChatMessage> = mutableListOf()
 
     /**
      * Milliseconds between the start of the drawing phase and [at], or null
@@ -77,7 +80,29 @@ class GameRoundSession(
             state = GameRoundState.Completed
         }
 
-    fun addMessage(message: ChatMessage): Unit = withLock { messages.add(message) }
+    /**
+     * Records a chat message.
+     *
+     * @param guessId the guess that produced this message, if any.
+     */
+    fun addMessage(
+        message: ChatMessage,
+        guessId: GuessId? = null,
+    ): Unit =
+        withLock {
+            val now = clock.now()
+            messages.add(
+                RecordedChatMessage(
+                    message = message,
+                    sentAt = now,
+                    elapsedMs = elapsedMsSinceDrawingStarted(now),
+                    guessId = guessId,
+                ),
+            )
+        }
+
+    /** Every recorded chat message in the order it was sent. */
+    fun getMessages(): List<RecordedChatMessage> = withLock { messages.toList() }
 }
 
 inline fun <reified T : GameRoundState> GameRoundSession.requireState(): T = state as? T ?: throw GameRoundStateInvalidException()

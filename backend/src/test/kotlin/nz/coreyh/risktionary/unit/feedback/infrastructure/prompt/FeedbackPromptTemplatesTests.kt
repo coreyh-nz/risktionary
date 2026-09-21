@@ -6,6 +6,7 @@ import io.kotest.matchers.string.shouldNotContain
 import nz.coreyh.risktionary.ai.infrastructure.prompt.PromptTemplateLoader
 import nz.coreyh.risktionary.feedback.domain.model.FeedbackGuessContext
 import nz.coreyh.risktionary.feedback.domain.model.condition.FeedbackFramingCondition
+import nz.coreyh.risktionary.feedback.domain.model.condition.FeedbackTimingCondition
 import nz.coreyh.risktionary.feedback.infrastructure.prompt.FeedbackPromptTemplates
 import nz.coreyh.risktionary.game.domain.model.round.guess.createGuessId
 import org.junit.jupiter.api.Test
@@ -21,21 +22,21 @@ class FeedbackPromptTemplatesTests {
         timeRemainingFraction: Double? = null,
     ) = FeedbackGuessContext(createGuessId(), text, correct, drawingNote, timeRemainingFraction)
 
+    private fun user(
+        guesses: List<FeedbackGuessContext>,
+        timing: FeedbackTimingCondition = FeedbackTimingCondition.INSTANT,
+    ) = templates.factGenerationUser(guesses, "hospital", listOf("infirmary"), "A place for medical care", timing).text!!
+
     @Test
     fun `fact generation user prompt lists every guess in order with its context`() {
-        val message =
-            templates.factGenerationUser(
-                guesses =
-                    listOf(
-                        guess("clinic", drawingNote = "a building with a cross", timeRemainingFraction = 0.8),
-                        guess("surgery", timeRemainingFraction = 0.25),
-                    ),
-                correctAnswer = "hospital",
-                synonyms = listOf("infirmary"),
-                description = "A place for medical care",
+        val text =
+            user(
+                listOf(
+                    guess("clinic", drawingNote = "a building with a cross", timeRemainingFraction = 0.8),
+                    guess("surgery", timeRemainingFraction = 0.25),
+                ),
             )
 
-        val text = message.text!!
         text shouldContain "correct_answer: hospital"
         text shouldContain "synonyms: infirmary"
         text shouldContain "description: A place for medical care"
@@ -50,21 +51,28 @@ class FeedbackPromptTemplatesTests {
 
     @Test
     fun `fact generation user prompt marks time remaining unknown when the phase has no timer`() {
-        val message = templates.factGenerationUser(listOf(guess("clinic")), "hospital", emptyList(), "desc")
+        user(listOf(guess("clinic"))) shouldContain "time_remaining: unknown"
+    }
 
-        message.text!! shouldContain "time_remaining: unknown"
+    @Test
+    fun `fact generation user prompt leaves out time remaining for delayed feedback`() {
+        val text = user(listOf(guess("clinic", drawingNote = "a cross", timeRemainingFraction = 0.8)), FeedbackTimingCondition.DELAYED)
+
+        text shouldContain "guess 1: clinic"
+        text shouldContain "drawing_note: a cross"
+        text shouldNotContain "time_remaining"
     }
 
     @Test
     fun `fact generation user prompt leaves no placeholders unfilled`() {
-        val message = templates.factGenerationUser(listOf(guess("clinic", true)), "hospital", listOf("a", "b"), "desc")
-
-        message.text!! shouldNotContain "{"
+        FeedbackTimingCondition.entries.forEach { timing ->
+            user(listOf(guess("clinic", true)), timing) shouldNotContain "{"
+        }
     }
 
     @Test
-    fun `fact generation system prompt states the required properties`() {
-        val text = templates.factGenerationSystem().text!!
+    fun `instant fact generation prompt states the required properties`() {
+        val text = templates.factGenerationSystem(FeedbackTimingCondition.INSTANT).text!!
 
         text shouldContain "never reveal"
         text shouldContain "TIME-AWARE SPECIFICITY"
@@ -75,22 +83,72 @@ class FeedbackPromptTemplatesTests {
     }
 
     @Test
-    fun `framing rewrite system prompt includes the rules for each framing condition`() {
-        FeedbackFramingCondition.entries.forEach { condition ->
-            val text = templates.framingRewriteSystem(condition).text!!
+    fun `delayed fact generation prompt asks for a round debrief that names the answer`() {
+        val text = templates.factGenerationSystem(FeedbackTimingCondition.DELAYED).text!!
 
-            text shouldNotContain "{framingRules}"
-            text shouldContain "Framing style for this feedback"
-        }
-        templates.framingRewriteSystem(FeedbackFramingCondition.CORRECTIVE).text!! shouldContain "correction"
-        templates.framingRewriteSystem(FeedbackFramingCondition.POSITIVE).text!! shouldContain "encouraging"
+        text shouldContain "END of the round"
+        text shouldContain "named plainly"
+        text shouldContain "How the guesses progressed"
+        text shouldContain "the guesses that progress"
+        text shouldContain "3 to 5 sentences"
+        text shouldContain "reading strategy"
+        text shouldNotContain "HARD LIMIT"
+        text shouldNotContain "TIME-AWARE SPECIFICITY"
     }
 
     @Test
-    fun `framing rewrite system prompt forbids inventing a guess contrast for answer-focused notes`() {
-        val text = templates.framingRewriteSystem(FeedbackFramingCondition.NEUTRAL).text!!
+    fun `both fact generation prompts share the same core rules and leave no placeholders`() {
+        FeedbackTimingCondition.entries.forEach { timing ->
+            val text = templates.factGenerationSystem(timing).text!!
 
-        text shouldContain "invent or assume what the player guessed"
-        text shouldContain "\"narrowing\""
+            text shouldContain "ONE evolving attempt"
+            text shouldContain "NOT addressed to the player"
+            text shouldContain "flat, neutral, third-person"
+            text shouldNotContain "{oneAttemptRules}"
+            text shouldNotContain "{noteFormRules}"
+        }
+    }
+
+    @Test
+    fun `framing rewrite prompt includes the rules for each framing condition and timing`() {
+        FeedbackTimingCondition.entries.forEach { timing ->
+            FeedbackFramingCondition.entries.forEach { condition ->
+                val text = templates.framingRewriteSystem(condition, timing).text!!
+
+                text shouldNotContain "{framingRules}"
+                text shouldNotContain "{timingConstraints}"
+                text shouldContain "Framing style for this feedback"
+            }
+        }
+        templates.framingRewriteSystem(FeedbackFramingCondition.CORRECTIVE, FeedbackTimingCondition.INSTANT).text!! shouldContain "correction"
+        templates.framingRewriteSystem(FeedbackFramingCondition.POSITIVE, FeedbackTimingCondition.INSTANT).text!! shouldContain "encouraging"
+    }
+
+    @Test
+    fun `instant framing rewrite keeps the answer hidden and short`() {
+        val text = templates.framingRewriteSystem(FeedbackFramingCondition.NEUTRAL, FeedbackTimingCondition.INSTANT).text!!
+
+        text shouldContain "Do not reveal, spell out, or make obvious the correct answer"
+        text shouldContain "1 to 2 sentences"
+        text shouldNotContain "3 to 5 sentences"
+    }
+
+    @Test
+    fun `delayed framing rewrite may name the answer and writes a short paragraph`() {
+        val text = templates.framingRewriteSystem(FeedbackFramingCondition.NEUTRAL, FeedbackTimingCondition.DELAYED).text!!
+
+        text shouldContain "may be named plainly"
+        text shouldContain "3 to 5 sentences"
+        text shouldNotContain "Do not reveal, spell out, or make obvious the correct answer"
+    }
+
+    @Test
+    fun `framing rewrite forbids inventing a guess contrast for answer-focused notes in both timings`() {
+        FeedbackTimingCondition.entries.forEach { timing ->
+            val text = templates.framingRewriteSystem(FeedbackFramingCondition.NEUTRAL, timing).text!!
+
+            text shouldContain "invent or assume what the player guessed"
+            text shouldContain "\"narrowing\""
+        }
     }
 }

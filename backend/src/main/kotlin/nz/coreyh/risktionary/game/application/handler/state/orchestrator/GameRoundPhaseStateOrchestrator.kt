@@ -97,6 +97,12 @@ class GameRoundPhaseStateOrchestrator(
         val state = round.requireState<GameRoundState.InProgress>()
         handlerMap[phase::class]?.onEnter(round, state, phase)
 
+        // the saving phase has no timer and no player input, so it moves on as soon as its work is done
+        if (phase is GameRoundPhase.Saving) {
+            advanceOrComplete(round)
+            return
+        }
+
         val endingAt = phase.timeWindow?.endingAt ?: return
         gameSessionTaskService.schedule(round.game.id, endingAt) {
             val currentState = round.state

@@ -100,6 +100,7 @@ class GameController(
                 ticket = ticket.value,
                 playerId = ticket.playerId,
                 displayName = sessionPlayer.player.identity.displayName,
+                feedbackEnabled = session.config.feedbackGenerationEnabled,
             )
         return ResponseEntity.ok(response)
     }
