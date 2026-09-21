@@ -9,6 +9,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+  buildFeedbackGroups,
+  FeedbackEntry,
+} from "@/features/game/components/feedback/feedback-entries"
 import { AiFeedbackLabel } from "@/features/game/components/feedback/ai-feedback-label"
 import {
   useGameFeedbackEnabled,
@@ -22,14 +26,7 @@ import {
 import { ChevronDown, History } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 
-interface Entry {
-  id: string
-  title: string
-  text: string
-  time: number
-}
-
-const HistoryEntry = ({ entry }: { entry: Entry }) => {
+const HistoryEntry = ({ entry }: { entry: FeedbackEntry }) => {
   const [open, setOpen] = useState(false)
   return (
     <div className="min-w-0 rounded-md border bg-muted/40">
@@ -78,35 +75,10 @@ export const FeedbackHistory = () => {
     if (open && unread > 0) markSeen()
   }, [open, unread, markSeen])
 
-  const groups = useMemo(() => {
-    const map = new Map<number, Entry[]>()
-    const push = (round: number, entry: Entry) =>
-      map.set(round, [...(map.get(round) ?? []), entry])
-
-    Object.entries(byMessage).forEach(([messageId, f]) => {
-      const guess = guesses[messageId]
-      push(f.roundNumber, {
-        id: f.id,
-        title: guess?.text ? `"${guess.text}"` : "Correct guess",
-        text: f.text,
-        time: f.receivedAt,
-      })
-    })
-    Object.values(byRound).forEach((f) =>
-      push(f.roundNumber, {
-        id: f.id,
-        title: "Round summary",
-        text: f.text,
-        time: f.receivedAt,
-      })
-    )
-    return [...map.entries()]
-      .sort(([a], [b]) => b - a)
-      .map(([round, entries]) => ({
-        round,
-        entries: entries.sort((a, b) => a.time - b.time),
-      }))
-  }, [byMessage, byRound, guesses])
+  const groups = useMemo(
+    () => buildFeedbackGroups(byMessage, byRound, guesses),
+    [byMessage, byRound, guesses]
+  )
 
   if (!enabled || !isPlayer) return null
 
