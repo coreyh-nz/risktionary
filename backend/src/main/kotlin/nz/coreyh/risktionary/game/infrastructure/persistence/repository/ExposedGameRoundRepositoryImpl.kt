@@ -26,6 +26,7 @@ class ExposedGameRoundRepositoryImpl : GameRoundRepository {
         endedAt: Instant,
         finalState: RoundStateType,
         abandonedAiCalls: Int,
+        drawerPoints: Int,
     ) {
         transaction {
             ExposedGameRoundTable.insert {
@@ -39,6 +40,7 @@ class ExposedGameRoundRepositoryImpl : GameRoundRepository {
                 it[ExposedGameRoundTable.endedAt] = endedAt
                 it[ExposedGameRoundTable.finalState] = finalState
                 it[ExposedGameRoundTable.abandonedAiCalls] = abandonedAiCalls
+                it[ExposedGameRoundTable.drawerPoints] = drawerPoints
             }
         }
     }

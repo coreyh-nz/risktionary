@@ -14,6 +14,9 @@ object ExposedGameTable : UUIDTable("risktionary_game") {
     val feedbackGenerationMode = enumerationByName<FeedbackGenerationMode>("feedback_generation_mode", 16)
     val lobbyCountdownMs = long("lobby_countdown_ms")
     val skippingCountdownsEnabled = bool("skipping_countdowns_enabled")
+    val scoringMaxPoints = integer("scoring_max_points").default(1000)
+    val scoringMinPoints = integer("scoring_min_points").default(100)
+    val scoringUntimedWindowMs = long("scoring_untimed_window_ms").default(60_000)
     val endReason = enumerationByName<GameEndReason>("end_reason", 16).nullable()
     val endedAt = timestamp("ended_at").nullable()
 }

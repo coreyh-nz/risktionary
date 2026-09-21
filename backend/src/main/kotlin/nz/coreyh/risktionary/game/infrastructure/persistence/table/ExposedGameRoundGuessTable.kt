@@ -14,4 +14,5 @@ object ExposedGameRoundGuessTable : UUIDTable("risktionary_game_round_guess") {
     val guessResult = enumerationByName<GuessResultType>("guess_result", 16)
     val submittedAt = timestamp("submitted_at")
     val elapsedMs = long("elapsed_ms").nullable()
+    val points = integer("points").nullable()
 }

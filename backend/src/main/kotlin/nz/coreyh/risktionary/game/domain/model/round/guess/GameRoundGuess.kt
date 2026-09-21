@@ -14,4 +14,6 @@ data class GameRoundGuess(
     val result: GuessResultType,
     val submittedAt: Instant,
     val elapsedMs: Long?,
+    /** Points earned, set only for a correct guess. */
+    val points: Int?,
 )

@@ -25,6 +25,7 @@ class ExposedGameRoundGuessRepositoryImpl : GameRoundGuessRepository {
                 this[ExposedGameRoundGuessTable.guessResult] = guess.result
                 this[ExposedGameRoundGuessTable.submittedAt] = guess.submittedAt
                 this[ExposedGameRoundGuessTable.elapsedMs] = guess.elapsedMs
+                this[ExposedGameRoundGuessTable.points] = guess.points
             }
         }
     }

@@ -47,6 +47,7 @@ class GameSession(
     private val players: MutableMap<GamePlayerId, GamePlayerSession> = mutableMapOf()
     val volunteers: GameVolunteerSession = GameVolunteerSession()
     val words: GameWordsSession = GameWordsSession(words = config.words)
+    val scoreboard: GameScoreboardSession = GameScoreboardSession()
 
     private val _feedback: GameFeedbackSession? = if (config.feedbackGenerationEnabled) GameFeedbackSession() else null
     val feedback: GameFeedbackSession

@@ -50,6 +50,7 @@ sealed interface GameRoundPhaseView {
 
     data class Scoring(
         override val timer: TimerView?,
+        val scoreboard: List<ScoreboardEntryView>,
     ) : GameRoundPhaseView {
         override val type = RoundPhaseType.SCORING
     }
@@ -93,7 +94,7 @@ fun GameRoundSession.toPhaseStateView(clock: Clock = Clock.System): GameRoundPha
         }
 
         is GameRoundPhase.Scoring -> {
-            GameRoundPhaseView.Scoring(timer = timer)
+            GameRoundPhaseView.Scoring(timer = timer, scoreboard = game.toScoreboardView(game.roundNumber))
         }
 
         is GameRoundPhase.WordReview -> {

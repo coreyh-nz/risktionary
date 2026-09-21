@@ -99,6 +99,7 @@ class GameResearchPersistenceService(
                 endedAt = clock.now(),
                 finalState = round.state.type,
                 abandonedAiCalls = abandonedAiCalls,
+                drawerPoints = game.scoreboard.drawerPoints(game.roundNumber),
             )
 
             // guesses must be inserted before the chat messages and feedback that reference them
