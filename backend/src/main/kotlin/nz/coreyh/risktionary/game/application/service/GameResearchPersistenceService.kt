@@ -1,12 +1,14 @@
 package nz.coreyh.risktionary.game.application.service
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import nz.coreyh.risktionary.feedback.infrastructure.ai.AiUseCaseModels
 import nz.coreyh.risktionary.game.application.session.GameSession
 import nz.coreyh.risktionary.game.application.session.round.GameRoundSession
 import nz.coreyh.risktionary.game.application.session.round.GameRoundState
 import nz.coreyh.risktionary.game.application.session.round.requireState
 import nz.coreyh.risktionary.game.domain.model.GameEndReason
 import nz.coreyh.risktionary.game.domain.model.round.RoundStateType
+import nz.coreyh.risktionary.game.domain.repository.GameAiUseCaseRepository
 import nz.coreyh.risktionary.game.domain.repository.GamePlayerRepository
 import nz.coreyh.risktionary.game.domain.repository.GameRepository
 import nz.coreyh.risktionary.game.domain.repository.GameRoundAiUsageRepository
@@ -45,20 +47,25 @@ class GameResearchPersistenceService(
     private val gameRoundDrawingAnalysisRepository: GameRoundDrawingAnalysisRepository,
     private val gameRoundFeedbackRepository: GameRoundFeedbackRepository,
     private val gameRoundAiUsageRepository: GameRoundAiUsageRepository,
+    private val gameAiUseCaseRepository: GameAiUseCaseRepository,
+    private val aiUseCaseModels: AiUseCaseModels,
     private val clock: Clock = Clock.System,
 ) {
     /**
-     * Records the game, its configuration, and its words. Called when the
+     * Records the game, its configuration, its words and the AI setup it runs with. Called when the
      * session is created, since every later row references the game.
      */
     fun persistGame(game: GameSession) {
-        gameRepository.create(
-            id = game.id,
-            code = game.code,
-            hostId = game.host.id,
-            createdAt = game.createdAt,
-            config = game.config,
-        )
+        transactional.execute {
+            gameRepository.create(
+                id = game.id,
+                code = game.code,
+                hostId = game.host.id,
+                createdAt = game.createdAt,
+                config = game.config,
+            )
+            gameAiUseCaseRepository.insertAll(game.id, aiUseCaseModels.snapshot())
+        }
         logger.debug { "Persisted game (game=${game.id})" }
     }
 

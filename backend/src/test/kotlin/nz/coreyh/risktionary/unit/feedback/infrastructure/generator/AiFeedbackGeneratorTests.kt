@@ -6,6 +6,7 @@ import io.kotest.matchers.string.shouldNotContain
 import io.mockk.every
 import io.mockk.mockk
 import nz.coreyh.risktionary.ai.domain.AiResponse
+import nz.coreyh.risktionary.ai.domain.AiUsagePurpose
 import nz.coreyh.risktionary.ai.infrastructure.prompt.PromptTemplateLoader
 import nz.coreyh.risktionary.ai.infrastructure.service.AiChatService
 import nz.coreyh.risktionary.feedback.domain.model.FeedbackFactPayload
@@ -13,6 +14,8 @@ import nz.coreyh.risktionary.feedback.domain.model.FeedbackGenerationStatus
 import nz.coreyh.risktionary.feedback.domain.model.FeedbackGuessContext
 import nz.coreyh.risktionary.feedback.domain.model.condition.FeedbackFramingCondition
 import nz.coreyh.risktionary.feedback.domain.model.condition.FeedbackTimingCondition
+import nz.coreyh.risktionary.feedback.infrastructure.ai.AiUseCaseModel
+import nz.coreyh.risktionary.feedback.infrastructure.ai.AiUseCaseModels
 import nz.coreyh.risktionary.feedback.infrastructure.generator.AiFeedbackGenerator
 import nz.coreyh.risktionary.feedback.infrastructure.prompt.FeedbackPromptTemplates
 import nz.coreyh.risktionary.game.domain.model.round.guess.createGuessId
@@ -25,11 +28,19 @@ import org.springframework.core.io.DefaultResourceLoader
 
 class AiFeedbackGeneratorTests {
     private val aiChatService = mockk<AiChatService>()
+    private val factChatModel = mockk<ChatModel>()
+    private val rewriteChatModel = mockk<ChatModel>()
     private val generator =
         AiFeedbackGenerator(
-            chatModel = mockk<ChatModel>(),
-            feedbackFactGenerationChatOptions = ChatOptions.builder().model("fact-model").build(),
-            feedbackFactFramingRewriteChatOptions = ChatOptions.builder().model("rewrite-model").build(),
+            aiUseCaseModels =
+                AiUseCaseModels(
+                    mapOf(
+                        AiUsagePurpose.FACT_GENERATION to
+                            AiUseCaseModel("fact-provider", factChatModel, ChatOptions.builder().model("fact-model").build()),
+                        AiUsagePurpose.FRAMING_REWRITE to
+                            AiUseCaseModel("rewrite-provider", rewriteChatModel, ChatOptions.builder().model("rewrite-model").build()),
+                    ),
+                ),
             feedbackPromptTemplates = FeedbackPromptTemplates(PromptTemplateLoader(DefaultResourceLoader())),
             aiChatService = aiChatService,
         )
@@ -82,6 +93,21 @@ class AiFeedbackGeneratorTests {
         val result = generator.generate(payload(FeedbackTimingCondition.DELAYED))
 
         result.usage.map { it.model } shouldBe listOf("fact-model", "rewrite-model")
+        result.usage.map { it.provider } shouldBe listOf("fact-provider", "rewrite-provider")
         result.usage.sumOf { it.totalTokens } shouldBe 30
+    }
+
+    @Test
+    fun `each step runs on the chat model of its own use case`() {
+        val usedModels = mutableListOf<ChatModel>()
+        every { aiChatService.send(any(), any(), any(), String::class) } answers
+            {
+                usedModels += firstArg<ChatModel>()
+                AiResponse.Success("text", 1, 1, 2)
+            }
+
+        generator.generate(payload(FeedbackTimingCondition.INSTANT))
+
+        usedModels shouldBe listOf(factChatModel, rewriteChatModel)
     }
 }

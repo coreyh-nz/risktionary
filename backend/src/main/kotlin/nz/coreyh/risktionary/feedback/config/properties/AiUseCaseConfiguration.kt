@@ -15,6 +15,7 @@ data class AiUseCaseProperties(
     val factFramingRewrite: UseCaseConfig,
 ) {
     data class UseCaseConfig(
+        val provider: String,
         val model: String,
         val temperature: Double,
     )

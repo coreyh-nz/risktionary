@@ -14,6 +14,7 @@ enum class AiUsagePurpose {
  */
 data class AiUsage(
     val purpose: AiUsagePurpose,
+    val provider: String,
     val model: String,
     val promptTokens: Int,
     val completionTokens: Int,
@@ -22,10 +23,12 @@ data class AiUsage(
 
 fun AiResponse.Success<*>.toUsage(
     purpose: AiUsagePurpose,
+    provider: String,
     model: String?,
 ): AiUsage =
     AiUsage(
         purpose = purpose,
+        provider = provider,
         model = model ?: "unknown",
         promptTokens = promptTokens,
         completionTokens = completionTokens,

@@ -23,6 +23,7 @@ import nz.coreyh.risktionary.game.domain.model.risk.RiskSeverity
 import nz.coreyh.risktionary.game.domain.model.round.RoundStateType
 import nz.coreyh.risktionary.game.domain.model.round.chat.ChatMessage
 import nz.coreyh.risktionary.game.domain.model.round.guess.GuessResultType
+import nz.coreyh.risktionary.game.infrastructure.persistence.table.ExposedGameAiUseCaseTable
 import nz.coreyh.risktionary.game.infrastructure.persistence.table.ExposedGamePlayerTable
 import nz.coreyh.risktionary.game.infrastructure.persistence.table.ExposedGameRoundAiUsageTable
 import nz.coreyh.risktionary.game.infrastructure.persistence.table.ExposedGameRoundChatMessageTable
@@ -62,6 +63,12 @@ class GameResearchPersistenceServiceIntegrationTests(
             val row = ExposedGameTable.selectAll().where { ExposedGameTable.id eq game.id.value }.single()
             row[ExposedGameTable.code] shouldBe game.code
             row[ExposedGameTable.hostUserId] shouldBe game.host.id.value
+
+            val aiSetup = ExposedGameAiUseCaseTable.selectAll().where { ExposedGameAiUseCaseTable.gameId eq game.id.value }.toList()
+            aiSetup.map { it[ExposedGameAiUseCaseTable.usagePurpose] }.toSet() shouldBe AiUsagePurpose.entries.toSet()
+            aiSetup.map { it[ExposedGameAiUseCaseTable.provider] }.distinct() shouldBe listOf("test-provider")
+            aiSetup.map { it[ExposedGameAiUseCaseTable.modelName] }.distinct() shouldBe listOf("test-model")
+            aiSetup.map { it[ExposedGameAiUseCaseTable.temperature] }.distinct() shouldBe listOf(0.5)
             ExposedGameWordTable
                 .selectAll()
                 .where { ExposedGameWordTable.gameId eq game.id.value }
@@ -129,8 +136,8 @@ class GameResearchPersistenceServiceIntegrationTests(
         val image = byteArrayOf(1, 2, 3)
         round.drawing.record(image, "image/png", DrawingAnalysisResult.Fact("a fact"), Clock.System.now())
         round.drawing.record(image, "image/png", DrawingAnalysisResult.NoFact, Clock.System.now())
-        round.aiUsage.record(AiUsage(AiUsagePurpose.FACT_GENERATION, "test-model", 10, 5, 15), guesser.id)
-        round.aiUsage.record(AiUsage(AiUsagePurpose.DRAWING_ANALYSIS, "test-model", 20, 8, 28))
+        round.aiUsage.record(AiUsage(AiUsagePurpose.FACT_GENERATION, "test-provider", "test-model", 10, 5, 15), guesser.id)
+        round.aiUsage.record(AiUsage(AiUsagePurpose.DRAWING_ANALYSIS, "test-provider", "test-model", 20, 8, 28))
         round.feedback.record(
             GeneratedFeedback(
                 id = createFeedbackId(),
@@ -187,6 +194,7 @@ class GameResearchPersistenceServiceIntegrationTests(
                 listOf(AiUsagePurpose.FACT_GENERATION, AiUsagePurpose.DRAWING_ANALYSIS)
             usage.first()[ExposedGameRoundAiUsageTable.playerId] shouldBe guesser.id.value
             usage.first()[ExposedGameRoundAiUsageTable.totalTokens] shouldBe 15
+            usage.map { it[ExposedGameRoundAiUsageTable.provider] }.distinct() shouldBe listOf("test-provider")
             usage.last()[ExposedGameRoundAiUsageTable.playerId] shouldBe null
 
             ExposedGameTable

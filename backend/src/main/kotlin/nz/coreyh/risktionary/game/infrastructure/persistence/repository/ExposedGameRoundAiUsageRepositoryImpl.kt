@@ -21,6 +21,7 @@ class ExposedGameRoundAiUsageRepositoryImpl : GameRoundAiUsageRepository {
                 this[ExposedGameRoundAiUsageTable.seq] = index
                 this[ExposedGameRoundAiUsageTable.playerId] = entry.playerId?.value
                 this[ExposedGameRoundAiUsageTable.usagePurpose] = entry.usage.purpose
+                this[ExposedGameRoundAiUsageTable.provider] = entry.usage.provider
                 this[ExposedGameRoundAiUsageTable.modelName] = entry.usage.model
                 this[ExposedGameRoundAiUsageTable.promptTokens] = entry.usage.promptTokens
                 this[ExposedGameRoundAiUsageTable.completionTokens] = entry.usage.completionTokens
