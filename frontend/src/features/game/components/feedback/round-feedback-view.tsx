@@ -17,9 +17,16 @@ export const RoundFeedbackView = ({ roundNumber }: { roundNumber: number }) => {
 
   const entries = useMemo(
     () =>
-      buildFeedbackGroups(byMessage, byRound, guesses).find(
-        (g) => g.round === roundNumber
-      )?.entries ?? [],
+      (
+        buildFeedbackGroups(byMessage, byRound, guesses).find(
+          (g) => g.round === roundNumber
+        )?.entries ?? []
+      ).filter(
+        // only guesses made in this round
+        (e) =>
+          e.kind === "SUMMARY" ||
+          (e.messageId && guesses[e.messageId]?.roundNumber === roundNumber)
+      ),
     [byMessage, byRound, guesses, roundNumber]
   )
 

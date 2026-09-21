@@ -13,6 +13,7 @@ import {
 import { config } from "@/lib/config"
 import { create, StateCreator } from "zustand"
 import { createJSONStorage, persist } from "zustand/middleware"
+import { drawingStore } from "./drawing-store"
 import { createFeedbackSlice, FeedbackSlice } from "./slices/feedback.slice"
 import { createRoundSlice, RoundSlice } from "./slices/round.slice"
 import {
@@ -26,6 +27,9 @@ type GameStore = SessionSlice &
   VolunteersSlice &
   RoundSlice &
   FeedbackSlice & {
+    // clears per-round state (chat, ratings, canvas, etc.) when a new round starts.
+    // feedback is kept, the history panel spans rounds.
+    resetForNewRound: () => void
     reset: () => void
   }
 
@@ -39,6 +43,12 @@ const storeDefinition: StateCreator<GameStore> = (...args) => {
     ...createRoundSlice(...args),
     ...createFeedbackSlice(...args),
 
+    resetForNewRound: () => {
+      get().resetRoundData()
+      get().resetVolunteers()
+      drawingStore.getState().clearCanvas()
+    },
+
     reset: () => {
       get().resetState()
       get().resetSession()
@@ -46,6 +56,7 @@ const storeDefinition: StateCreator<GameStore> = (...args) => {
       get().resetVolunteers()
       get().resetRound()
       get().resetFeedback()
+      drawingStore.getState().clearCanvas()
     },
   }
 }

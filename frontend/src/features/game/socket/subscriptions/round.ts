@@ -59,6 +59,11 @@ const handleRoundStateEvent = (event: RoundStateEvent) => {
   const round = useGameStore.getState().round
   if (!round) throw new Error()
 
+  // the start of a round, drop anything left over from the previous one
+  if (event.state.type === "SELECTING_DRAWER") {
+    useGameStore.getState().resetForNewRound()
+  }
+
   const state: RoundState = mapRoundStateViewToRoundState(event.state)
   useGameStore.getState().setRound({
     ...round,
