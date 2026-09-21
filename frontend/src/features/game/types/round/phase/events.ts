@@ -1,6 +1,7 @@
 import { ChatMessage } from "@/features/game/types/round/phase/drawing/chat"
 import { RiskRatingCount } from "@/features/game/types/round/phase/risk/risk"
 import { WordHint } from "@/features/game/types/round/phase/round"
+import { ScoreboardEntry } from "@/features/game/types/game/scoring"
 import { TimerView } from "@/types/time"
 import { GameSessionPlayer } from "../../game"
 
@@ -51,7 +52,8 @@ export type RoundPhaseStateView =
     }
   | {
       type: "SCORING"
-      timer?: TimerView
+      timer?: TimerView | null
+      scoreboard?: ScoreboardEntry[]
     }
   | {
       type: "COMPLETED"

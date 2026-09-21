@@ -1,3 +1,4 @@
+import { ScoreboardEntry } from "@/features/game/types/game/scoring"
 import { CountdownState } from "@/types/time"
 import { GameSessionPlayer } from "../../game"
 
@@ -47,6 +48,7 @@ export type RoundPhase =
   | {
       type: "SCORING"
       countdown?: CountdownState
+      scoreboard?: ScoreboardEntry[]
     }
   | {
       type: "COMPLETED"
