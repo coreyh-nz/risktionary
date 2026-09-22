@@ -2,7 +2,10 @@ package nz.coreyh.risktionary.game.socket.interceptor
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import nz.coreyh.risktionary.game.socket.security.GameSocketPrincipal
+import nz.coreyh.risktionary.game.socket.support.WebSocketConnectRejectedException
 import nz.coreyh.risktionary.game.socket.support.WebSocketDestinations
+import nz.coreyh.risktionary.game.socket.support.WebSocketSessionAttributes
+import nz.coreyh.risktionary.shared.exception.code.ErrorCode
 import org.springframework.messaging.Message
 import org.springframework.messaging.MessageChannel
 import org.springframework.messaging.MessageDeliveryException
@@ -14,7 +17,10 @@ import org.springframework.stereotype.Component
 private val kLogger = KotlinLogging.logger {}
 
 /**
- * Channel interceptor that validates STOMP SUBSCRIBE messages on the WebSocket inbound channel.
+ * Channel interceptor that validates STOMP CONNECT and SUBSCRIBE messages on the WebSocket inbound channel.
+ *
+ * CONNECT is refused (surfacing to the client as a STOMP ERROR frame carrying an error code) when
+ * [WebSocketHandshakeInterceptor] recorded a failure or no [GameSocketPrincipal] was established.
  *
  * This interceptor enforces strict isolation between game sessions by ensuring clients can only
  * subscribe to destinations belonging to their authenticated game or user-specific queues.
@@ -53,6 +59,18 @@ class WebSocketChannelInterceptor : ChannelInterceptor {
     ): Message<*>? {
         val accessor = StompHeaderAccessor.wrap(message)
         when (accessor.command) {
+            StompCommand.CONNECT -> {
+                val refusal = accessor.sessionAttributes?.get(WebSocketSessionAttributes.CONNECT_ERROR) as? ErrorCode
+                if (refusal != null) {
+                    kLogger.debug { "Rejecting CONNECT: $refusal (sessionId=${accessor.sessionId})" }
+                    throw WebSocketConnectRejectedException(refusal)
+                }
+                if (accessor.user !is GameSocketPrincipal) {
+                    kLogger.debug { "Rejecting CONNECT: missing principal (sessionId=${accessor.sessionId})" }
+                    throw WebSocketConnectRejectedException(ErrorCode.AUTH_UNAUTHENTICATED)
+                }
+            }
+
             StompCommand.SUBSCRIBE -> {
                 val principal =
                     accessor.user as? GameSocketPrincipal
@@ -61,7 +79,8 @@ class WebSocketChannelInterceptor : ChannelInterceptor {
                     accessor.destination
                         ?: run {
                             kLogger.debug {
-                                "Rejecting subscription: missing destination (sessionId=${accessor.sessionId})"
+                                "Rejecting subscription: missing destination (sessionId=${accessor.sessionId}, " +
+                                    "user=${principal.name}, headers=${accessor.toNativeHeaderMap()})"
                             }
                             throw MessageDeliveryException("Unauthorized subscription destination")
                         }

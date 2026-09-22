@@ -6,18 +6,15 @@ import nz.coreyh.risktionary.auth.config.AuthConfiguration
 import nz.coreyh.risktionary.game.application.service.GameSessionService
 import nz.coreyh.risktionary.game.application.service.GameTicketService
 import nz.coreyh.risktionary.shared.exception.code.ErrorCode
-import nz.coreyh.risktionary.shared.web.dto.ApiErrorResponse
-import nz.coreyh.risktionary.shared.web.support.Routes
 import nz.coreyh.risktionary.support.annotation.IntegrationTest
 import nz.coreyh.risktionary.support.creator.TestGameSessionCreator
 import nz.coreyh.risktionary.support.creator.TestUserCreator
-import nz.coreyh.risktionary.support.extensions.andReturn
-import nz.coreyh.risktionary.support.extensions.auth
 import nz.coreyh.risktionary.support.factory.game.createTestGameId
 import nz.coreyh.risktionary.support.factory.game.createTestGamePlayerId
 import nz.coreyh.risktionary.support.factory.game.createTestGamePlayerIdentityGuest
 import nz.coreyh.risktionary.support.factory.user.createTestUser
 import nz.coreyh.risktionary.support.socket.WebSocketTestSupport.connect
+import nz.coreyh.risktionary.support.socket.WebSocketTestSupport.connectExpectingError
 import nz.coreyh.risktionary.user.domain.model.User
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -25,12 +22,8 @@ import org.junit.jupiter.api.assertDoesNotThrow
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.http.HttpHeaders
-import org.springframework.test.web.servlet.MockHttpServletRequestDsl
-import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.get
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.socket.WebSocketHttpHeaders
-import tools.jackson.databind.ObjectMapper
 
 @IntegrationTest
 @Transactional
@@ -39,14 +32,12 @@ import tools.jackson.databind.ObjectMapper
 )
 class WebSocketHandshakeInterceptorIntegrationTests(
     @LocalServerPort private val port: Int,
-    private val mockMvc: MockMvc,
     private val gameSessionService: GameSessionService,
     private val gameTicketService: GameTicketService,
     private val authTokenService: AuthTokenService,
     private val testGameSessionCreator: TestGameSessionCreator,
     private val testUserCreator: TestUserCreator,
     private val authConfiguration: AuthConfiguration,
-    private val objectMapper: ObjectMapper,
 ) {
     @Nested
     inner class Player {
@@ -62,77 +53,60 @@ class WebSocketHandshakeInterceptorIntegrationTests(
         }
 
         @Test
-        fun `handshake fails when ticket is not provided and user is unauthenticated`() {
-            val response =
-                mockMvc
-                    .get(Routes.V1.Game.SOCKET) {
-                        websocketUpgradeHeaders()
-                    }.andExpect {
-                        status { isBadRequest() }
-                    }.andReturn<ApiErrorResponse>(objectMapper)
+        fun `connect is refused when ticket is not provided and user is unauthenticated`() {
+            val headers =
+                connectExpectingError(port)
 
-            response.errorCode shouldBe ErrorCode.GAME_TICKET_INVALID.code
+            headers.getFirst("code") shouldBe ErrorCode.INVALID_REQUEST.code
         }
 
         @Test
-        fun `handshake fails when ticket is an empty string`() {
-            val response =
-                mockMvc
-                    .get(Routes.V1.Game.SOCKET) {
-                        websocketUpgradeHeaders()
-                        param("ticket", "")
-                    }.andExpect {
-                        status { isBadRequest() }
-                    }.andReturn<ApiErrorResponse>(objectMapper)
+        fun `connect is refused when ticket is an empty string`() {
+            val headers =
+                connectExpectingError(
+                    port,
+                    ticket = "",
+                )
 
-            response.errorCode shouldBe ErrorCode.GAME_TICKET_INVALID.code
+            headers.getFirst("code") shouldBe ErrorCode.GAME_TICKET_INVALID.code
         }
 
         @Test
-        fun `handshake fails when ticket is invalid`() {
-            val response =
-                mockMvc
-                    .get(Routes.V1.Game.SOCKET) {
-                        websocketUpgradeHeaders()
-                        param("ticket", "not-a-valid-ticket")
-                    }.andExpect {
-                        status { isBadRequest() }
-                    }.andReturn<ApiErrorResponse>(objectMapper)
+        fun `connect is refused when ticket is invalid`() {
+            val headers =
+                connectExpectingError(
+                    port,
+                    ticket = "not-a-valid-ticket",
+                )
 
-            response.errorCode shouldBe ErrorCode.GAME_TICKET_INVALID.code
+            headers.getFirst("code") shouldBe ErrorCode.GAME_TICKET_INVALID.code
         }
 
         @Test
-        fun `handshake fails when ticket references a non-existent game`() {
+        fun `connect is refused when ticket references a non-existent game`() {
             val ticket = gameTicketService.generateTicket(createTestGameId(), createTestGamePlayerId())
 
-            val response =
-                mockMvc
-                    .get(Routes.V1.Game.SOCKET) {
-                        websocketUpgradeHeaders()
-                        param("ticket", ticket.value)
-                    }.andExpect {
-                        status { isBadRequest() }
-                    }.andReturn<ApiErrorResponse>(objectMapper)
+            val headers =
+                connectExpectingError(
+                    port,
+                    ticket = ticket.value,
+                )
 
-            response.errorCode shouldBe ErrorCode.GAME_TICKET_INVALID.code
+            headers.getFirst("code") shouldBe ErrorCode.GAME_NOT_FOUND.code
         }
 
         @Test
-        fun `handshake fails when ticket references a player that has not joined the game`() {
+        fun `connect is refused when ticket references a player that has not joined the game`() {
             val session = testGameSessionCreator.createTestGameSession()
             val ticket = gameTicketService.generateTicket(session.id, createTestGamePlayerId())
 
-            val response =
-                mockMvc
-                    .get(Routes.V1.Game.SOCKET) {
-                        websocketUpgradeHeaders()
-                        param("ticket", ticket.value)
-                    }.andExpect {
-                        status { isBadRequest() }
-                    }.andReturn<ApiErrorResponse>(objectMapper)
+            val headers =
+                connectExpectingError(
+                    port,
+                    ticket = ticket.value,
+                )
 
-            response.errorCode shouldBe ErrorCode.GAME_TICKET_INVALID.code
+            headers.getFirst("code") shouldBe ErrorCode.GAME_PLAYER_NOT_IN_SESSION.code
         }
     }
 
@@ -154,80 +128,61 @@ class WebSocketHandshakeInterceptorIntegrationTests(
         }
 
         @Test
-        fun `host handshake fails when user is not authenticated`() {
+        fun `host connect is refused when user is not authenticated`() {
             val session = testGameSessionCreator.createTestGameSession()
 
-            val response =
-                mockMvc
-                    .get(Routes.V1.Game.SOCKET) {
-                        websocketUpgradeHeaders()
-                        param("gameId", session.id.value.toString())
-                    }.andExpect {
-                        status { isBadRequest() }
-                    }.andReturn<ApiErrorResponse>(objectMapper)
+            val headers =
+                connectExpectingError(
+                    port,
+                    gameId = session.id.value.toString(),
+                )
 
-            response.errorCode shouldBe ErrorCode.GAME_TICKET_INVALID.code
+            headers.getFirst("code") shouldBe ErrorCode.AUTH_UNAUTHENTICATED.code
         }
 
         @Test
-        fun `host handshake fails when authenticated user has no active game`() {
+        fun `host connect is refused when authenticated user has no active game`() {
             val user = createTestUser()
 
-            val response =
-                mockMvc
-                    .get(Routes.V1.Game.SOCKET) {
-                        websocketUpgradeHeaders()
-                        auth(user)
-                        param("gameId", createTestGameId().value.toString())
-                    }.andExpect {
-                        status { isBadRequest() }
-                    }.andReturn<ApiErrorResponse>(objectMapper)
+            val headers =
+                connectExpectingError(
+                    port,
+                    gameId = createTestGameId().value.toString(),
+                    handshakeHeaders = buildHostHandshakeHeaders(user),
+                )
 
-            response.errorCode shouldBe ErrorCode.GAME_TICKET_INVALID.code
+            headers.getFirst("code") shouldBe ErrorCode.GAME_NOT_FOUND.code
         }
 
         @Test
-        fun `host handshake fails when gameId is invalid`() {
+        fun `host connect is refused when gameId is invalid`() {
             val user = testUserCreator.createTestUser()
 
-            val response =
-                mockMvc
-                    .get(Routes.V1.Game.SOCKET) {
-                        websocketUpgradeHeaders()
-                        auth(user)
-                        param("gameId", "invalid-game-id")
-                    }.andExpect {
-                        status { isBadRequest() }
-                    }.andReturn<ApiErrorResponse>(objectMapper)
+            val headers =
+                connectExpectingError(
+                    port,
+                    gameId = "invalid-game-id",
+                    handshakeHeaders = buildHostHandshakeHeaders(user),
+                )
 
-            response.errorCode shouldBe ErrorCode.GAME_TICKET_INVALID.code
+            headers.getFirst("code") shouldBe ErrorCode.GAME_NOT_FOUND.code
         }
 
         @Test
-        fun `host handshake fails when authenticated user is not the game host`() {
+        fun `host connect is refused when authenticated user is not the game host`() {
             val host = testUserCreator.createUniqueTestUser()
             val otherUser = testUserCreator.createUniqueTestUser()
             val session = testGameSessionCreator.createTestGameSession(host = host)
 
-            val response =
-                mockMvc
-                    .get(Routes.V1.Game.SOCKET) {
-                        websocketUpgradeHeaders()
-                        auth(otherUser)
-                        param("gameId", session.id.value.toString())
-                    }.andExpect {
-                        status { isBadRequest() }
-                    }.andReturn<ApiErrorResponse>(objectMapper)
+            val headers =
+                connectExpectingError(
+                    port,
+                    gameId = session.id.value.toString(),
+                    handshakeHeaders = buildHostHandshakeHeaders(otherUser),
+                )
 
-            response.errorCode shouldBe ErrorCode.GAME_TICKET_INVALID.code
+            headers.getFirst("code") shouldBe ErrorCode.GAME_NOT_FOUND.code
         }
-    }
-
-    private fun MockHttpServletRequestDsl.websocketUpgradeHeaders() {
-        header("Upgrade", "websocket")
-        header("Connection", "Upgrade")
-        header("Sec-WebSocket-Key", "dGhlIHNhbXBsZSBub25jZQ==")
-        header("Sec-WebSocket-Version", "13")
     }
 
     private fun buildHostHandshakeHeaders(user: User): WebSocketHttpHeaders =

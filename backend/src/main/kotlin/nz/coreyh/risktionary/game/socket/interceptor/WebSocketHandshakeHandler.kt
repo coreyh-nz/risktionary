@@ -2,6 +2,7 @@ package nz.coreyh.risktionary.game.socket.interceptor
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import nz.coreyh.risktionary.game.socket.security.GameSocketPrincipal
+import nz.coreyh.risktionary.game.socket.support.WebSocketSessionAttributes
 import org.springframework.http.server.ServerHttpRequest
 import org.springframework.stereotype.Component
 import org.springframework.web.socket.WebSocketHandler
@@ -45,7 +46,7 @@ class WebSocketHandshakeHandler : DefaultHandshakeHandler() {
         wsHandler: WebSocketHandler,
         attributes: Map<String, Any>,
     ): Principal? {
-        val principal = attributes["principal"] as? GameSocketPrincipal
+        val principal = attributes[WebSocketSessionAttributes.PRINCIPAL] as? GameSocketPrincipal
         if (principal == null) {
             kLogger.debug {
                 "WebSocket handshake: no principal found in attributes, rejecting user assignment"

@@ -1,10 +1,12 @@
 package nz.coreyh.risktionary.game.config
 
+import jakarta.annotation.PreDestroy
 import nz.coreyh.risktionary.game.socket.interceptor.WebSocketChannelInterceptor
 import nz.coreyh.risktionary.game.socket.interceptor.WebSocketHandshakeHandler
 import nz.coreyh.risktionary.game.socket.interceptor.WebSocketHandshakeInterceptor
 import nz.coreyh.risktionary.game.socket.interceptor.WebSocketLoggingDirection
 import nz.coreyh.risktionary.game.socket.interceptor.WebSocketLoggingInterceptor
+import nz.coreyh.risktionary.game.socket.interceptor.WebSocketStompErrorHandler
 import nz.coreyh.risktionary.game.socket.support.WebSocketDestinations
 import nz.coreyh.risktionary.game.socket.support.WebSocketDestinations.App
 import nz.coreyh.risktionary.game.socket.support.WebSocketDestinations.Queue
@@ -13,6 +15,7 @@ import nz.coreyh.risktionary.shared.config.AppProperties
 import org.springframework.context.annotation.Configuration
 import org.springframework.messaging.simp.config.ChannelRegistration
 import org.springframework.messaging.simp.config.MessageBrokerRegistry
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer
@@ -27,8 +30,26 @@ class WebSocketConfiguration(
     private val webSocketHandshakeInterceptor: WebSocketHandshakeInterceptor,
     private val webSocketChannelInterceptor: WebSocketChannelInterceptor,
     private val webSocketHandshakeHandler: WebSocketHandshakeHandler,
+    private val webSocketStompErrorHandler: WebSocketStompErrorHandler,
     private val appProperties: AppProperties,
 ) : WebSocketMessageBrokerConfigurer {
+    /**
+     * Scheduler the simple broker uses to send and monitor STOMP heartbeats. Heartbeats are silently
+     * disabled by Spring unless the broker has a scheduler, so this is required for them to work.
+     */
+    private val heartbeatScheduler =
+        ThreadPoolTaskScheduler().apply {
+            poolSize = 1
+            setThreadNamePrefix("ws-heartbeat-")
+            isDaemon = true
+            initialize()
+        }
+
+    @PreDestroy
+    fun shutdownHeartbeatScheduler() {
+        heartbeatScheduler.shutdown()
+    }
+
     /**
      * Configures the message broker and application destination prefixes.
      *
@@ -42,12 +63,18 @@ class WebSocketConfiguration(
      * Configures user destination prefix to support user-specific routing:
      * - Clients subscribe to `/user/queue/...` which gets translated to `/queue/...-user{sessionId}`
      * - Enables private messages and user-specific notifications
+     *
+     * Enables STOMP heartbeats (server-to-client and client-to-server, every [HEARTBEAT_INTERVAL_MS]) so idle
+     * connections stay alive through proxies and dead connections are detected. Without them, no heartbeats are
+     * negotiated and idle sockets get dropped by intermediaries, causing disconnect/reconnect cycles.
      */
     override fun configureMessageBroker(registry: MessageBrokerRegistry) {
-        registry.enableSimpleBroker(
-            Topic.PREFIX,
-            Queue.PREFIX,
-        )
+        registry
+            .enableSimpleBroker(
+                Topic.PREFIX,
+                Queue.PREFIX,
+            ).setHeartbeatValue(longArrayOf(HEARTBEAT_INTERVAL_MS, HEARTBEAT_INTERVAL_MS))
+            .setTaskScheduler(heartbeatScheduler)
         registry.setApplicationDestinationPrefixes(App.PREFIX)
         registry.setUserDestinationPrefix(WebSocketDestinations.USER_PREFIX)
         registry.configureBrokerChannel().interceptors(WebSocketLoggingInterceptor(WebSocketLoggingDirection.OUTBOUND))
@@ -60,12 +87,14 @@ class WebSocketConfiguration(
      * - Custom handshake handler ([WebSocketHandshakeHandler]) that assigns the [nz.coreyh.risktionary.game.socket.security.GameSocketPrincipal]
      *   to the WebSocket session after successful authentication
      * - Handshake interceptor ([WebSocketHandshakeInterceptor]) that validates player tickets
-     *   or host authentication before the WebSocket connection is established
+     *   or host authentication. Failures are recorded rather than rejected, and reported to the client
+     *   as a STOMP ERROR frame on CONNECT (see [WebSocketStompErrorHandler])
      * - Allowed origin patterns from application configuration to enforce CORS policies
      *
      * @param registry The STOMP endpoint registry to configure
      */
     override fun registerStompEndpoints(registry: StompEndpointRegistry) {
+        registry.setErrorHandler(webSocketStompErrorHandler)
         registry
             .addEndpoint("/ws")
             .setHandshakeHandler(webSocketHandshakeHandler)
@@ -95,3 +124,5 @@ class WebSocketConfiguration(
             .setSendTimeLimit(20 * 1000)
     }
 }
+
+const val HEARTBEAT_INTERVAL_MS = 10_000L
