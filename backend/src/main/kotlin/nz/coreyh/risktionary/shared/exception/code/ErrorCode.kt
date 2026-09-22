@@ -69,6 +69,11 @@ enum class ErrorCode(
         httpStatus = HttpStatus.BAD_REQUEST,
         defaultMessage = "Game round state invalid",
     ),
+    GAME_DRAWING_ANALYSIS_NOT_FOUND(
+        code = "game.drawing-analysis-not-found",
+        httpStatus = HttpStatus.NOT_FOUND,
+        defaultMessage = "Drawing analysis not found",
+    ),
 
     // Words
     WORD_NOT_FOUND(

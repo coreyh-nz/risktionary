@@ -1,6 +1,7 @@
 package nz.coreyh.risktionary.game.domain.repository
 
 import nz.coreyh.risktionary.game.domain.model.GameId
+import nz.coreyh.risktionary.game.domain.model.details.PersistedRound
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerId
 import nz.coreyh.risktionary.game.domain.model.round.RoundId
 import nz.coreyh.risktionary.game.domain.model.round.RoundStateType
@@ -25,4 +26,6 @@ interface GameRoundRepository {
         id: RoundId,
         finalState: RoundStateType,
     )
+
+    fun findByGameId(gameId: GameId): List<PersistedRound>
 }

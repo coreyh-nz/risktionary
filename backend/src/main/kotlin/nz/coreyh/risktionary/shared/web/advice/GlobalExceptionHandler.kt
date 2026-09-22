@@ -7,6 +7,7 @@ import nz.coreyh.risktionary.shared.exception.ValidationException
 import nz.coreyh.risktionary.shared.exception.code.ErrorCode
 import nz.coreyh.risktionary.shared.web.dto.ApiErrorResponse
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.servlet.resource.NoResourceFoundException
@@ -49,6 +50,17 @@ class GlobalExceptionHandler {
 
         return handleErrorCode(ex.errorCode, ex.message)
     }
+
+    /**
+     * Thrown by `@PreAuthorize` (method security) when an authenticated user lacks
+     * the required role. Filter-level denials (e.g. `authorizeHttpRequests`) never
+     * reach here - those are handled by [nz.coreyh.risktionary.shared.web.security.ApiAccessDeniedHandler] -
+     * but a denial from inside a controller method invocation surfaces as this
+     * exception, so it needs its own mapping or the generic handler below would
+     * turn it into a 500.
+     */
+    @ExceptionHandler(AccessDeniedException::class)
+    fun handleAccessDeniedException(e: AccessDeniedException): ResponseEntity<ApiErrorResponse> = handleErrorCode(ErrorCode.AUTH_FORBIDDEN)
 
     @ExceptionHandler(Exception::class)
     fun handleUnknown(

@@ -26,6 +26,9 @@ object Routes {
             const val SOCKET = "/ws"
 
             const val CURRENT_ROUND_WORD = "$BASE/{gameId}/round/word"
+
+            const val DETAILS = "$BASE/{gameId}/details"
+            const val DRAWING_IMAGE = "$BASE/{gameId}/drawings/{analysisId}"
         }
 
         object Words {

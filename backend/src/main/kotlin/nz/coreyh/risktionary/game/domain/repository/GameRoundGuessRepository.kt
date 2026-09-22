@@ -9,4 +9,7 @@ interface GameRoundGuessRepository {
         roundId: RoundId,
         guesses: List<GameRoundGuess>,
     )
+
+    /** Every guess made in [roundId], in submission order. */
+    fun findByRoundId(roundId: RoundId): List<GameRoundGuess>
 }
