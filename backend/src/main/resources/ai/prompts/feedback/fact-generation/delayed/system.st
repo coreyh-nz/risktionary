@@ -16,6 +16,10 @@ and every guess the player made in this round, in the order they were made. For 
 the guess text, whether it was correct, and - if available - a note about what was visible in the
 drawing at that moment. Every player already knows the answer and whether each guess was correct.
 
+The guesses listed are only the player wrong guesses: a correct guess is never listed. Instead you
+are told the round_outcome: whether the player went on to guess the correct answer, or never got
+there before the round ended. Use it to shape the note (see below), but do not restate it.
+
 {oneAttemptRules}
 
 WHAT THE NOTE MUST CONTAIN
@@ -33,9 +37,16 @@ WHAT THE NOTE MUST CONTAIN
    instance, that a particular object shown in a particular situation is typically associated with a
    particular kind of hazard). Write it as a statement of fact, never as advice or an instruction.
 
-If the player made only one guess, cover only that guess, in the same way, without inventing a
-progression. If the player got the answer on a first guess, point 2 is that guess and point 3 is
-which cues supported it.
+If the player made only one wrong guess, cover only that guess, in the same way, without inventing
+a progression.
+
+Use the round_outcome:
+- If the player went on to guess the answer, treat the listed guesses as the route that led there:
+  point 2 describes how they moved toward the concept, and point 3 names which cues in the drawing
+  they must have picked up on to reach it. Do not invent a final guess or its text.
+- If the player never guessed the answer, point 2 describes where their guesses stayed relative to
+  the concept, and point 3 names the cues in the drawing that pointed toward it and were missed or
+  read differently. State this as fact about the cues, never as blame.
 
 FORM OF THE NOTE
 {noteFormRules}

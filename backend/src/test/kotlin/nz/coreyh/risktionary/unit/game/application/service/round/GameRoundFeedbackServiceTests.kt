@@ -189,6 +189,49 @@ class GameRoundFeedbackServiceTests {
     }
 
     @Test
+    fun `delayed feedback tells the generator the player went on to guess correctly`() {
+        val scenario = Scenario(FeedbackTimingCondition.DELAYED)
+        val payload = slot<FeedbackFactPayload>()
+        every { feedbackService.generate(any(), capture(payload)) } returns success()
+        val latch = publishedLatch()
+        service.onGuess(scenario.round, scenario.player, scenario.guess("cable"), createChatMessageId())
+        scenario.guess("trip hazard", GuessResultType.CORRECT)
+
+        service.generateDelayed(scenario.round)
+        latch.awaitPublished()
+
+        payload.captured.guessedCorrectly shouldBe true
+        payload.captured.guesses.map { it.text } shouldBe listOf("cable")
+    }
+
+    @Test
+    fun `delayed feedback tells the generator the player never guessed correctly`() {
+        val scenario = Scenario(FeedbackTimingCondition.DELAYED)
+        val payload = slot<FeedbackFactPayload>()
+        every { feedbackService.generate(any(), capture(payload)) } returns success()
+        val latch = publishedLatch()
+        service.onGuess(scenario.round, scenario.player, scenario.guess("cable"), createChatMessageId())
+
+        service.generateDelayed(scenario.round)
+        latch.awaitPublished()
+
+        payload.captured.guessedCorrectly shouldBe false
+    }
+
+    @Test
+    fun `instant feedback is never generated as if the player had guessed correctly`() {
+        val scenario = Scenario(FeedbackTimingCondition.INSTANT)
+        val payload = slot<FeedbackFactPayload>()
+        every { feedbackService.generate(any(), capture(payload)) } returns success()
+        val latch = publishedLatch()
+
+        service.onGuess(scenario.round, scenario.player, scenario.guess("cable"), createChatMessageId())
+        latch.awaitPublished()
+
+        payload.captured.guessedCorrectly shouldBe false
+    }
+
+    @Test
     fun `generating delayed feedback skips instant players and players who did not guess`() {
         val instant = Scenario(FeedbackTimingCondition.INSTANT)
         every { feedbackService.generate(any(), any()) } returns success()

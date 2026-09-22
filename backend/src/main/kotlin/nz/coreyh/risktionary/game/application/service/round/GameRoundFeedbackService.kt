@@ -60,6 +60,7 @@ class GameRoundFeedbackService(
         val game = round.game
         val mode = game.config.feedbackGenerationMode
         if (mode == FeedbackGenerationMode.NONE) return
+        if (guess.result == GuessResultType.CORRECT) return
 
         val assignment = game.feedback.findAssignmentFor(player.id) ?: return
 
@@ -69,14 +70,14 @@ class GameRoundFeedbackService(
                 FeedbackGuessContext(
                     guessId = guess.id,
                     text = guess.text,
-                    correct = guess.result == GuessResultType.CORRECT,
+                    correct = false,
                     drawingNote = (round.drawing.latestAnalysis() as? DrawingAnalysisResult.Fact)?.note,
                     timeRemainingFraction = timeRemainingFraction(round, guess.submittedAt),
                 ),
             )
 
         if (assignment.timingCondition == FeedbackTimingCondition.INSTANT) {
-            generate(round, mode, player.id, assignment, guessesSoFar, messageId)
+            generate(round, mode, player.id, assignment, guessesSoFar, messageId, guessedCorrectly = false)
         }
     }
 
@@ -92,7 +93,15 @@ class GameRoundFeedbackService(
         round.feedback.getGuessesByPlayer().forEach { (playerId, guesses) ->
             val assignment = game.feedback.findAssignmentFor(playerId) ?: return@forEach
             if (assignment.timingCondition == FeedbackTimingCondition.DELAYED) {
-                generate(round, mode, playerId, assignment, guesses, messageId = null)
+                generate(
+                    round,
+                    mode,
+                    playerId,
+                    assignment,
+                    guesses,
+                    messageId = null,
+                    guessedCorrectly = round.guesses.hasGuessedCorrectly(playerId),
+                )
             }
         }
     }
@@ -104,6 +113,7 @@ class GameRoundFeedbackService(
         assignment: GamePlayerFeedbackAssignment,
         guesses: List<FeedbackGuessContext>,
         messageId: ChatMessageId?,
+        guessedCorrectly: Boolean,
     ) {
         val job =
             round.game.feedback.feedbackDispatcher.launch(
@@ -116,6 +126,7 @@ class GameRoundFeedbackService(
                                 word = round.word,
                                 condition = assignment.framingCondition,
                                 timing = assignment.timingCondition,
+                                guessedCorrectly = guessedCorrectly,
                             ),
                     )
                 },

@@ -4,3 +4,5 @@ description: {description}
 
 guesses so far, oldest first:
 {guesses}
+
+{outcome}
