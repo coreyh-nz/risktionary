@@ -3,6 +3,8 @@ package nz.coreyh.risktionary.game.domain.repository
 import nz.coreyh.risktionary.game.domain.model.GameConfiguration
 import nz.coreyh.risktionary.game.domain.model.GameEndReason
 import nz.coreyh.risktionary.game.domain.model.GameId
+import nz.coreyh.risktionary.game.domain.model.details.PersistedGame
+import nz.coreyh.risktionary.game.domain.model.details.PersistedGameSummary
 import nz.coreyh.risktionary.user.domain.model.UserId
 import kotlin.time.Instant
 
@@ -20,6 +22,12 @@ interface GameRepository {
         createdAt: Instant,
         config: GameConfiguration,
     )
+
+    /** The game as it was configured, or null if no game with that id was persisted. */
+    fun findById(id: GameId): PersistedGame?
+
+    /** Every persisted game, newest first. */
+    fun findAll(): List<PersistedGameSummary>
 
     fun markEnded(
         id: GameId,

@@ -1,14 +1,19 @@
 package nz.coreyh.risktionary.game.infrastructure.persistence.repository
 
 import nz.coreyh.risktionary.game.domain.model.GameId
+import nz.coreyh.risktionary.game.domain.model.details.PersistedRound
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerId
+import nz.coreyh.risktionary.game.domain.model.player.toGamePlayerId
 import nz.coreyh.risktionary.game.domain.model.round.RoundId
 import nz.coreyh.risktionary.game.domain.model.round.RoundStateType
+import nz.coreyh.risktionary.game.domain.model.round.toRoundId
 import nz.coreyh.risktionary.game.domain.repository.GameRoundRepository
 import nz.coreyh.risktionary.game.infrastructure.persistence.table.ExposedGameRoundTable
 import nz.coreyh.risktionary.words.domain.model.Word
+import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 import org.springframework.stereotype.Repository
@@ -57,4 +62,26 @@ class ExposedGameRoundRepositoryImpl : GameRoundRepository {
             check(count == 1) { "Expected to update exactly one round but updated $count (round=$id)" }
         }
     }
+
+    override fun findByGameId(gameId: GameId): List<PersistedRound> =
+        transaction {
+            ExposedGameRoundTable
+                .selectAll()
+                .where { ExposedGameRoundTable.gameId eq gameId.value }
+                .orderBy(ExposedGameRoundTable.roundNumber, SortOrder.ASC)
+                .map {
+                    PersistedRound(
+                        id = it[ExposedGameRoundTable.id].value.toRoundId(),
+                        roundNumber = it[ExposedGameRoundTable.roundNumber],
+                        wordId = it[ExposedGameRoundTable.wordId],
+                        wordValue = it[ExposedGameRoundTable.wordValue],
+                        drawerId = it[ExposedGameRoundTable.drawerId].toGamePlayerId(),
+                        startedAt = it[ExposedGameRoundTable.startedAt],
+                        endedAt = it[ExposedGameRoundTable.endedAt],
+                        finalState = it[ExposedGameRoundTable.finalState],
+                        abandonedAiCalls = it[ExposedGameRoundTable.abandonedAiCalls],
+                        drawerPoints = it[ExposedGameRoundTable.drawerPoints],
+                    )
+                }
+        }
 }

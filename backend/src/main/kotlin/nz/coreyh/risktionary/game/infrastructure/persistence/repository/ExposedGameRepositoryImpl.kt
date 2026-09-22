@@ -3,17 +3,27 @@ package nz.coreyh.risktionary.game.infrastructure.persistence.repository
 import nz.coreyh.risktionary.game.domain.model.GameConfiguration
 import nz.coreyh.risktionary.game.domain.model.GameEndReason
 import nz.coreyh.risktionary.game.domain.model.GameId
+import nz.coreyh.risktionary.game.domain.model.details.PersistedGame
+import nz.coreyh.risktionary.game.domain.model.details.PersistedGameSummary
+import nz.coreyh.risktionary.game.domain.model.details.PersistedGameWord
+import nz.coreyh.risktionary.game.domain.model.details.PersistedScoring
+import nz.coreyh.risktionary.game.domain.model.toGameId
 import nz.coreyh.risktionary.game.domain.repository.GameRepository
 import nz.coreyh.risktionary.game.infrastructure.persistence.table.ExposedGamePhaseDurationTable
 import nz.coreyh.risktionary.game.infrastructure.persistence.table.ExposedGameTable
 import nz.coreyh.risktionary.game.infrastructure.persistence.table.ExposedGameWordTable
 import nz.coreyh.risktionary.user.domain.model.UserId
+import nz.coreyh.risktionary.user.domain.model.toUserId
+import nz.coreyh.risktionary.words.domain.model.toWordId
+import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.batchInsert
 import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 import org.springframework.stereotype.Repository
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Instant
 
 @Repository
@@ -63,6 +73,72 @@ class ExposedGameRepositoryImpl : GameRepository {
                 }
         }
     }
+
+    override fun findById(id: GameId): PersistedGame? =
+        transaction {
+            val row =
+                ExposedGameTable
+                    .selectAll()
+                    .where { ExposedGameTable.id eq id.value }
+                    .singleOrNull() ?: return@transaction null
+
+            val phaseDurations =
+                ExposedGamePhaseDurationTable
+                    .selectAll()
+                    .where { ExposedGamePhaseDurationTable.gameId eq id.value }
+                    .associate { it[ExposedGamePhaseDurationTable.phase] to it[ExposedGamePhaseDurationTable.durationMs].milliseconds }
+
+            val words =
+                ExposedGameWordTable
+                    .selectAll()
+                    .where { ExposedGameWordTable.gameId eq id.value }
+                    .orderBy(ExposedGameWordTable.position)
+                    .map {
+                        PersistedGameWord(
+                            position = it[ExposedGameWordTable.position],
+                            wordId = it[ExposedGameWordTable.wordId]?.toWordId(),
+                            wordValue = it[ExposedGameWordTable.wordValue],
+                        )
+                    }
+
+            PersistedGame(
+                id = row[ExposedGameTable.id].value.toGameId(),
+                code = row[ExposedGameTable.code],
+                hostUserId = row[ExposedGameTable.hostUserId].toUserId(),
+                createdAt = row[ExposedGameTable.createdAt],
+                feedbackGenerationMode = row[ExposedGameTable.feedbackGenerationMode],
+                lobbyCountdown = row[ExposedGameTable.lobbyCountdownMs].milliseconds,
+                skippingCountdownsEnabled = row[ExposedGameTable.skippingCountdownsEnabled],
+                scoring =
+                    PersistedScoring(
+                        maxPoints = row[ExposedGameTable.scoringMaxPoints],
+                        minPoints = row[ExposedGameTable.scoringMinPoints],
+                        untimedReferenceWindow = row[ExposedGameTable.scoringUntimedWindowMs].milliseconds,
+                    ),
+                phaseDurations = phaseDurations,
+                words = words,
+                endReason = row[ExposedGameTable.endReason],
+                endedAt = row[ExposedGameTable.endedAt],
+            )
+        }
+
+    override fun findAll(): List<PersistedGameSummary> =
+        transaction {
+            ExposedGameTable
+                .selectAll()
+                .orderBy(ExposedGameTable.createdAt, SortOrder.DESC)
+                .map {
+                    PersistedGameSummary(
+                        id = it[ExposedGameTable.id].value.toGameId(),
+                        code = it[ExposedGameTable.code],
+                        hostUserId = it[ExposedGameTable.hostUserId].toUserId(),
+                        createdAt = it[ExposedGameTable.createdAt],
+                        feedbackGenerationMode = it[ExposedGameTable.feedbackGenerationMode],
+                        endReason = it[ExposedGameTable.endReason],
+                        endedAt = it[ExposedGameTable.endedAt],
+                    )
+                }
+        }
 
     override fun markEnded(
         id: GameId,

@@ -9,4 +9,7 @@ interface GameRoundAiUsageRepository {
         roundId: RoundId,
         usage: List<GameRoundAiUsage>,
     )
+
+    /** Every AI call recorded in [roundId], in the order it was recorded. */
+    fun findByRoundId(roundId: RoundId): List<GameRoundAiUsage>
 }

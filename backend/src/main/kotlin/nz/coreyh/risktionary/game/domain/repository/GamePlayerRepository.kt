@@ -2,6 +2,7 @@ package nz.coreyh.risktionary.game.domain.repository
 
 import nz.coreyh.risktionary.feedback.domain.model.GamePlayerFeedbackAssignment
 import nz.coreyh.risktionary.game.domain.model.GameId
+import nz.coreyh.risktionary.game.domain.model.details.PersistedGamePlayer
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerId
 
 interface GamePlayerRepository {
@@ -16,4 +17,6 @@ interface GamePlayerRepository {
         gameId: GameId,
         players: Map<GamePlayerId, GamePlayerFeedbackAssignment?>,
     )
+
+    fun findByGameId(gameId: GameId): List<PersistedGamePlayer>
 }
