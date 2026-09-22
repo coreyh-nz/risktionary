@@ -7,12 +7,18 @@ interface WordDescriptionProps {
 }
 
 export const WordDescription = ({ content }: WordDescriptionProps) => {
-  return useMemo(
+  const rendered = useMemo(
     () =>
       renderToReactElement({
         content: JSON.parse(content),
         extensions: sharedExtensions,
       }),
     [content]
+  )
+
+  return (
+    <div className="tiptap max-w-none max-h-none! overflow-visible!">
+      {rendered}
+    </div>
   )
 }
