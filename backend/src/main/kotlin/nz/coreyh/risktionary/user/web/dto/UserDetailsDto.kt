@@ -2,6 +2,7 @@ package nz.coreyh.risktionary.user.web.dto
 
 import nz.coreyh.risktionary.user.domain.model.User
 import nz.coreyh.risktionary.user.domain.model.UserId
+import nz.coreyh.risktionary.user.domain.model.UserRole
 
 data class UserDetailsDto(
     val id: UserId,
@@ -9,6 +10,7 @@ data class UserDetailsDto(
     val firstName: String,
     val lastName: String,
     val displayName: String,
+    val roles: Set<UserRole>,
 )
 
 fun User.toDto(): UserDetailsDto =
@@ -18,4 +20,5 @@ fun User.toDto(): UserDetailsDto =
         firstName = firstName,
         lastName = lastName,
         displayName = displayName,
+        roles = roles,
     )

@@ -1,18 +1,19 @@
 package nz.coreyh.risktionary.user.infrastructure.persistence.repository
 
+import java.util.UUID
 import nz.coreyh.risktionary.user.domain.model.User
 import nz.coreyh.risktionary.user.domain.model.UserId
 import nz.coreyh.risktionary.user.domain.model.toUserId
 import nz.coreyh.risktionary.user.domain.repository.UserRepository
+import nz.coreyh.risktionary.user.infrastructure.persistence.table.ExposedUserRoleTable
 import nz.coreyh.risktionary.user.infrastructure.persistence.table.ExposedUserTable
-import nz.coreyh.risktionary.user.infrastructure.persistence.table.ExposedUserTable.id
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.Query
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.springframework.stereotype.Repository
-import java.util.UUID
 
 @Repository
 class ExposedUserRepositoryImpl : UserRepository {
@@ -20,11 +21,10 @@ class ExposedUserRepositoryImpl : UserRepository {
 
     override fun findByEmail(email: String): User? =
         transaction {
-            ExposedUserTable
+            (ExposedUserTable leftJoin ExposedUserRoleTable)
                 .selectAll()
                 .where { ExposedUserTable.email eq email }
-                .map { it.toDomain() }
-                .firstOrNull()
+                .toUser()
         }
 
     override fun create(
@@ -48,19 +48,27 @@ class ExposedUserRepositoryImpl : UserRepository {
 
     private fun findById(id: UUID): User? =
         transaction {
-            ExposedUserTable
+            (ExposedUserTable leftJoin ExposedUserRoleTable)
                 .selectAll()
                 .where { ExposedUserTable.id eq id }
-                .map { it.toDomain() }
-                .firstOrNull()
+                .toUser()
         }
 
-    private fun ResultRow.toDomain(): User =
-        User(
-            id = this[id].value.toUserId(),
-            email = this[ExposedUserTable.email],
-            firstName = this[ExposedUserTable.firstName],
-            lastName = this[ExposedUserTable.lastName],
-            displayName = this[ExposedUserTable.displayName],
+    private fun Query.toUser(): User? =
+        groupBy { it[ExposedUserTable.id] }
+            .values
+            .map { it.toUserAggregate() }
+            .singleOrNull()
+
+    private fun Collection<ResultRow>.toUserAggregate(): User {
+        val first = first()
+        return User(
+            id = first[ExposedUserTable.id].value.toUserId(),
+            email = first[ExposedUserTable.email],
+            firstName = first[ExposedUserTable.firstName],
+            lastName = first[ExposedUserTable.lastName],
+            displayName = first[ExposedUserTable.displayName],
+            roles = mapNotNull { it.getOrNull(ExposedUserRoleTable.role) }.toSet(),
         )
+    }
 }

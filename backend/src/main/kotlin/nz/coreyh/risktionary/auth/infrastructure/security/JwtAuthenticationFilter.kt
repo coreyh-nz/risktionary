@@ -34,8 +34,8 @@ class JwtAuthenticationFilter(
         } else {
             try {
                 val token = authTokenService.decodeAccessToken(cookie.value)
-                val principal = UserPrincipal(token.userId, listOf())
-                val authentication = UsernamePasswordAuthenticationToken(principal, null, listOf())
+                val principal = UserPrincipal(token.userId, token.roles.map { it.name })
+                val authentication = UsernamePasswordAuthenticationToken(principal, null, principal.authorities)
 
                 SecurityContextHolder.getContext().authentication = authentication
 

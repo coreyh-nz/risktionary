@@ -4,6 +4,7 @@ import nz.coreyh.risktionary.auth.config.JwtProperties
 import nz.coreyh.risktionary.auth.domain.model.AccessToken
 import nz.coreyh.risktionary.shared.application.service.TokenService
 import nz.coreyh.risktionary.shared.exception.UnauthenticatedException
+import nz.coreyh.risktionary.user.domain.model.UserRole
 import nz.coreyh.risktionary.user.domain.model.User
 import nz.coreyh.risktionary.user.domain.model.toUserIdOrNull
 import org.springframework.security.oauth2.jwt.BadJwtException
@@ -24,12 +25,14 @@ class AuthTokenService(
                 issuedAt = issuedAt,
                 expiresAt = expiresAt,
                 type = TOKEN_TYPE,
+                claims = mapOf(ROLES_CLAIM to user.roles.joinToString(",") { it.name }),
             )
         return AccessToken(
             userId = user.id,
             issuedAt = token.issuedAt,
             expiresAt = token.expiresAt,
             value = token.value,
+            roles = user.roles,
         )
     }
 
@@ -48,10 +51,24 @@ class AuthTokenService(
             issuedAt = token.issuedAt,
             expiresAt = token.expiresAt,
             value = token.value,
+            roles = rolesFrom(token.claims),
         )
     }
 
+    /**
+     * Parses the roles claim, ignoring any name that is no longer a known
+     * [UserRole] (for example, one removed since the token was issued).
+     */
+    private fun rolesFrom(claims: Map<String, String>): Set<UserRole> =
+        claims[ROLES_CLAIM]
+            .orEmpty()
+            .split(",")
+            .filter { it.isNotBlank() }
+            .mapNotNull { name -> UserRole.entries.find { it.name == name } }
+            .toSet()
+
     companion object {
         const val TOKEN_TYPE = "access-token"
+        private const val ROLES_CLAIM = "roles"
     }
 }

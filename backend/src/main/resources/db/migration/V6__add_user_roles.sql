@@ -1,0 +1,1 @@
+CREATE TABLE IF NOT EXISTS risktionary_user_role (user_id uuid, user_role VARCHAR(32), CONSTRAINT pk_risktionary_user_role PRIMARY KEY (user_id, user_role), CONSTRAINT fk_risktionary_user_role_user_id__id FOREIGN KEY (user_id) REFERENCES risktionary_user(id) ON DELETE CASCADE ON UPDATE RESTRICT);
