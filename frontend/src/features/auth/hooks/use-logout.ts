@@ -1,7 +1,8 @@
-import { useAuth } from "@/providers/auth-provider"
-import { toast } from "sonner"
+import { useGameReset } from "@/features/game/stores/game-store-selectors"
 import { useApi } from "@/hooks/use-api"
 import { API_ROUTES } from "@/lib/api/api-routes"
+import { useAuth } from "@/providers/auth-provider"
+import { toast } from "sonner"
 
 interface UseLogoutReturn {
   logout: () => Promise<void>
@@ -13,6 +14,7 @@ export const useLogout = (): UseLogoutReturn => {
     credentials: "include",
   })
   const { setUser } = useAuth()
+  const resetGame = useGameReset()
 
   const logout = async () => {
     const response = await request()
@@ -21,6 +23,7 @@ export const useLogout = (): UseLogoutReturn => {
       return
     }
     setUser(null)
+    resetGame()
   }
 
   return { logout }

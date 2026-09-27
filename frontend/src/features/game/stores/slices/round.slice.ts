@@ -24,6 +24,8 @@ export interface RoundSlice {
 
   addRoundChatMessage: (message: ChatMessage) => void
 
+  // clears everything belonging to a single round, keeping the round itself
+  resetRoundData: () => void
   resetRound: () => void
 }
 
@@ -59,6 +61,15 @@ export const createRoundSlice: StateCreator<RoundSlice, [], [], RoundSlice> = (
     set((state) => ({
       roundChatMessages: [...state.roundChatMessages, message],
     })),
+
+  resetRoundData: () =>
+    set({
+      roundRole: null,
+      roundChatMessages: [],
+      roundCorrectGuessesCount: 0,
+      roundRiskRatingCounts: null,
+      roundSubmittedRiskRating: null,
+    }),
 
   resetRound: () =>
     set({

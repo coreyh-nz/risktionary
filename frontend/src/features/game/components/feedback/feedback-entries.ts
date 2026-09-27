@@ -6,6 +6,7 @@ import {
 export interface FeedbackEntry {
   id: string
   kind: "GUESS" | "SUMMARY"
+  messageId?: string
   title: string
   text: string
   time: number
@@ -31,6 +32,7 @@ export const buildFeedbackGroups = (
     push(f.roundNumber, {
       id: f.id,
       kind: "GUESS",
+      messageId,
       title: guess?.text ? `"${guess.text}"` : "Correct guess",
       text: f.text,
       time: f.receivedAt,

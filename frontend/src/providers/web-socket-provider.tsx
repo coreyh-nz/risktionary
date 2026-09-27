@@ -1,4 +1,9 @@
-import { Client, IMessage, StompSubscription } from "@stomp/stompjs"
+import {
+  Client,
+  IMessage,
+  ReconnectionTimeMode,
+  StompSubscription,
+} from "@stomp/stompjs"
 import {
   createContext,
   PropsWithChildren,
@@ -10,18 +15,28 @@ import {
 
 const MAX_RETRIES = 5
 
+// must match the server's negotiated heartbeat; 0 would stop the server
+// heartbeating us and let idle sockets be closed by proxies.
+const HEARTBEAT_MS = 10000
+
+export interface WebSocketError {
+  code: string
+  message: string
+}
+
 interface WebSocketState {
   connected: boolean
   attempts: number
-  error: string | null
+  error: WebSocketError | null
 }
 
 type WebSocketAction =
   | { type: "CONNECTED" }
   | { type: "DISCONNECTED" }
   | { type: "ATTEMPT" }
-  | { type: "ERROR"; message: string }
+  | { type: "ERROR"; error: WebSocketError }
   | { type: "RESET" }
+  | { type: "CLEAR_ERROR" }
 
 const initialState: WebSocketState = {
   connected: false,
@@ -41,9 +56,11 @@ const reducer = (
     case "ATTEMPT":
       return { ...state, attempts: state.attempts + 1 }
     case "ERROR":
-      return { ...state, error: action.message }
+      return { ...state, error: action.error }
     case "RESET":
-      return initialState
+      return { ...initialState, error: state.error }
+    case "CLEAR_ERROR":
+      return { ...state, error: null }
     default:
       return state
   }
@@ -52,9 +69,10 @@ const reducer = (
 interface WebSocketContextValue {
   connect: (url: string, onConnect: (client: Client) => void) => void
   disconnect: () => void
+  clearError: () => void
   connected: boolean
   attempts: number
-  error: string | null
+  error: WebSocketError | null
 
   send: (destination: string, body?: unknown) => void
   subscribe: (
@@ -70,20 +88,30 @@ export const WebSocketProvider = ({ children }: PropsWithChildren) => {
   const [state, dispatch] = useReducer(reducer, initialState)
   const clientRef = useRef<Client | null>(null)
   const attemptsRef = useRef(0)
+  const fatalRef = useRef(false)
 
   const connect = useCallback(
     (url: string, onConnect: (client: Client) => void) => {
       if (clientRef.current?.active) return
 
       attemptsRef.current = 0
+      fatalRef.current = false
+      // RESET keeps any prior error so the UI can still react to it;
+      // it is cleared on CONNECTED or by the consumer via clearError.
       dispatch({ type: "RESET" })
 
       const stompClient = new Client({
         brokerURL: url,
         reconnectDelay: 1000,
+        reconnectTimeMode: ReconnectionTimeMode.EXPONENTIAL,
+        maxReconnectDelay: 10000,
+        heartbeatIncoming: HEARTBEAT_MS,
+        heartbeatOutgoing: HEARTBEAT_MS,
         splitLargeFrames: true,
 
         onConnect: () => {
+          // a successful connection means earlier failures were transient.
+          attemptsRef.current = 0
           dispatch({ type: "CONNECTED" })
           onConnect(stompClient)
         },
@@ -94,6 +122,8 @@ export const WebSocketProvider = ({ children }: PropsWithChildren) => {
 
         onWebSocketClose: () => {
           dispatch({ type: "DISCONNECTED" })
+          if (fatalRef.current) return
+
           attemptsRef.current += 1
           dispatch({ type: "ATTEMPT" })
 
@@ -102,13 +132,26 @@ export const WebSocketProvider = ({ children }: PropsWithChildren) => {
             void stompClient.deactivate()
             dispatch({
               type: "ERROR",
-              message: `Failed to connect after ${MAX_RETRIES} attempts.`,
+              error: {
+                code: "client.connection-failed",
+                message: `Failed to connect after ${MAX_RETRIES} attempts.`,
+              },
             })
           }
         },
 
         onStompError: (frame) => {
           console.error("STOMP error", frame)
+          fatalRef.current = true
+          stompClient.reconnectDelay = 0
+          void stompClient.deactivate()
+          dispatch({
+            type: "ERROR",
+            error: {
+              code: frame.headers["code"] ?? "generic.bad-request",
+              message: frame.headers["message"] ?? "Connection refused",
+            },
+          })
         },
       })
 
@@ -124,9 +167,11 @@ export const WebSocketProvider = ({ children }: PropsWithChildren) => {
     dispatch({ type: "DISCONNECTED" })
   }, [])
 
+  const clearError = useCallback(() => dispatch({ type: "CLEAR_ERROR" }), [])
+
   const send = useCallback((destination: string, body: unknown = {}) => {
     const client = clientRef.current
-    if (!client?.active) {
+    if (!client?.connected) {
       console.warn(`[WebSocket] Cannot send to ${destination} - not connected`)
       return
     }
@@ -141,7 +186,7 @@ export const WebSocketProvider = ({ children }: PropsWithChildren) => {
   const subscribe = useCallback(
     (destination: string, handler: (message: IMessage) => void) => {
       const client = clientRef.current
-      if (!client?.active) {
+      if (!client?.connected) {
         console.warn(
           `[WebSocket] Cannot subscribe to ${destination} - not connected`
         )
@@ -154,7 +199,7 @@ export const WebSocketProvider = ({ children }: PropsWithChildren) => {
 
   const unsubscribe = useCallback((destination: string) => {
     const client = clientRef.current
-    if (!client?.active) {
+    if (!client?.connected) {
       console.warn(
         `[WebSocket] Cannot unsubscribe to ${destination} - not connected`
       )
@@ -167,6 +212,7 @@ export const WebSocketProvider = ({ children }: PropsWithChildren) => {
     <WebSocketContext.Provider
       value={{
         connect,
+        clearError,
         disconnect,
         send,
         connected: state.connected,

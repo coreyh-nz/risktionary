@@ -26,6 +26,9 @@ export const useGameAddPlayer = () => useGameStore((s) => s.addPlayer)
 
 export const useGameRemovePlayer = () => useGameStore((s) => s.removePlayer)
 
+export const useGameResetForNewRound = () =>
+  useGameStore((s) => s.resetForNewRound)
+
 export const useGameReset = () => useGameStore((s) => s.reset)
 
 export const useGameIsDrawer = () =>

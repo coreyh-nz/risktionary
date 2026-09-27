@@ -49,7 +49,14 @@ const handleState = ({ state }: GameStateEvent) => {
 
   // round state is stored separately to game state
   if (state.type === "IN_PROGRESS") {
-    useGameStore.getState().setRound(mapRoundViewToRound(state.round))
+    const round = mapRoundViewToRound(state.round)
+    const previous = useGameStore.getState().round
+    // a new round: drop the previous round's chat, ratings, canvas, etc.
+    // (same number means a resync of the current round, so keep it)
+    if (previous && previous.number !== round.number) {
+      useGameStore.getState().resetForNewRound()
+    }
+    useGameStore.getState().setRound(round)
   }
 }
 

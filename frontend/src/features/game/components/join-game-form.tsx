@@ -26,6 +26,8 @@ export const JoinGameForm = () => {
   const router = useRouter()
 
   const onSubmit = async (values: JoinGameFormValues) => {
+    reset()
+
     const response = await joinGame(values)
     if (!response.ok) {
       switch (response.error.errorCode) {
@@ -53,7 +55,6 @@ export const JoinGameForm = () => {
     const displayName = response.data.displayName
     const feedbackEnabled = response.data.feedbackEnabled
 
-    reset()
     setPlayer(
       session.id,
       session.code,
