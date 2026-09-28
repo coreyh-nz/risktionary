@@ -12,9 +12,8 @@ import nz.coreyh.risktionary.feedback.domain.model.FeedbackGenerationStatus
 import nz.coreyh.risktionary.feedback.domain.model.condition.FeedbackFramingCondition
 import nz.coreyh.risktionary.feedback.domain.model.condition.FeedbackTimingCondition
 import nz.coreyh.risktionary.feedback.domain.service.FeedbackGenerator
+import nz.coreyh.risktionary.feedback.infrastructure.ai.AiUseCaseModels
 import nz.coreyh.risktionary.feedback.infrastructure.prompt.FeedbackPromptTemplates
-import org.springframework.ai.chat.model.ChatModel
-import org.springframework.ai.chat.prompt.ChatOptions
 import org.springframework.stereotype.Component
 import kotlin.time.Clock
 
@@ -26,13 +25,14 @@ private val logger = KotlinLogging.logger {}
  */
 @Component
 class AiFeedbackGenerator(
-    private val chatModel: ChatModel,
-    private val feedbackFactGenerationChatOptions: ChatOptions,
-    private val feedbackFactFramingRewriteChatOptions: ChatOptions,
+    private val aiUseCaseModels: AiUseCaseModels,
     private val feedbackPromptTemplates: FeedbackPromptTemplates,
     private val aiChatService: AiChatService,
     private val clock: Clock = Clock.System,
 ) : FeedbackGenerator {
+    private val factModel get() = aiUseCaseModels.get(AiUsagePurpose.FACT_GENERATION)
+    private val rewriteModel get() = aiUseCaseModels.get(AiUsagePurpose.FRAMING_REWRITE)
+
     override fun generate(payload: FeedbackFactPayload): FeedbackGenerationResult {
         val framingCondition = payload.condition
         val usage = mutableListOf<AiUsage>()
@@ -42,7 +42,7 @@ class AiFeedbackGenerator(
             logger.warn { "Could not generate a feedback fact." }
             return result(FeedbackGenerationStatus.FACT_FAILED, null, null, framingCondition, usage)
         }
-        usage += factResponse.toUsage(AiUsagePurpose.FACT_GENERATION, feedbackFactGenerationChatOptions.model)
+        usage += factResponse.toUsage(AiUsagePurpose.FACT_GENERATION, factModel.provider, factModel.model)
 
         val fact = factResponse.data
         logger.debug { "Generated feedback fact for ${payload.guesses.size} guess(es): \"$fact\". Cost: ${factResponse.costToString()}" }
@@ -52,7 +52,7 @@ class AiFeedbackGenerator(
             logger.warn { "Could not generate a feedback fact frame rewrite." }
             return result(FeedbackGenerationStatus.FRAMING_FAILED, fact, null, framingCondition, usage)
         }
-        usage += framingRewriteResponse.toUsage(AiUsagePurpose.FRAMING_REWRITE, feedbackFactFramingRewriteChatOptions.model)
+        usage += framingRewriteResponse.toUsage(AiUsagePurpose.FRAMING_REWRITE, rewriteModel.provider, rewriteModel.model)
 
         val framingRewrite = framingRewriteResponse.data
         logger.debug {
@@ -80,7 +80,7 @@ class AiFeedbackGenerator(
     private fun generateFact(payload: FeedbackFactPayload): AiResponse<String> {
         val word = payload.word
         return aiChatService.send(
-            chatModel = chatModel,
+            chatModel = factModel.chatModel,
             messages =
                 listOf(
                     feedbackPromptTemplates.factGenerationSystem(payload.timing),
@@ -93,7 +93,7 @@ class AiFeedbackGenerator(
                         guessedCorrectly = payload.guessedCorrectly,
                     ),
                 ),
-            options = feedbackFactGenerationChatOptions,
+            options = factModel.options,
             responseClass = String::class,
         )
     }
@@ -104,13 +104,13 @@ class AiFeedbackGenerator(
         timing: FeedbackTimingCondition,
     ): AiResponse<String> =
         aiChatService.send(
-            chatModel = chatModel,
+            chatModel = rewriteModel.chatModel,
             messages =
                 listOf(
                     feedbackPromptTemplates.framingRewriteSystem(condition, timing),
                     feedbackPromptTemplates.framingRewriteUser(fact),
                 ),
-            options = feedbackFactFramingRewriteChatOptions,
+            options = rewriteModel.options,
             responseClass = String::class,
         )
 }

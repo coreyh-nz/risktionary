@@ -8,6 +8,8 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import nz.coreyh.risktionary.ai.domain.AiUsage
 import nz.coreyh.risktionary.ai.domain.AiUsagePurpose
 import nz.coreyh.risktionary.feedback.domain.model.FeedbackFactPayload
@@ -37,8 +39,6 @@ import nz.coreyh.risktionary.support.factory.game.createTestGameSession
 import nz.coreyh.risktionary.support.factory.word.createTestWord
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -62,7 +62,11 @@ class GameRoundFeedbackServiceTests {
             framedText = "framed",
             framingCondition = framing,
             generatedAt = Clock.System.now(),
-            usage = listOf(AiUsage(AiUsagePurpose.FACT_GENERATION, "test-model", 10, 5, 15), AiUsage(AiUsagePurpose.FRAMING_REWRITE, "test-model", 4, 3, 7)),
+            usage =
+                listOf(
+                    AiUsage(AiUsagePurpose.FACT_GENERATION, "test-provider", "test-model", 10, 5, 15),
+                    AiUsage(AiUsagePurpose.FRAMING_REWRITE, "test-provider", "test-model", 4, 3, 7),
+                ),
         )
 
     private inner class Scenario(
@@ -115,7 +119,10 @@ class GameRoundFeedbackServiceTests {
 
         payload.captured.guesses.map { it.text } shouldBe listOf("clinic")
         payload.captured.condition shouldBe FeedbackFramingCondition.CORRECTIVE
-        val feedback = scenario.round.feedback.getAll().single()
+        val feedback =
+            scenario.round.feedback
+                .getAll()
+                .single()
         feedback.sourceGuessIds shouldBe listOf(guess.id)
         feedback.timingCondition shouldBe FeedbackTimingCondition.INSTANT
         verify {
@@ -174,7 +181,10 @@ class GameRoundFeedbackServiceTests {
 
         payloads shouldHaveSize 1
         payloads.single().guesses.map { it.text } shouldBe listOf("clinic", "surgery")
-        val feedback = scenario.round.feedback.getAll().single()
+        val feedback =
+            scenario.round.feedback
+                .getAll()
+                .single()
         feedback.sourceGuessIds shouldBe listOf(first.id, second.id)
         feedback.timingCondition shouldBe FeedbackTimingCondition.DELAYED
         verify {
@@ -253,7 +263,10 @@ class GameRoundFeedbackServiceTests {
         scenario.round.drawing.record(byteArrayOf(1), "image/png", DrawingAnalysisResult.Fact("a building"), Clock.System.now())
         service.onGuess(scenario.round, scenario.player, scenario.guess("late"), createChatMessageId())
 
-        val (early, late) = scenario.round.feedback.getGuessesByPlayer().getValue(scenario.player.id)
+        val (early, late) =
+            scenario.round.feedback
+                .getGuessesByPlayer()
+                .getValue(scenario.player.id)
 
         early.drawingNote.shouldBeNull()
         late.drawingNote shouldBe "a building"
@@ -298,7 +311,12 @@ class GameRoundFeedbackServiceTests {
 
         service.onGuess(scenario.round, scenario.player, scenario.guess("clinic"), createChatMessageId())
         val deadline = System.currentTimeMillis() + 5_000
-        while (scenario.round.feedback.getAll().isEmpty() && System.currentTimeMillis() < deadline) Thread.sleep(10)
+        while (scenario.round.feedback
+                .getAll()
+                .isEmpty() && System.currentTimeMillis() < deadline
+        ) {
+            Thread.sleep(10)
+        }
 
         scenario.round.feedback
             .getAll()

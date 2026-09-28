@@ -12,6 +12,7 @@ object ExposedGameRoundAiUsageTable : UUIDTable("risktionary_game_round_ai_usage
     val seq = integer("seq")
     val playerId = javaUUID("player_id").references(ExposedGamePlayerTable.id).nullable()
     val usagePurpose = enumerationByName<AiUsagePurpose>("usage_purpose", 32)
+    val provider = varchar("provider", 64).default("unknown")
     val modelName = varchar("model_name", 128)
     val promptTokens = integer("prompt_tokens")
     val completionTokens = integer("completion_tokens")
