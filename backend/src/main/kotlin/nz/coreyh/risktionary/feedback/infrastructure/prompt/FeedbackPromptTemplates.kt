@@ -63,6 +63,7 @@ class FeedbackPromptTemplates(
         description: String,
         timing: FeedbackTimingCondition,
         guessedCorrectly: Boolean = false,
+        previousFacts: List<String> = emptyList(),
     ): Message =
         promptTemplateLoader.userMessage(
             factGenerationUserResource,
@@ -72,6 +73,7 @@ class FeedbackPromptTemplates(
                 "description" to description,
                 "guesses" to formatGuesses(guesses, includeTimeRemaining = timing == FeedbackTimingCondition.INSTANT),
                 "outcome" to formatOutcome(timing, guessedCorrectly),
+                "previousFacts" to formatPreviousFacts(previousFacts),
             ),
         )
 
@@ -128,6 +130,13 @@ class FeedbackPromptTemplates(
                 }
                 add("drawing_note: ${guess.drawingNote ?: "none"}")
             }.joinToString(separator = "\n")
+        }
+
+    private fun formatPreviousFacts(previousFacts: List<String>): String =
+        if (previousFacts.isEmpty()) {
+            "none"
+        } else {
+            previousFacts.withIndex().joinToString(separator = "\n") { (index, fact) -> "note ${index + 1}: $fact" }
         }
 
     private fun framingRulesFor(condition: FeedbackFramingCondition): String =
