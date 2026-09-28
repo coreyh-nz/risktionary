@@ -62,6 +62,7 @@ export type RoundPhaseStateView =
 
 export interface RoundStateEvent {
   type: "STATE"
+  number: number
   state: RoundStateView
 }
 
