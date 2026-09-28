@@ -67,6 +67,7 @@ const handleRoundStateEvent = (event: RoundStateEvent) => {
   const state: RoundState = mapRoundStateViewToRoundState(event.state)
   useGameStore.getState().setRound({
     ...round,
+    number: event.number,
     state,
   })
 }
