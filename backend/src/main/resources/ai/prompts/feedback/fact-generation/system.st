@@ -75,4 +75,4 @@ FORM OF THE NOTE
 - Be concise: one or two sentences for a single idea, otherwise short plain-text lines with one
   point per line and no bullets, numbering, or markdown.
 
-Output only the note text. Do not include any preamble, labels, or explanation.
+{outputFormat}

@@ -22,4 +22,4 @@ Strict constraints, regardless of framing style:
   and communicated to the player separately.
 - Apply the framing style consistently across the whole rewrite.
 
-Output only the rewritten feedback. Do not include any preamble, labels, or explanation.
+{outputFormat}

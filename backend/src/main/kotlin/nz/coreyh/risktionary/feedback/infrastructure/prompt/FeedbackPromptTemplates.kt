@@ -20,6 +20,7 @@ class FeedbackPromptTemplates(
         )
     private val oneAttemptRulesResource = promptTemplateLoader.resource(SHARED_ONE_ATTEMPT)
     private val noteFormRulesResource = promptTemplateLoader.resource(SHARED_NOTE_FORM)
+    private val outputFormatResource = promptTemplateLoader.resource(SHARED_OUTPUT_FORMAT)
     private val factGenerationUserResource = promptTemplateLoader.resource(FACT_GENERATION_USER)
 
     private val framingRewriteSystemResource = promptTemplateLoader.resource(FRAMING_REWRITE_SYSTEM)
@@ -51,6 +52,7 @@ class FeedbackPromptTemplates(
             mapOf(
                 "oneAttemptRules" to promptTemplateLoader.raw(oneAttemptRulesResource),
                 "noteFormRules" to promptTemplateLoader.raw(noteFormRulesResource),
+                "outputFormat" to promptTemplateLoader.raw(outputFormatResource),
             ),
         )
 
@@ -82,12 +84,17 @@ class FeedbackPromptTemplates(
             mapOf(
                 "framingRules" to framingRulesFor(condition),
                 "timingConstraints" to promptTemplateLoader.raw(framingTimingResources.getValue(timing)),
+                "outputFormat" to promptTemplateLoader.raw(outputFormatResource),
             ),
         )
 
     fun framingRewriteUser(fact: String): Message = promptTemplateLoader.userMessage(framingRewriteUserResource, mapOf("fact" to fact))
 
-    fun drawingAnalysisSystem(): Message = promptTemplateLoader.systemMessage(drawingAnalysisSystemResource)
+    fun drawingAnalysisSystem(): Message =
+        promptTemplateLoader.systemMessage(
+            drawingAnalysisSystemResource,
+            mapOf("outputFormat" to promptTemplateLoader.raw(outputFormatResource)),
+        )
 
     fun drawingAnalysisMediaUser(
         word: String,
@@ -130,6 +137,8 @@ class FeedbackPromptTemplates(
         private const val BASE_PATH = "ai/prompts"
         private const val SYSTEM_FILE_NAME = "system.st"
         private const val USER_FILE_NAME = "user.st"
+
+        private const val SHARED_OUTPUT_FORMAT = "$BASE_PATH/shared/output-format.st"
 
         private const val FEEDBACK_BASE_PATH = "$BASE_PATH/feedback"
 

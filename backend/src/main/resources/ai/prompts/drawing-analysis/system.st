@@ -23,4 +23,6 @@ Your job is to produce a note that:
 If the drawing has too little content to interpret anything meaningful (e.g. it's blank, or just
 a few disconnected marks), respond with exactly: NO_MEANINGFUL_FACT
 
-Output only the note text, or NO_MEANINGFUL_FACT. Do not include any preamble or explanation.
+{outputFormat}
+- The one exception to the above is the NO_MEANINGFUL_FACT case: when it applies, output exactly
+  that token and nothing else.
