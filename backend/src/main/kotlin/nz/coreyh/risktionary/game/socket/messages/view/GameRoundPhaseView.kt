@@ -94,7 +94,7 @@ fun GameRoundSession.toPhaseStateView(clock: Clock = Clock.System): GameRoundPha
         }
 
         is GameRoundPhase.Scoring -> {
-            GameRoundPhaseView.Scoring(timer = timer, scoreboard = game.toScoreboardView(game.roundNumber))
+            GameRoundPhaseView.Scoring(timer = timer, scoreboard = game.toScoreboardView(number))
         }
 
         is GameRoundPhase.WordReview -> {

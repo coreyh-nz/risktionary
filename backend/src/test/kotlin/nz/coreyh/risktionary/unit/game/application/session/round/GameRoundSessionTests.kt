@@ -3,6 +3,7 @@ package nz.coreyh.risktionary.unit.game.application.session.round
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import io.mockk.every
 import io.mockk.mockk
 import nz.coreyh.risktionary.game.application.exception.round.GameRoundStateInvalidException
 import nz.coreyh.risktionary.game.application.session.GameSession
@@ -21,6 +22,7 @@ class GameRoundSessionTests {
     @BeforeEach
     fun setup() {
         gameSession = mockk()
+        every { gameSession.roundNumber } returns 1
         roundSession =
             GameRoundSession(
                 id = createRoundId(),

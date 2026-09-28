@@ -19,6 +19,10 @@ class GameRoundSession(
     val word: Word,
     private val clock: Clock = Clock.System,
 ) : LockableSession() {
+    // snapshotted at creation, unlike game.roundNumber, which keeps advancing
+    // as the game progresses through later rounds
+    val number: Int = game.roundNumber
+
     var state: GameRoundState = GameRoundState.SelectingDrawer
         get() = withLock { field }
         private set(value) = withLock { field = value }

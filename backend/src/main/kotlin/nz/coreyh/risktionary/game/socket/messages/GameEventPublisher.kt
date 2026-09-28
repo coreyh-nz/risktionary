@@ -136,7 +136,7 @@ class GameEventPublisher(
     fun publishRoundState(round: GameRoundSession) {
         messagingTemplate.sendToTopic(
             destination = WebSocketDestinations.Topic.round(round.game.id),
-            message = RoundStateEvent(round.toStateView()),
+            message = RoundStateEvent(round.number, round.toStateView()),
         )
     }
 

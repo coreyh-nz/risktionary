@@ -69,7 +69,7 @@ class GameRoundPhaseGuessActionHandler(
 
         if (result == GuessResultType.CORRECT) {
             recordedGuess.points?.let { points ->
-                round.game.scoreboard.recordCorrectGuess(round.game.roundNumber, drawerId, player.id, points)
+                round.game.scoreboard.recordCorrectGuess(round.number, drawerId, player.id, points)
             }
             gameEventPublisher.publishRoundCorrectGuessesCountUpdated(
                 gameId = round.game.id,

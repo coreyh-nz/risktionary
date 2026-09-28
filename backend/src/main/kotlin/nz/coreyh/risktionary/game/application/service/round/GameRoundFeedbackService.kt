@@ -174,7 +174,7 @@ class GameRoundFeedbackService(
                 playerId = playerId,
                 feedbackId = feedback.id,
                 messageId = messageId,
-                roundNumber = round.game.roundNumber,
+                roundNumber = round.number,
                 text = text,
             )
         }
