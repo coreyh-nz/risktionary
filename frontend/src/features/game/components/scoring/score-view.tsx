@@ -51,7 +51,7 @@ const PodiumStep = ({
       )}
       style={{ animationDelay: `${revealDelay(position)}ms` }}
     >
-      <div className="relative mb-1">
+      <div className="relative mb-1 mt-4">
         {item.rank === 1 && (
           <Crown className="absolute -top-4 left-1/2 size-5 -translate-x-1/2 text-chart-3" />
         )}
@@ -110,10 +110,7 @@ const ListRow = ({
     <UserAvatar displayName={item.displayName} />
     <div className="min-w-0">
       <p
-        className={cn(
-          "truncate text-sm font-semibold",
-          isMe && "text-primary"
-        )}
+        className={cn("truncate text-sm font-semibold", isMe && "text-primary")}
         title={item.displayName}
       >
         {item.displayName}
