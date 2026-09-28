@@ -55,4 +55,4 @@ FORM OF THE NOTE
 - Every sentence must be grounded in the answer, the guesses, or the drawing notes provided. Do
   not add facts that are not supported by them.
 
-Output only the note text. Do not include any preamble, labels, or explanation.
+{outputFormat}

@@ -18,6 +18,11 @@ import nz.coreyh.risktionary.words.domain.model.Word
  * guesses are not part of [guesses], so this is the only way the debrief knows
  * how the round ended for the player. It is always false for instant feedback,
  * which is generated while the player is still guessing.
+ *
+ * [previousFacts] are the fact notes already generated for this player earlier in
+ * the round, oldest first, so fact generation can avoid repeating itself across
+ * successive instant-feedback calls. Empty for delayed feedback, which is only
+ * generated once.
  */
 data class FeedbackFactPayload(
     val guesses: List<FeedbackGuessContext>,
@@ -25,6 +30,7 @@ data class FeedbackFactPayload(
     val condition: FeedbackFramingCondition,
     val timing: FeedbackTimingCondition,
     val guessedCorrectly: Boolean = false,
+    val previousFacts: List<String> = emptyList(),
 ) {
     init {
         require(guesses.isNotEmpty()) { "Feedback needs at least one guess" }

@@ -18,7 +18,7 @@ class PersistedGameDetailsTests {
         model: String,
         totalTokens: Int,
     ) = GameRoundAiUsage(
-        usage = AiUsage(AiUsagePurpose.FACT_GENERATION, model, promptTokens = 0, completionTokens = 0, totalTokens = totalTokens),
+        usage = AiUsage(AiUsagePurpose.FACT_GENERATION, "openai", model, promptTokens = 0, completionTokens = 0, totalTokens = totalTokens),
         playerId = null,
         recordedAt = Clock.System.now(),
     )

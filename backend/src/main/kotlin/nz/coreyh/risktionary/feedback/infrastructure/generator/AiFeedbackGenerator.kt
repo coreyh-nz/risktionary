@@ -91,6 +91,7 @@ class AiFeedbackGenerator(
                         description = word.descriptionText,
                         timing = payload.timing,
                         guessedCorrectly = payload.guessedCorrectly,
+                        previousFacts = payload.previousFacts,
                     ),
                 ),
             options = factModel.options,

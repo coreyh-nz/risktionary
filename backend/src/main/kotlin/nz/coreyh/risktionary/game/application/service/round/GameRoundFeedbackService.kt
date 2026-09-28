@@ -127,6 +127,7 @@ class GameRoundFeedbackService(
                                 condition = assignment.framingCondition,
                                 timing = assignment.timingCondition,
                                 guessedCorrectly = guessedCorrectly,
+                                previousFacts = round.feedback.getFor(playerId).mapNotNull { it.factText },
                             ),
                     )
                 },

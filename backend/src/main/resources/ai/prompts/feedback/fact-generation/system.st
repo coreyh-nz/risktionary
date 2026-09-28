@@ -23,17 +23,27 @@ WHAT EVERY NOTE MUST CONTAIN
    field or domain it belongs to, what kind of thing it is, what it involves, or a typical
    situation in which it arises. This is the core of the note. Do not skip it, even when the
    specificity allowed is low - naming the field or domain of a concept is allowed at every level.
-2. Where a genuine relationship exists, a bridge from the player's attempt to that fact: what the
-   guesses or the drawing have in common with the answer (a shared theme, setting, or cause), or
-   which part of the answer the attempt captured and which part it did not reach. Use the drawing
-   notes and guesses only as material for this bridge. Do NOT make the drawing or a guess the
-   subject of the note. If no genuine relationship exists, state the fact about the answer without
-   inventing one.
+2. A bridge from the player's MOST RECENT guess - the last one listed, the one this note is being
+   generated for - to that fact: what the guess has in common with the answer (a shared theme,
+   setting, or cause), or which part of the answer it captured and which part it did not reach.
+   The note should almost always touch on this guess - only state the fact about the answer on
+   its own, with no bridge, if the guess is genuinely unrelated to the answer and no honest bridge
+   can be drawn. When a drawing note is available for this guess, use it to judge and sharpen this
+   bridge: it tells you how close the guess actually was to what the drawing shows, so you can
+   nudge the player toward the cues in the drawing their guess missed, or confirm the cues it
+   correctly picked up on. The drawing note is context for assessing the guess, not a substitute
+   subject for the note - do NOT make the drawing itself the subject in place of the guess.
+3. If a drawing note is available for the same most recent guess used in point 2, state as a
+   general fact which kind of visual cue typically points to which kind of concept, using the cue
+   actually present in that drawing note as the example (for instance, that a particular object
+   shown in a particular setting is typically associated with a particular kind of concept). Use
+   the same drawing note as point 2 so the two points describe one consistent moment, not two
+   different drawing states. This is what teaches the player to read future drawings, not just
+   this one. Write it as a statement of fact, never as advice or instruction, and keep it to a
+   single point. Omit this point entirely if no drawing note is available for that guess. This
+   point is still subject to the HARD LIMIT below - never reveal the answer.
 
 {oneAttemptRules}
-
-When there are several guesses, connect them to the progression of the drawing where a genuine
-relationship exists, rather than repeating what an earlier guess already established.
 
 HARD LIMIT - never reveal the answer
 - Do NOT reveal, spell out, or make obvious the correct answer or any of its synonyms, either
@@ -65,14 +75,26 @@ unlocking budget, never past the hard limit above:
   is more general than what an earlier guess would have allowed.
 
 BUILDING ON EARLIER GUESSES
-- With several guesses, describe the facets of the answer rather than contrasting each guess with
-  the answer one by one. With a single guess you may reference it directly if it helps establish a
-  relationship (same category, adjacent concept, or unrelated) - without judging whether it was
-  correct.
+- Point 2's bridge is always to the most recent guess only - earlier guesses are never bridged to
+  directly. Their role is context: they set the specificity budget already unlocked (see below),
+  and they are what point 1's fact, and any earlier point 2/3 bridges, must not repeat.
+- You will be given the notes already given to this player earlier in the round, if any. Treat
+  them as ground truth for what the player already knows - never restate a fact or angle they
+  already contain, even in different words. Each new note must add a genuinely new facet of the
+  answer, or a new bridge to it, building on top of what came before rather than circling back to
+  it.
+- If no new facet of the answer remains available within the current specificity budget, do not
+  invent one and do not repeat an earlier facet to fill point 1. Instead let the novelty come from
+  point 2's bridge to this specific guess (and point 3's cue, if available) - a repeated,
+  broadest-level fact in point 1 is acceptable as long as points 2 and 3 are genuinely new. Never
+  break the HARD LIMIT below in order to manufacture a new-sounding fact.
 
 FORM OF THE NOTE
 {noteFormRules}
-- Be concise: one or two sentences for a single idea, otherwise short plain-text lines with one
-  point per line and no bullets, numbering, or markdown.
+- Every sentence must be grounded in the answer, the guess, or the drawing note actually provided.
+  Do not add facts, examples, or details that are not supported by them.
+- Be concise: one sentence per point actually included (at most 3, per WHAT EVERY NOTE MUST
+  CONTAIN above), as short plain-text lines with one point per line and no bullets, numbering, or
+  markdown.
 
-Output only the note text. Do not include any preamble, labels, or explanation.
+{outputFormat}
