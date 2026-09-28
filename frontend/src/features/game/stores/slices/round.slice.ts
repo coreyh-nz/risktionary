@@ -6,6 +6,10 @@ import {
 import { StateCreator } from "zustand"
 import { Round, RoundRole, WordHint } from "../../types/round/phase/round"
 
+export type RoundResult =
+  | { type: "CORRECT"; word: string; points: number }
+  | { type: "TIMEOUT" }
+
 export interface RoundSlice {
   round: Round | null
   roundRole: RoundRole | null
@@ -13,6 +17,7 @@ export interface RoundSlice {
   roundCorrectGuessesCount: number
   roundRiskRatingCounts: RiskRatingCount[] | null
   roundSubmittedRiskRating: RiskRating | null
+  roundResult: RoundResult | null
 
   setRound: (round: Round) => void
   setRoundDrawer: (word: string) => void
@@ -21,6 +26,7 @@ export interface RoundSlice {
   setRoundRiskRatingCounts: (riskRatingCounts: RiskRatingCount[]) => void
   setRoundCorrectGuessesCount: (roundCorrectGuessesCount: number) => void
   setRoundSubmittedRiskRating: (riskRating: RiskRating) => void
+  setRoundResult: (roundResult: RoundResult | null) => void
 
   addRoundChatMessage: (message: ChatMessage) => void
 
@@ -38,6 +44,7 @@ export const createRoundSlice: StateCreator<RoundSlice, [], [], RoundSlice> = (
   roundCorrectGuessesCount: 0,
   roundRiskRatingCounts: null,
   roundSubmittedRiskRating: null,
+  roundResult: null,
 
   setRound: (round) => set({ round }),
   setRoundDrawer: (word) => set({ roundRole: { type: "DRAWER", word } }),
@@ -57,6 +64,8 @@ export const createRoundSlice: StateCreator<RoundSlice, [], [], RoundSlice> = (
   setRoundSubmittedRiskRating: (riskRating: RiskRating) =>
     set({ roundSubmittedRiskRating: riskRating }),
 
+  setRoundResult: (roundResult) => set({ roundResult }),
+
   addRoundChatMessage: (message) =>
     set((state) => ({
       roundChatMessages: [...state.roundChatMessages, message],
@@ -69,6 +78,7 @@ export const createRoundSlice: StateCreator<RoundSlice, [], [], RoundSlice> = (
       roundCorrectGuessesCount: 0,
       roundRiskRatingCounts: null,
       roundSubmittedRiskRating: null,
+      roundResult: null,
     }),
 
   resetRound: () =>
@@ -79,5 +89,6 @@ export const createRoundSlice: StateCreator<RoundSlice, [], [], RoundSlice> = (
       roundCorrectGuessesCount: 0,
       roundRiskRatingCounts: null,
       roundSubmittedRiskRating: null,
+      roundResult: null,
     }),
 })

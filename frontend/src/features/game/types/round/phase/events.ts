@@ -88,6 +88,7 @@ export interface RoundChatMessageEvent {
 export interface RoundCorrectGuessEvent {
   type: "CORRECT_GUESS"
   word: string
+  points: number
 }
 
 export interface RoundCorrectGuessesUpdatedEvent {

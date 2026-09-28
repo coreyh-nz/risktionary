@@ -90,6 +90,15 @@ const handleRoundPhaseStateEvent = (event: RoundPhaseStateEvent) => {
       phase: mapRoundPhaseStateViewToRoundPhaseState(event.phase),
     },
   })
+
+  // a guesser who didn't guess in time gets a "ran out of time" result
+  // once the drawing phase ends and the word is revealed
+  if (event.phase.type === "DRAWING_REVIEW") {
+    const roundRole = useGameStore.getState().roundRole
+    if (roundRole?.type === "GUESSER" && !roundRole.correctGuessWord) {
+      useGameStore.getState().setRoundResult({ type: "TIMEOUT" })
+    }
+  }
 }
 
 const handleAssignedGuesserEvent = (event: RoundAssignedGuesserEvent) => {
@@ -136,6 +145,11 @@ const handleCorrectGuessEvent = (event: RoundCorrectGuessEvent) => {
   const role = useGameStore.getState().roundRole
   if (role?.type === "GUESSER") {
     useGameStore.getState().setRoundGuesserCorrectWord(event.word)
+    useGameStore.getState().setRoundResult({
+      type: "CORRECT",
+      word: event.word,
+      points: event.points,
+    })
   }
 }
 

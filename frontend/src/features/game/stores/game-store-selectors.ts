@@ -58,3 +58,9 @@ export const useGameFeedbackEnabled = () =>
 
 export const useGameRoundCorrectGuessesCount = () =>
   useGameStore((s) => s.roundCorrectGuessesCount)
+
+export const useGameRoundResult = () =>
+  useGameStore(useShallow((s) => s.roundResult))
+
+export const useGameSetRoundResult = () =>
+  useGameStore((s) => s.setRoundResult)
