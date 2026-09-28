@@ -191,11 +191,12 @@ class GameEventPublisher(
     fun publishRoundCorrectGuess(
         playerId: GamePlayerId,
         word: Word,
+        points: Int,
     ) {
         messagingTemplate.sendToPlayer(
             playerId = playerId,
             destination = WebSocketDestinations.Queue.ROUND,
-            message = RoundCorrectGuessEvent(word.value),
+            message = RoundCorrectGuessEvent(word.value, points),
         )
     }
 

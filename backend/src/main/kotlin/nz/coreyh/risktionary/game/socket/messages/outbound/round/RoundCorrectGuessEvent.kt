@@ -5,4 +5,5 @@ import nz.coreyh.risktionary.game.socket.messages.event.round.RoundEventType
 
 data class RoundCorrectGuessEvent(
     val word: String,
+    val points: Int,
 ) : RoundEvent(RoundEventType.CORRECT_GUESS)

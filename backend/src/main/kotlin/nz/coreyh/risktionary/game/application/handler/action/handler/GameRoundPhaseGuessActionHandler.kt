@@ -78,6 +78,7 @@ class GameRoundPhaseGuessActionHandler(
             gameEventPublisher.publishRoundCorrectGuess(
                 playerId = player.id,
                 word = round.word,
+                points = recordedGuess.points ?: 0,
             )
             val message =
                 gameRoundSessionChatService.sendMessage(
