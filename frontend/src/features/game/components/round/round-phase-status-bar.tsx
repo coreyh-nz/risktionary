@@ -11,6 +11,7 @@ import {
   Trophy,
 } from "lucide-react"
 import { RoundNotActiveError, RoundNotInProgress } from "../../errors/round"
+import { useSkipCommand } from "../../hooks/connection/use-skip-command"
 import { useCountdown } from "../../hooks/shared/countdown/use-countdown"
 import { useGameIsHost } from "../../stores/game-store-selectors"
 import { useGameRound } from "../../stores/selectors/round.selectors"
@@ -35,14 +36,13 @@ const ROUND_PHASE_META: Record<
 export const RoundPhaseStatusBar = () => {
   const round = useGameRound()
   const isHost = useGameIsHost()
+  const { skip } = useSkipCommand()
 
   if (!round) throw new RoundNotActiveError()
   if (round.state.type !== "IN_PROGRESS") throw new RoundNotInProgress()
 
   const phase = round.state.phase
   const { label, icon: Icon } = ROUND_PHASE_META[phase.type]
-
-  const onSkip = () => {}
 
   return (
     <div className="w-full shrink-0 border-b border-primary/15 bg-card">
@@ -69,7 +69,7 @@ export const RoundPhaseStatusBar = () => {
             </span>
           </div>
           {isHost && (
-            <Button size="sm" variant="secondary" onClick={onSkip}>
+            <Button size="sm" variant="secondary" onClick={skip}>
               Skip
               <SkipForward />
             </Button>
