@@ -1,6 +1,7 @@
 import { CenteredLayout } from "@/components/layout/centered-layout"
-import { ScreenHeader } from "@/features/game/components/screen-header"
 import { FinalStandings } from "@/features/game/components/scoring/final-standings"
+import { SurveyPrompt } from "@/features/game/components/scoring/survey-prompt"
+import { ScreenHeader } from "@/features/game/components/screen-header"
 import { useGameState } from "@/features/game/stores/game-store-selectors"
 import { Trophy } from "lucide-react"
 
@@ -13,6 +14,7 @@ export const GameCompletedScreen = () => {
       <div className="flex w-full flex-col gap-4">
         <ScreenHeader icon={Trophy} label="Game over" title="Final standings" />
         <FinalStandings standings={state.standings} />
+        <SurveyPrompt />
       </div>
     </CenteredLayout>
   )
