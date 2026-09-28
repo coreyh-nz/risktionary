@@ -51,20 +51,40 @@ class AiChatService {
         }
 
         return runCatching {
-            val response =
+            val call =
                 ChatClient
                     .create(chatModel)
                     .prompt(Prompt(messages, options))
                     .call()
-                    .responseEntity(responseClass.java)
 
-            val entity =
-                response.entity ?: run {
-                    logger.debug { "[$requestId] Model returned an empty body for responseClass=${responseClass.qualifiedName}" }
-                    throw IllegalStateException("Model returned an empty body")
+            // String responses are plain prose, not JSON: routing them through
+            // responseEntity()'s BeanOutputConverter would require the model to
+            // return a quoted JSON string literal, which conflicts with prompts
+            // that (correctly) forbid JSON/quoted output.
+            val (entity, usage) =
+                if (responseClass == String::class) {
+                    val chatResponse =
+                        call.chatResponse() ?: run {
+                            logger.debug { "[$requestId] Model returned an empty body for responseClass=${responseClass.qualifiedName}" }
+                            throw IllegalStateException("Model returned an empty body")
+                        }
+                    val text =
+                        chatResponse.result?.output?.text ?: run {
+                            logger.debug { "[$requestId] Model returned an empty body for responseClass=${responseClass.qualifiedName}" }
+                            throw IllegalStateException("Model returned an empty body")
+                        }
+
+                    @Suppress("UNCHECKED_CAST")
+                    (text as T) to chatResponse.metadata.usage
+                } else {
+                    val response = call.responseEntity(responseClass.java)
+                    val entity =
+                        response.entity ?: run {
+                            logger.debug { "[$requestId] Model returned an empty body for responseClass=${responseClass.qualifiedName}" }
+                            throw IllegalStateException("Model returned an empty body")
+                        }
+                    entity to response.response?.metadata?.usage
                 }
-
-            val usage = response.response?.metadata?.usage
 
             val success =
                 AiResponse
