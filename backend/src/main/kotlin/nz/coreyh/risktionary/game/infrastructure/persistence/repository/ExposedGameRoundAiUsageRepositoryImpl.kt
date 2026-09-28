@@ -47,6 +47,7 @@ class ExposedGameRoundAiUsageRepositoryImpl : GameRoundAiUsageRepository {
                         usage =
                             AiUsage(
                                 purpose = it[ExposedGameRoundAiUsageTable.usagePurpose],
+                                provider = it[ExposedGameRoundAiUsageTable.provider],
                                 model = it[ExposedGameRoundAiUsageTable.modelName],
                                 promptTokens = it[ExposedGameRoundAiUsageTable.promptTokens],
                                 completionTokens = it[ExposedGameRoundAiUsageTable.completionTokens],

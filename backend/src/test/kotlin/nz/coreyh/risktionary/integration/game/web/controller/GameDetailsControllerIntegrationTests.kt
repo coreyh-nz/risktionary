@@ -153,8 +153,14 @@ class GameDetailsControllerIntegrationTests(
         val guess = round.guesses.recordGuess(guesser.id, "wrong", GuessResultType.INCORRECT)
         round.riskRatings.submitRating(guesser.id, RiskLikelihood.LIKELY, RiskSeverity.MAJOR)
         round.drawing.record(byteArrayOf(1, 2, 3), "image/png", DrawingAnalysisResult.Fact("a fact"), Clock.System.now())
-        round.aiUsage.record(AiUsage(AiUsagePurpose.DRAWING_ANALYSIS, "gpt-4o", promptTokens = 10, completionTokens = 5, totalTokens = 15), null)
-        round.aiUsage.record(AiUsage(AiUsagePurpose.FACT_GENERATION, "gpt-4o", promptTokens = 20, completionTokens = 8, totalTokens = 28), guesser.id)
+        round.aiUsage.record(
+            AiUsage(AiUsagePurpose.DRAWING_ANALYSIS, "openai", "gpt-4o", promptTokens = 10, completionTokens = 5, totalTokens = 15),
+            null,
+        )
+        round.aiUsage.record(
+            AiUsage(AiUsagePurpose.FACT_GENERATION, "openai", "gpt-4o", promptTokens = 20, completionTokens = 8, totalTokens = 28),
+            guesser.id,
+        )
         round.feedback.record(
             GeneratedFeedback(
                 id = createFeedbackId(),
