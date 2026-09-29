@@ -11,8 +11,8 @@ export const RoundScoreboard = ({
       playerId: e.playerId,
       displayName: e.displayName,
       rank: e.rank,
-      primary: `+${e.roundPoints.toLocaleString()}`,
-      secondary: `${e.totalPoints.toLocaleString()} pts total`,
+      primary: `${e.totalPoints.toLocaleString()} pts`,
+      secondary: `+${e.roundPoints.toLocaleString()} this round`,
       muted: e.roundPoints === 0,
     }))}
   />
