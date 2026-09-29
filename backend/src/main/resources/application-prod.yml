@@ -14,3 +14,7 @@ app:
       same-site: lax
       access-token-name: risktionary_at
       login-success-redirect-url-name: risktionary_lr
+
+logging:
+  level:
+    nz.coreyh.risktionary: debug
