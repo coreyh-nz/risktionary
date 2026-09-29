@@ -1,5 +1,6 @@
 package nz.coreyh.risktionary.game.application.session
 
+import java.util.concurrent.locks.ReentrantLock
 import nz.coreyh.risktionary.game.application.exception.GameFeedbackNotEnabledException
 import nz.coreyh.risktionary.game.application.exception.GamePlayerAlreadyInSessionException
 import nz.coreyh.risktionary.game.application.exception.GamePlayerNotInSessionException
@@ -17,7 +18,6 @@ import nz.coreyh.risktionary.game.domain.model.TimeWindow
 import nz.coreyh.risktionary.game.domain.model.host.GameSessionHost
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerId
 import nz.coreyh.risktionary.game.domain.model.player.GamePlayerStatus
-import java.util.concurrent.locks.ReentrantLock
 import kotlin.time.Clock
 import kotlin.time.Instant
 
@@ -106,17 +106,18 @@ class GameSession(
     fun connect(playerId: GamePlayerId): Unit =
         withLock {
             val player = getPlayer(playerId)
-            when (player.status) {
-                GamePlayerStatus.PENDING,
-                GamePlayerStatus.DISCONNECTED,
-                -> {
-                    withActivity { player.status = GamePlayerStatus.CONNECTING }
-                }
-
-                else -> {
-                    throw GamePlayerStateInvalidException()
-                }
-            }
+            withActivity { player.status = GamePlayerStatus.CONNECTING }
+//            when (player.status) {
+//                GamePlayerStatus.PENDING,
+//                GamePlayerStatus.DISCONNECTED,
+//                -> {
+//                    withActivity { player.status = GamePlayerStatus.CONNECTING }
+//                }
+//
+//                else -> {
+//                    throw GamePlayerStateInvalidException()
+//                }
+//            }
         }
 
     /**
@@ -133,15 +134,16 @@ class GameSession(
     fun activate(playerId: GamePlayerId): GamePlayerSession =
         withLock {
             val player = getPlayer(playerId)
-            when (player.status) {
-                GamePlayerStatus.CONNECTING -> {
-                    withActivity { player.status = GamePlayerStatus.ACTIVE }
-                }
-
-                else -> {
-                    throw GamePlayerStateInvalidException()
-                }
-            }
+            withActivity { player.status = GamePlayerStatus.ACTIVE }
+//            when (player.status) {
+//                GamePlayerStatus.CONNECTING -> {
+//                    withActivity { player.status = GamePlayerStatus.ACTIVE }
+//                }
+//
+//                else -> {
+//                    throw GamePlayerStateInvalidException()
+//                }
+//            }
             player
         }
 
@@ -158,15 +160,16 @@ class GameSession(
     fun disconnect(playerId: GamePlayerId): Unit =
         withLock {
             val player = getPlayer(playerId)
-            when (player.status) {
-                GamePlayerStatus.ACTIVE -> {
-                    withActivity { player.status = GamePlayerStatus.DISCONNECTED }
-                }
-
-                else -> {
-                    throw GamePlayerStateInvalidException()
-                }
-            }
+            withActivity { player.status = GamePlayerStatus.DISCONNECTED }
+//            when (player.status) {
+//                GamePlayerStatus.ACTIVE -> {
+//                    withActivity { player.status = GamePlayerStatus.DISCONNECTED }
+//                }
+//
+//                else -> {
+//                    throw GamePlayerStateInvalidException()
+//                }
+//            }
         }
 
     /**
