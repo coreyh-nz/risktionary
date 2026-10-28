@@ -262,5 +262,44 @@ A single GitHub Actions workflow (`.github/workflows/ci.yml`) runs on every push
 Pushing a semver tag (e.g. `v1.2.3`) validates the tag and publishes both images to GHCR as
 `risktionary-backend` and `risktionary-frontend`, tagged with the version and `latest`.
 
-The frontend build reads `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_WS_URL` from repository variables.
+The frontend build reads `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_WS_URL` from repository variables
+(Settings > Secrets and variables > Actions > Variables). Because Next.js bakes them in at build time, the published
+frontend image only works for the URLs it was built with. Change the variables, then publish a new tag to update them.
 Dependabot (`.github/dependabot.yml`) checks both projects, their Dockerfiles and the workflows weekly.
+
+---
+
+## Deploying
+
+Production runs the published images from GHCR using the root `docker-compose.yml`. `deploy/install.sh` installs or
+updates a server in one step. It downloads the compose file, pulls the images, stops the running containers and
+starts the new ones.
+
+### First-time setup
+
+1. Install Docker with the Compose plugin on the server.
+2. Create `/opt/risktionary/backend.env` with the [backend environment variables](#backend), including
+   `SPRING_PROFILES_ACTIVE=postgres` and the database settings. The database is not part of the compose file, so it
+   must already exist.
+3. If the GHCR packages are private, log in once with a GitHub token that has `read:packages`:
+   ```bash
+   echo <token> | docker login ghcr.io -u <github-username> --password-stdin
+   ```
+4. Run the installer:
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/coreyh-nz/risktionary/main/deploy/install.sh | sudo bash
+   ```
+
+### Updating
+
+1. Push a new semver tag (e.g. `git tag v1.2.4 && git push origin v1.2.4`) and wait for the CI run to publish the
+   images.
+2. Re-run the installer on the server (step 4 above).
+
+To deploy a specific version rather than `latest`, set `IMAGE_TAG` (no leading `v`):
+
+```bash
+IMAGE_TAG=1.2.3 ./install.sh
+```
+
+`INSTALL_DIR` (default `/opt/risktionary`) and `BRANCH` (default `main`) can also be overridden.

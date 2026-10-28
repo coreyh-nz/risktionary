@@ -1,0 +1,19 @@
+name: risktionary
+services:
+  backend:
+    image: ghcr.io/coreyh-nz/risktionary-backend:${IMAGE_TAG:-latest}
+    container_name: risktionary-backend
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    env_file:
+      - backend.env
+
+  frontend:
+    image: ghcr.io/coreyh-nz/risktionary-frontend:${IMAGE_TAG:-latest}
+    container_name: risktionary-frontend
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    depends_on:
+      - backend
