@@ -5,7 +5,8 @@
 #   ./install.sh                  # deploy the latest release
 #   IMAGE_TAG=1.2.3 ./install.sh  # deploy a specific version (no leading "v")
 #
-# Optional overrides: INSTALL_DIR (default /opt/risktionary), BRANCH (default main)
+# Optional overrides: INSTALL_DIR (default /opt/risktionary), BRANCH (default main),
+# COMPOSE_URL (where to download docker-compose.yml from; file:// URLs work)
 set -euo pipefail
 
 REPO="coreyh-nz/risktionary"
@@ -13,7 +14,7 @@ BRANCH="${BRANCH:-main}"
 INSTALL_DIR="${INSTALL_DIR:-/opt/risktionary}"
 export IMAGE_TAG="${IMAGE_TAG:-latest}"
 
-COMPOSE_URL="https://raw.githubusercontent.com/${REPO}/${BRANCH}/docker-compose.yml"
+COMPOSE_URL="${COMPOSE_URL:-https://raw.githubusercontent.com/${REPO}/${BRANCH}/docker-compose.yml}"
 
 command -v docker >/dev/null || { echo "Docker is not installed." >&2; exit 1; }
 docker compose version >/dev/null 2>&1 || { echo "Docker Compose v2 is not installed." >&2; exit 1; }

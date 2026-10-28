@@ -22,6 +22,54 @@ jobs:
       - name: Validate tag is semver
         run: ./scripts/validate-tag.sh "${GITHUB_REF#refs/tags/}"
 
+  deploy-check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: ShellCheck
+        run: shellcheck deploy/install.sh scripts/validate-tag.sh
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Prepare install directory
+        run: |
+          mkdir -p "$RUNNER_TEMP/risktionary"
+          # in-memory database so the backend can start without Postgres
+          cat > "$RUNNER_TEMP/risktionary/backend.env" <<EOF
+          SPRING_PROFILES_ACTIVE=h2
+          JWT_SECRET=ci-dummy-secret-ci-dummy-secret-ci-dummy
+          GOOGLE_CLIENT_ID=dummy
+          GOOGLE_CLIENT_SECRET=dummy
+          MICROSOFT_CLIENT_ID=dummy
+          MICROSOFT_CLIENT_SECRET=dummy
+          MICROSOFT_TENANT_ID=dummy
+          EOF
+
+      - name: Run install script (first install)
+        env:
+          INSTALL_DIR: ${{ runner.temp }}/risktionary
+          COMPOSE_URL: file://${{ github.workspace }}/docker-compose.yml
+        run: ./deploy/install.sh
+
+      - name: Run install script (update over running containers)
+        env:
+          INSTALL_DIR: ${{ runner.temp }}/risktionary
+          COMPOSE_URL: file://${{ github.workspace }}/docker-compose.yml
+        run: ./deploy/install.sh
+
+      - name: Show container logs
+        if: always()
+        run: docker compose -f "$RUNNER_TEMP/risktionary/docker-compose.yml" logs --tail 50
+
   backend-test:
     runs-on: ubuntu-latest
     steps:
