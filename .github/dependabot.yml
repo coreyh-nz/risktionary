@@ -1,7 +1,19 @@
 version: 2
 updates:
+  # Backend
+  - package-ecosystem: "gradle"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "docker"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+
+  # Frontend
   - package-ecosystem: "npm"
-    directory: "/"
+    directory: "/frontend"
     schedule:
       interval: "weekly"
 
@@ -31,10 +43,11 @@ updates:
           - "@typescript-eslint/*"
 
   - package-ecosystem: "docker"
-    directory: "/"
+    directory: "/frontend"
     schedule:
       interval: "weekly"
 
+  # Workflows (root .github)
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
