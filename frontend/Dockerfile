@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM node:25-alpine AS builder
+FROM node:26-alpine AS builder
 
 WORKDIR /app
 
@@ -23,7 +23,7 @@ ENV SURVEY_REDIRECT_URL=$SURVEY_REDIRECT_URL
 RUN npm run build
 
 # Stage 2: Run
-FROM node:25-alpine AS runner
+FROM node:26-alpine AS runner
 
 WORKDIR /app
 ENV NODE_ENV=production
