@@ -1,0 +1,60 @@
+@startuml join-ticket-sequence
+title Join -> ticket -> WebSocket connect
+skinparam shadowing false
+autonumber
+
+actor Player
+participant "Frontend\n(Next.js)" as FE
+participant "GameController" as GC
+participant "GameSessionService" as GSS
+participant "GameSession\n(in memory)" as GS
+participant "GameTicketService" as GTS
+participant "WebSocketHandshake\nInterceptor" as HI
+participant "WebSocketChannel\nInterceptor" as CI
+participant "Connect / Connected\nlisteners" as L
+
+Player -> FE : enter code + display name
+FE -> GC : POST /api/v1/game/join\n{code, displayName}
+GC -> GSS : handleJoinRequest(code, identity)
+GSS -> GS : find by code, check display name unique
+alt unknown code
+  GSS --> GC : GameNotFoundException
+  GC --> FE : error (game.not-found)
+else display name taken (case-insensitive)
+  GSS --> GC : GamePlayerDisplayNameInUseException
+  GC --> FE : error
+else ok
+  GSS -> GS : requestJoin(player, status PENDING)
+  GSS -> GTS : generateTicket(gameId, playerId)
+  GTS --> GSS : signed JWT (type game-ticket, 30 min)
+  GSS --> GC : ticket
+  GC --> FE : 200 {session, ticket, playerId,\ndisplayName, feedbackEnabled}
+end
+
+FE -> HI : GET /api/ws/?ticket=JWT (Upgrade: websocket)
+HI -> GTS : decodeTicket(ticket)
+alt invalid, expired, wrong signature or type
+  HI -> HI : record CONNECT_ERROR = game.ticket-invalid
+else game no longer in memory
+  HI -> HI : record CONNECT_ERROR = game.not-found
+else player id not in game
+  HI -> HI : record CONNECT_ERROR = game.player-not-in-session
+else valid
+  HI -> HI : store GameSocketPrincipal.Player
+end
+HI --> FE : 101 Switching Protocols (always accepted)
+
+FE -> CI : STOMP CONNECT
+alt a CONNECT_ERROR was recorded
+  CI --> FE : STOMP ERROR frame, header code=<error code>
+  FE -> Player : toast, session cleared, back to home
+else principal present
+  CI --> FE : STOMP CONNECTED
+  CI -> L : SessionConnectEvent -> status CONNECTING
+  CI -> L : SessionConnectedEvent -> status ACTIVE,\nassign feedback condition (first time only)
+  FE -> CI : SUBSCRIBE /topic/game/{gameId}, /topic/game/{gameId}/round,\n/user/queue/game, /user/queue/game/round
+  CI -> CI : destination must start with the principal's own\ngame prefix or /user/queue
+  FE -> CI : SEND /app/player/ready
+  CI --> FE : full state sync via /user/queue/game
+end
+@enduml

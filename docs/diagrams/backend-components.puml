@@ -1,0 +1,83 @@
+@startuml backend-components
+title Risktionary backend - main components
+left to right direction
+skinparam componentStyle rectangle
+skinparam shadowing false
+
+package "Web / socket layer" {
+  [GameController\n(REST: create, join)] as GameController
+  [GameDetailsController\n(REST: research export)] as GameDetailsController
+  [AuthController / OAuth2 handlers] as AuthWeb
+  [WordController / UserController] as WordWeb
+  [Socket controllers\n(@MessageMapping /app/...)] as SocketControllers
+  [WebSocket interceptors\n(handshake + channel)] as WsInterceptors
+  [GameEventPublisher\n(STOMP topics / queues)] as EventPublisher
+}
+
+package "game (application)" {
+  [GameSessionService] as GameSessionService
+  [GameTicketService] as GameTicketService
+  [Action handlers + dispatchers] as ActionHandlers
+  [State orchestrators\n(game + round phase)] as Orchestrators
+  [GameRoundFeedbackService] as RoundFeedback
+  [GameRoundDrawingAnalysisService] as RoundAnalysis
+  [GameResearchPersistenceService] as Persistence
+  [GameSessionCleanupService] as Cleanup
+  [GameSessionStore\n(in-memory sessions)] as Store
+}
+
+package "feedback + ai" {
+  [FeedbackService /\nFeedbackGeneratorResolver] as FeedbackService
+  [AiFeedbackGenerator\n(fact -> framing rewrite)] as AiGenerator
+  [AiDrawingAnalysisService] as DrawingAnalysis
+  [AiChatService + AiDispatcher] as AiChat
+  [AiUseCaseModels\n(provider/model per use case)] as UseCaseModels
+}
+
+package "auth / user / words" {
+  [AuthService + JWT\n(JwtTokenServiceImpl)] as Auth
+  [UserService / WordService] as UserWord
+}
+
+package "Persistence (Exposed)" {
+  [Exposed repositories] as Repos
+}
+
+database "PostgreSQL" as DB
+cloud "OpenAI-compatible\nAI provider" as Provider
+
+AuthWeb --> Auth
+WordWeb --> UserWord
+GameController --> GameSessionService
+GameDetailsController --> Repos
+WsInterceptors --> GameTicketService
+WsInterceptors --> Store
+SocketControllers --> GameSessionService
+SocketControllers --> ActionHandlers
+GameSessionService --> GameTicketService
+GameSessionService --> Store
+GameSessionService --> Orchestrators
+GameSessionService --> RoundAnalysis
+GameSessionService --> Persistence
+GameSessionService --> EventPublisher
+GameTicketService --> Auth : sign/verify JWT
+ActionHandlers --> RoundFeedback
+ActionHandlers --> Orchestrators
+Orchestrators --> EventPublisher
+Orchestrators --> RoundFeedback : delayed feedback
+Orchestrators --> Persistence : SAVING phase
+RoundFeedback --> FeedbackService
+RoundFeedback --> EventPublisher
+RoundAnalysis --> DrawingAnalysis
+FeedbackService --> AiGenerator
+AiGenerator --> AiChat
+DrawingAnalysis --> AiChat
+AiChat --> UseCaseModels
+AiChat --> Provider : HTTPS
+Persistence --> Repos
+Cleanup --> GameSessionService
+Cleanup --> Persistence
+UserWord --> Repos
+Auth --> UserWord
+Repos --> DB : JDBC
+@enduml

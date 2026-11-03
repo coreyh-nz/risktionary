@@ -1,0 +1,58 @@
+@startuml feedback-sequence
+title Wrong guess -> AI feedback
+skinparam shadowing false
+autonumber
+
+actor "Player (guesser)" as P
+participant "Frontend" as FE
+participant "GameRoundChat\nActionHandler" as CH
+participant "GameRoundFeedbackService" as RFS
+participant "AiDispatcher\n(per game)" as D
+participant "FeedbackService /\nAiFeedbackGenerator" as FG
+participant "AiChatService" as AI
+participant "AI provider" as LLM
+participant "GameEventPublisher" as EP
+participant "Round feedback session\n(in memory)" as RS
+
+note over D
+  Meanwhile, the host browser sends canvas snapshots to
+  /app/game/draw/snapshot, analysed by AiDrawingAnalysisService.
+  The latest drawing note is attached to each guess.
+end note
+
+P -> FE : types a guess in chat
+FE -> CH : SEND /app/game/chat {text}
+CH -> CH : guess handler marks it INCORRECT,\nsend as chat message
+CH -> RFS : onGuess(round, player, guess, messageId)
+RFS -> RS : addGuess(text, drawing note, time remaining fraction)
+alt player's timing condition = INSTANT
+  RFS -> D : launch(generate)
+  D -> FG : generate(all guesses so far, word, framing, timing, previous facts)
+  FG -> AI : stage 1 - fact generation
+  AI -> LLM : chat completion
+  LLM --> AI : neutral fact note
+  FG -> AI : stage 2 - framing rewrite\n(CORRECTIVE, NEUTRAL or POSITIVE)
+  AI -> LLM : chat completion
+  LLM --> AI : framed text
+  FG --> D : FeedbackGenerationResult (status, fact, framed, usage)
+  D -> RFS : onResult
+  RFS -> RS : record GeneratedFeedback + AI usage
+  alt status = SUCCESS
+    RFS -> EP : publishRoundFeedback(playerId, feedbackId, messageId, text)
+    EP --> FE : /user/queue/game/round  FEEDBACK (this player only)
+    FE -> P : feedback shown under the guess
+  else FACT_FAILED or FRAMING_FAILED
+    note right of RFS : kept for research, nothing sent to the player
+  end
+else DELAYED
+  note right of RFS : guess is only accumulated, nothing generated now
+end
+
+== Delayed timing: end of the drawing phase ==
+note over RFS
+  GameRoundPhaseStateDrawingHandler.onExit calls generateDelayed(round).
+  For each DELAYED player with at least one guess, the same two-stage
+  generation runs once with all their guesses (messageId = null), and
+  FEEDBACK is published to that player only.
+end note
+@enduml

@@ -1,0 +1,31 @@
+@startuml deployment
+title Risktionary - deployment
+skinparam shadowing false
+
+node "Client" as client {
+  artifact "Web browser" as browser
+}
+
+node "UC CSSE Ubuntu VM\n(risktionary.csse.canterbury.ac.nz)" as vm {
+  node "Nginx (on host)\n:80 redirects, :443 TLS" as nginx
+  node "Docker" as docker {
+    node "risktionary-frontend\nNext.js standalone, :3000" as fe
+    node "risktionary-backend\nSpring Boot (Java 25), :8080" as be
+  }
+  database "PostgreSQL (on host,\nnot in Docker)" as pg
+}
+
+cloud "OpenRouter or other\nOpenAI-compatible API\n(provider set per use case)" as ai
+cloud "Google OAuth" as google
+cloud "Microsoft OAuth\n(Entra ID)" as ms
+
+browser --> nginx : HTTPS 443\n(WSS on /api/ws/)
+nginx --> fe : HTTP :3000\nlocation /
+nginx --> be : HTTP :8080\n/api/ -> /\n/api/ws/ -> /ws/ (upgrade)
+be --> pg : JDBC (DATABASE_URL)\nport TODO: confirm
+be --> ai : HTTPS 443\nchat completions
+be --> google : HTTPS 443\ntoken + userinfo
+be --> ms : HTTPS 443\ntoken + userinfo
+browser ..> google : HTTPS redirect (login)
+browser ..> ms : HTTPS redirect (login)
+@enduml

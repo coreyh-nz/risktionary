@@ -1,0 +1,57 @@
+@startuml frontend-backend
+title Frontend structure and the backend endpoints it uses
+skinparam shadowing false
+left to right direction
+
+package "Frontend (Next.js 16 / React 19)" {
+  package "Pages (src/app)" {
+    [Home + join form] as Home
+    [game/create] as Create
+    [game/play] as Play
+    [words/*] as Words
+  }
+  package "Game state" {
+    [Zustand game store\n(session, state, round, players,\nvolunteers, feedback slices)] as Store
+    [drawing-store] as DrawStore
+  }
+  package "Connection" {
+    [WebSocketProvider\n(@stomp/stompjs Client)] as Stomp
+    [useGameConnection +\nsocket/subscriptions] as Subs
+    [Command hooks\n(chat, draw, snapshot, risk,\nvolunteer, skip, start)] as Cmds
+  }
+  [apiRequest (fetch + cookies)] as Api
+  [AuthProvider] as AuthProv
+}
+
+package "Backend" {
+  [POST /v1/game/join] as Join
+  [POST /v1/game/create] as CreateApi
+  [GET /v1/game/{id}/round/word] as WordApi
+  [/v1/words CRUD] as WordsApi
+  [GET /v1/user/me\nPOST /v1/auth/logout\n/v1/oauth/google|microsoft] as AuthApi
+  [WS endpoint /ws\n?ticket= or ?gameId=] as Ws
+  [Topics /topic/game/{id}\n/topic/game/{id}/round\n/topic/game/{id}/draw] as Topics
+  [Queues /user/queue/game\n/user/queue/game/round] as Queues
+  [Commands /app/...] as AppDest
+}
+
+Home --> Api
+Create --> Api
+Words --> Api
+AuthProv --> Api
+Api --> Join
+Api --> CreateApi
+Api --> WordApi
+Api --> WordsApi
+Api --> AuthApi
+Play --> Subs
+Subs --> Stomp
+Stomp --> Ws
+Subs --> Topics : subscribe
+Subs --> Queues : subscribe
+Cmds --> Stomp
+Stomp --> AppDest : publish
+Subs --> Store : events
+Cmds --> DrawStore
+Play --> Store
+@enduml
